@@ -1,1 +1,1 @@
-python client.py -w http://x.x.x/ -c rtsp://uname:pass@x.x.x.x/streamid
+python client.py -w http://x.x.x/ -c rtsp://uname:pass@x.x.x.x/streamid -l location-id -i camera-id

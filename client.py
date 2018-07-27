@@ -16,10 +16,18 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-w","--wservice",required=True,help="web service url")
 parser.add_argument("-c","--camera",required=True,help="Camera host")
+parser.add_argument("-l","--location",required=True,help="Location")
+parser.add_argument("-i","--cameraid",required=True,help="Camera Id")
+
+
 args = vars(parser.parse_args())
 
 url = args['wservice']
 cameraurl = args['camera']
+location = args['location']
+camera_id = args['cameraid']
+
+
 if cameraurl == "0":
     cameraurl = 0
 
@@ -51,9 +59,10 @@ while 1:
 
         # Make the payload
         data = {}
-        data['camera_id'] = 'camera-1'
+        data['camera_id'] = camera_id
         data['no_faces'] = str(people_count)
         data['windows'] = ",".join(str(r) for v in windows for r in v)
+        data['location'] = location
 
         payload = json.dumps(data)
 
