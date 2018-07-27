@@ -1,0 +1,1 @@
+python client.py -w http://x.x.x/ -c rtsp://uname:pass@x.x.x.x/streamid
