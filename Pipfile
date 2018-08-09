@@ -9,6 +9,7 @@ dlib = "*"
 requests = "*"
 pillow = "*"
 six = "*"
+rtsp = "*"
 
 [dev-packages]
 

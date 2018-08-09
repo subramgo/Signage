@@ -11,6 +11,8 @@ from PIL import Image
 from io import BytesIO
 import json
 import argparse
+import time
+import rtsp
 
 parser = argparse.ArgumentParser()
 
@@ -38,15 +40,27 @@ logger.setLevel(logging.DEBUG)
 
 detector = dlib.get_frontal_face_detector()
 cap = cv2.VideoCapture(cameraurl)
+#cap = rtsp.Client(cameraurl)
 frame_ind =0
+frames = []
 while 1:
-    ret, frame = cap.read()
+    for i in range(15):
+        ret,frame = cap.read()
+        if ret:
+            frames.append(frame)
+
+    frames = []
+    ret,frame = cap.read()
     if  ret:
         frame_ind+=1
-
+        """
+        cv2.imshow('image',frame)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        """
         logger.info("Processing frame {}".format(frame_ind))
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        dets, scores, idx = detector.run(frame, 1, 1)
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        dets= detector(frame, 1)
         windows = []
         people_count = 0
         logger.info("No faces detected {}".format(len(dets)))
