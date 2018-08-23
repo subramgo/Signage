@@ -4,12 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-opencv-python = "*"
+opencv-python = "3.3.0.10"
 dlib = "*"
 requests = "*"
 pillow = "*"
 six = "*"
-rtsp = "*"
 
 [dev-packages]
 
