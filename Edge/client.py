@@ -17,20 +17,33 @@ import numpy as np
 import time
 import rtsp
 
+from Gender import GenderClassifier
+gender = GenderClassifier()
+
+from Player import Player
+player_object = Player()
+
+player_object.play_default()
+
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-w","--wservice",required=True,help="web service url")
+parser.add_argument("-w","--wservice",required=False,help="web service url")
 parser.add_argument("-c","--camera",required=True,help="Camera host")
 parser.add_argument("-l","--location",required=True,help="Location")
 parser.add_argument("-i","--cameraid",required=True,help="Camera Id")
+parser.add_argument("-g","--gender", required=False,default="True",help="Enable Gender")
 
 
 args = vars(parser.parse_args())
+
+url = None
+is_gender = None
 
 url = args['wservice']
 cameraurl = args['camera']
 location = args['location']
 camera_id = args['cameraid']
+is_gender = args['gender']
 
 if cameraurl == "0":
     cameraurl = 0
@@ -68,6 +81,16 @@ while True:
     ### Input processing: PIL Image -> ???
     frame = np.asarray(cap.read())
     #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # Gender Classification
+    if is_gender == "True":
+        image_arr = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+        pred_val = predictor.process(x_test=image_arr, y_test=None, batch_size=1)
+        if pred_val == "male":
+            player.play_male()
+        else:
+            player.play_female()
+
+
     frame.setflags(write=True)
 
     ### Detection
