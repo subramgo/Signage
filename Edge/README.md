@@ -1,9 +1,5 @@
 # Signage Edge Processing
 
-## To-Do
-
-  1. OpenCV is still caching frames in a way leading to delay
-
 ## Deployment
 
   * `client.py` is the configurable python client.
