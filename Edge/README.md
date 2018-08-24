@@ -1,4 +1,4 @@
-# Signage project for retail
+# Signage Edge Processing
 
 ## To-Do
 
@@ -6,24 +6,25 @@
 
 ## Deployment
 
-  * run.sh uses `watch` to keep the script running
-  * singlerun.sh runs the script with set configuration
-  * client.py is the configurable python client.
+  * `client.py` is the configurable python client.
+  * `singlerun.sh` runs the client with set configuration.
 
-### `screen` and `rc.local`
+### Configuration
+Configuration is located in `Signage/singlerun.sh`:
 
+  * address for IP camera
+  * address for application server
+  * name for the location
+  * name for the camera
+
+### Automation
+ 
 Add this to `/etc/rc.local`:
 
     printf "Starting signage script.\n"
     runuser -l pi -c "screen -dmS signage"
     runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 /home/pi/Signage/singlerun.sh\n'"
 
-## Configuration
-Configuration is located in `Signage/singlerun.sh`:
-
-  * address for IP camera
-  * address for application server
-  * name for this location
-  * name for this camera
-
-
+  * `singlerun.sh` is our main script
+  * `watch` re-runs the script when it see the script complete.
+  * `/etc/rc.local` creates a screen session for `watch` on system startup.
