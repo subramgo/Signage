@@ -1,8 +1,20 @@
 from flask_sqlalchemy import SQLAlchemy
 import datetime
+import passlib
+from passlib.apps import custom_app_context as pwd_context
 
 signage_db = SQLAlchemy()
 
+class User(signage_db.Model):
+    id = signage_db.Column(signage_db.Integer, primary_key = True)
+    username = signage_db.Column(signage_db.String(32), index = True)
+    password_hash = signage_db.Column(signage_db.String(128))
+
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password_hash)
 
 class FaceSignage(signage_db.Model):
     id = signage_db.Column(signage_db.Integer, primary_key=True, autoincrement=True)

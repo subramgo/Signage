@@ -9,6 +9,8 @@ dlib = "*"
 requests = "*"
 pillow = "*"
 six = "*"
+keras = "*"
+passlib = "*"
 
 [dev-packages]
 

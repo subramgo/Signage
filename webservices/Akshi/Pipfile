@@ -17,6 +17,8 @@ dlib = "*"
 requests = "*"
 flask-uploads = "*"
 flask-wtf = "*"
+passlib = "*"
+"e1839a8" = {path = ".", editable = true}
 
 [dev-packages]
 

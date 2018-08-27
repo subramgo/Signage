@@ -22,7 +22,7 @@
 ### Docker
 
 build ourselves
-    docker build -t ubuntu-akshi:latest -f Dockerfile.base .
+     docker build -t ubuntu-akshi:latest -f Dockerfile.base .
      docker run -p 5000:5000 -d akshi:latest
 
 or from prebuilt image...?
@@ -30,3 +30,5 @@ or from prebuilt image...?
 
 
 
+### Create user
+curl -i -X POST -H "Content-Type: application/json" -d '{"username":"michael","password":"irkbid"}' http://127.0.0.1:5000/api/v1/signage/users

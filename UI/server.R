@@ -27,13 +27,28 @@ function(input, output) {
     selections$tracker.summary <- tracker.summary
   })
   
+
   output$choose_location <- renderUI({
-    selectInput("locationid",span(icon("map"),"Location"),as.list(unique(data$location)))
+    selectInput("locationid","Location",as.list(unique(data$location)))
   })
-  
+
   output$choose_camera <- renderUI({
-    selectInput("cameraid", span(icon("camera-retro"),"Camera"), as.list(selections$cameras))
+    selectInput("cameraid", "Camera", as.list(unique(data$camera_id)))
   })
+
+  output$distSummaryTable = renderTable({
+    distance.table}, bordered ='TRUE',spacing = 'xs',striped='TRUE'
+  )
+
+  output$viewTimePlot <- renderPlot({
+    ggplot(tracker.data, aes(x=time_alive)) + geom_histogram() + 
+      theme_minimal() + xlab("View time (seconds)") + ylab("Number of Unique Persons")
+  })
+
+  output$densityPlot <- renderPlot({
+    p <- ggplot(plot.final, aes(x=Points, y=Feet, color = Feet, shape = Feet)) + 
+      geom_jitter(height=0.2) +
+      xlim(-0.5,1.5)
   
   output$densityPlot <- renderPlot({
     #### Distance Plot data calculation
