@@ -1,50 +1,54 @@
+dbHeader <- dashboardHeader( title = span( icon("desktop"), app_name, icon("fire") ) 
+                             , tags$li(a(href = company_uri,
+                                         img(src = 'jci_logo_wb.png',
+                                             title = "Johnson Controls", height = "50px"),
+                                         style = "padding-top:3px; padding-bottom:3px;"),
+                                       class = "dropdown")
+)
 
-# This is the user-interface definition of a Shiny web application.
-# You can find out more about building applications with Shiny here:
-#
-# http://shiny.rstudio.com
-#
-
-library(shiny)
-library(DT)
-library(shinythemes)
-
-shinyUI(
-  navbarPage(theme = shinytheme("sandstone"),
-      "Signage Data Analysis",
-      tabPanel("Home",
-          sidebarPanel(
-            h3("Camera and Location"),
-            
-            uiOutput("choose_location"),
-            uiOutput("choose_camera")
-          ),
-            # Show a plot of the generated distribution
-            mainPanel(
-              tabsetPanel(type = "tabs",
-                tabPanel("Distance",
-                    fluidRow(column(8, h3("Statistics on how far the viewers are standing from the pedestal"))),
-                    fluidRow(
-                    column(8,
-                    
-                    plotOutput("densityPlot")
-                    ),
-                    column(4,
-                    tableOutput("distSummaryTable")
-                    )
-                    )
-                    
-                ),
-                tabPanel("Unique Views",
-                    fluidRow(column(8, h3("How much time people spend watching the display"))),
-                    fluidRow(column(4, plotOutput("viewTimePlot")),
-                             column(8,tableOutput("personCountTable"))
-                             ),     
-                    fluidRow(column(4,tableOutput(("personSummaryTable")) ))
-                )
-              
-            ) # End tab Panel
-          ) # End main Panel
+dashboardPage( 
+    title = app_name
+  , dbHeader
+  , dashboardSidebar(sidebarMenu(id = 'sidebar') , disable = TRUE )
+  , dashboardBody(
+    title = "Dashboard"
+    , fluidRow(
+        box(
+            status = "primary"
+          , solidHeader = FALSE
+          , collapsible = FALSE
+          , uiOutput("choose_location")
+          , width=6
         )
-    )# End Navbar Page
-)# End ShinyUI
+      , box(
+            status = "primary"
+          , solidHeader = FALSE
+          , collapsible = FALSE
+          , uiOutput("choose_camera")
+          , width=6
+          )
+      )
+    , fluidRow(
+        tabBox(
+        width = 12
+        , tabPanel(
+          title = "Distance"
+          , h3("Statistics on how far viewers are from the pedestal")
+          , fluidRow(
+              box(width=6,plotOutput("densityPlot"))
+            , box(width=6,tableOutput("distSummaryTable"))
+          )
+        )
+        , tabPanel(
+          title = "Unique Views"
+          , h2("Unique Views")
+          , fluidRow(column(8, h3("How much time people spend watching the display")))
+          , fluidRow(column(4, plotOutput("viewTimePlot")),
+                     column(8,tableOutput("personCountTable")))
+          , fluidRow(column(4,tableOutput(("personSummaryTable")) ))
+          )
+        )
+      )
+    )
+)
+

@@ -53,6 +53,7 @@ class ObjectTracker:
         def __init__(self,frame_dict,tracker):
             self.image_id  = frame_dict['image_id']
             self.camera_id = frame_dict['camera_id']
+            self.location  = frame_dict['location']
             self.id        = frame_dict['id']
 
             self.timestamp = float(frame_dict['date_created'])
@@ -124,11 +125,12 @@ class ObjectTracker:
 
             self.image_id  = frame.image_id
             self.camera_id = frame.camera_id
+            self.location  = frame.location
             self.id        = frame.id
 
         def to_json(self):
             return {'latest_coords': self.latest_coords, 'date_created':self.date_created,'end_time':self.end_time,
-                    'time_alive':self.time_alive, 'camera_id':self.camera_id}
+                    'time_alive':self.time_alive, 'camera_id':self.camera_id, 'location':self.location}
 
         def __repr__(self):
             report = "\nlived {} secs ({} to {})\n".format(self.time_alive,self.date_created,self.end_time)

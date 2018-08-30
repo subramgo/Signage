@@ -1,5 +1,6 @@
 library(shiny)
 library(shinydashboard)
+
 library(DT)
 library(ggplot2)
 
@@ -26,20 +27,6 @@ result <- GET(url)
 tracker.data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
 tracker.data['date'] <- anydate(tracker.data$date_created)
 
-#########################  Object Tracker Stas ############################
-
-tracker.stats <- tracker.data %>%
-                  group_by(date,time_alive) %>%
-                  summarise(Person_Count = n())
-
-
-tracker.stats$date <- as.character(tracker.stats$date)
-
-tracker.summary <- tracker.stats %>%
-                    group_by(date) %>%
-                    summarise('Unique Person' = sum(Person_Count), 'Avg View Time (in seconds)' = mean(time_alive))
-
-names(tracker.stats) <- c("Date","View Time ( in seconds)", "Number of People" )
   
 ###################### Distance from Pedestal Calcs ######################
 getDistance <- function(windows){
@@ -70,43 +57,7 @@ find_distance <- function(no_faces, windows){
 }
 
 data$distance <- mapply(find_distance, data$no_faces, data$windows)
-distance.data <- data[c('date','distance')]
-distance.data$mean_distance <- mapply(mean, distance.data$distance)
-distance.data$distance <- NULL
-distance.data <- na.omit(distance.data)
 
-# Distance table - mean distance by date
-distance.table <- distance.data %>%
-                  group_by(date) %>%
-                  summarise(Distance = mean(mean_distance, na.rm=TRUE))
-distance.table$date <- as.character(distance.table$date)
-distance.table <- distance.table[order(as.Date(distance.table$date, "%Y-%m-%d"), decreasing = TRUE),]
-names(distance.table) <- c("Date","Avg Distance (Feet)")
-
-
-#### Distance Plot data calculation
-plot.data.1 <- distance.data %>%
-                group_by(ceiling(mean_distance)) %>%
-                summarise(count = n())
-plot.final <- read.table(text = "",
-                 col.names = c("Feet", "Points"))
-
-for (row in 1:nrow(plot.data.1)){
-  no.points <- as.numeric(plot.data.1[row, 'count'])
-  feet      <- as.numeric(plot.data.1[row,'ceiling(mean_distance)'])
-  
-
-  df.inter <- data.frame(Feet = rep(feet, no.points), 
-                         Points = sample(1:9, no.points, replace=TRUE)/10)
-
-  plot.final <- rbind(plot.final, df.inter)
-  
-  
-  
-  
-}
-
-plot.final$Feet <- as.factor(plot.final$Feet)
 
 ########################################################################
 
