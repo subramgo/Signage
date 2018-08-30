@@ -29,7 +29,7 @@ output$personSummaryTable <- renderTable(({
     selectInput("cameraid", "Camera", as.list(unique(data$camera_id)))
   })
 
-output$rawTable = renderTable({
+output$distSummaryTable = renderTable({
   distance.table}, bordered ='TRUE',spacing = 'xs',striped='TRUE'
 )
 
@@ -40,10 +40,11 @@ output$viewTimePlot <- renderPlot({
 
 output$densityPlot <- renderPlot({
   p <- ggplot(plot.final, aes(x=Points, y=Feet, color = Feet, shape = Feet)) + 
-    geom_jitter(height=0.2) 
+    geom_jitter(height=0.2) +
+    xlim(-0.5,1.5)
   
   p <- p + scale_color_brewer(palette="Dark2") + theme_minimal() + 
-    theme(axis.text.x=element_blank(),plot.title = element_text(hjust = 0.5)) + 
+    theme(axis.text.x=element_blank(),plot.title = element_text(hjust = 0.5),legend.position="none") + 
     xlab("Screen") + ggtitle("Distance from Pedestal")
    
   p

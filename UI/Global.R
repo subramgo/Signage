@@ -1,7 +1,15 @@
+library(shiny)
+library(shinydashboard)
+library(DT)
+library(ggplot2)
+
 library(httr)
 library(jsonlite)
 library(dplyr)
 library(anytime)
+
+app_name <- "Signage Data Analysis"
+company_uri <- 'http://www.johnsoncontrols.com/buildings/building-management/data-enabled-business/digital-midmarket-platform'
 
 
 ##################### Pull data from web service #####################
@@ -72,6 +80,7 @@ distance.table <- distance.data %>%
                   group_by(date) %>%
                   summarise(Distance = mean(mean_distance, na.rm=TRUE))
 distance.table$date <- as.character(distance.table$date)
+distance.table <- distance.table[order(as.Date(distance.table$date, "%Y-%m-%d"), decreasing = TRUE),]
 names(distance.table) <- c("Date","Avg Distance (Feet)")
 
 

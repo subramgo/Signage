@@ -14,7 +14,6 @@ shinyUI(
       "Signage Data Analysis",
       tabPanel("Home",
           sidebarPanel(
-            
             h3("Camera and Location"),
             
             uiOutput("choose_location"),
@@ -31,7 +30,7 @@ shinyUI(
                     plotOutput("densityPlot")
                     ),
                     column(4,
-                    tableOutput("rawTable")
+                    tableOutput("distSummaryTable")
                     )
                     )
                     

@@ -13,6 +13,8 @@ Configuration is located in `Signage/singlerun.sh`:
   * name for the location
   * name for the camera
 
+Set up `/etc/network/interfaces` to allow access to necessary IP cameras.
+
 ### Automation
  
 Add this to `/etc/rc.local`:

@@ -106,3 +106,4 @@ venv.bak/
 # R Scripts
 rsconnect
 *.Rproj
+.Rproj.user
