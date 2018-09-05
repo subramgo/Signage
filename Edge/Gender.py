@@ -45,7 +45,9 @@ class  GenderClassifier():
         Apply resize, reshape, other scaling/whitening effects.
         x_test can be any image size greater than 100x100 and it will be resized
         """
-        resized = cv2.resize(self.x_test, (self.image_w, self.image_h)) 
+
+        image = self.x_test * (1./255.)
+        resized = cv2.resize(image, (self.image_w, self.image_h)) 
         self.preprocessed = resized.reshape(1,self.image_w,self.image_h,3)
 
 
