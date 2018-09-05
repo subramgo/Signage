@@ -18,11 +18,12 @@ import time
 import rtsp
 
 from Gender import GenderClassifier
-gender = GenderClassifier()
+gender_object = GenderClassifier()
 
 from Player import Player
 player_object = Player()
 
+player_object.play_default()
 
 parser = argparse.ArgumentParser()
 
@@ -83,7 +84,7 @@ while True:
     # Gender Classification
     if is_gender == "True":
         image_arr = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-        pred_val = predictor.process(x_test=image_arr, y_test=None, batch_size=1)
+        pred_val = gender_object.process(x_test=image_arr, y_test=None, batch_size=1)
         if pred_val == "male":
             player.play_male()
         else:
@@ -127,7 +128,7 @@ while True:
     for i in range(25):
         f = cap.read()
         f = None
-        
+
     frame_limit = 500
     if frame_ind >= frame_limit:
         logger.info("Retrieved {} of frames. Stopping to help manage video buffer.".format(frame_limit))
