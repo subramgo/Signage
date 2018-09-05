@@ -2,26 +2,22 @@ from subprocess import Popen
 import os
 
 class Player():
-	def __init__(self, video_list):
-		self.videos_root_folder = '/opt/signage/videos/'
-		self.default_video = self.videos_root_folder + 'cold-brew.mp4'
-		self.male_ads = self.videos_root_folder +  'mobile-order.mp4'
-		self.female_ads = self.videos_root_folder + 'red-cups.mp4'
-		self.video_play_list = video_list
-
-	def _play(self,path):
-		""" Play the required video identfied by index"""
-		os.system('killall omxplayer.bin')
-		omxc = Popen(['omxplayer', '-b','-r','-o local', '--loop',path])
+	def __init__(self):
+		self.video_file = '/opt/signage/videos/multi_ads.mov'
+		self.control = pexpect.spawn('/usr/bin/omxplayer ' + self.video_file)
+		print("Video Loaded")
 
 	def play_default(self):
-		self._play(self.default_video)
-
+		self.control.send("i")
+	
 	def play_male(self):
-		self._play(self.play_male)
-
+		self.control.send('i')
+		time.sleep(.5)
+		self.control.send ('\x1b[C') # jump ahead 30 seconds
+	
 	def play_female(self):
-		self._play(self.play_female)
-
+		self.control.send("i")
+		time.sleep(.5)
+		self.control.send ('\x1b[C') # jump ahead 30 seconds
 
 

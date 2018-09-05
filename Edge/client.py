@@ -23,7 +23,6 @@ gender = GenderClassifier()
 from Player import Player
 player_object = Player()
 
-player_object.play_default()
 
 parser = argparse.ArgumentParser()
 
@@ -122,6 +121,13 @@ while True:
 
     logger.info("Finished processing frame {}".format(frame_ind))
     frame_ind+=1
+    if frame_ind%20 == 0:
+        player_object.play_default()
+
+    for i in range(25):
+        f = cap.read()
+        f = None
+        
     frame_limit = 500
     if frame_ind >= frame_limit:
         logger.info("Retrieved {} of frames. Stopping to help manage video buffer.".format(frame_limit))
