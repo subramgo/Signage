@@ -1,4 +1,4 @@
-from keras.models import load_model
+from keras.models import load_model,model_from_json
 import os
 import cv2
 import numpy as np
@@ -22,7 +22,8 @@ class  GenderClassifier():
         self.__load_model()
 
     def __load_model(self):
-      self.model = load_model('/opt/signage/gender/gender_1.h5')
+      self.model =model_from_json('/opt/signage/gender/4_try.json')
+      self.model.load_weights('/opt/signage/gender/4_try.h5')
       print("Gender Model Loaded")
 
     def __evaluate(self):
