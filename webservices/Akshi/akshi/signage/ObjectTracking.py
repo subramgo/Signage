@@ -57,6 +57,7 @@ class ObjectTracker:
 
             self.timestamp = float(frame_dict['date_created'])
             self.face_count = int(frame_dict['no_faces'])
+            self.location = str(frame_dict['location'])
             self.objects = [tracker.TrackingObject(bbox,self.timestamp,tracker) for bbox in self._convert_to_frame_of_boxes(frame_dict['windows']) ]
 
         def _convert_to_frame_of_boxes(self,array):
@@ -125,10 +126,11 @@ class ObjectTracker:
             self.image_id  = frame.image_id
             self.camera_id = frame.camera_id
             self.id        = frame.id
+            self.location = frame.location
 
         def to_json(self):
             return {'latest_coords': self.latest_coords, 'date_created':self.date_created,'end_time':self.end_time,
-                    'time_alive':self.time_alive, 'camera_id':self.camera_id}
+                    'time_alive':self.time_alive, 'camera_id':self.camera_id,'location_id':self.location}
 
         def __repr__(self):
             report = "\nlived {} secs ({} to {})\n".format(self.time_alive,self.date_created,self.end_time)
