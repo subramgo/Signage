@@ -1,6 +1,7 @@
 from subprocess import Popen
 import os
 import pexpect
+import time
 
 class Player():
 	def __init__(self):
