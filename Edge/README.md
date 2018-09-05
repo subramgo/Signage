@@ -1,11 +1,18 @@
 # Signage Edge Processing
 
-## Deployment
 
-  * `Folder /home/pi/Signage/Edge/`
-  * `Gender.py` service to determine the gender
-  * `Player.py` service to play video
-  * `client.py` is the configurable python client.
+### Configuration
+Configuration is located in `/boot/signage/config.yml`
+A template with default values is in `config.template.yml`
+
+## Code Structure
+
+  * `face_detection.py`
+    * reads from IP Cam 
+    * performs face detection
+    * orchestrates data flow
+  * `gender.py` service to determine the gender
+  * `player.py` service to play video
   * `singlerun.sh` runs the client with set configuration.
 
   * [optional]
@@ -18,43 +25,11 @@
   * Gender Model download from https://drive.google.com/open?id=1dLg4izlUYVTRkrGyTVv5OJ60awa69zwN
   *  `gender/4_try.h5` and `gender/4_try.json`
 
-### Configuration
-Configuration is located in `Signage/singlerun.sh`:
-
-    python3 /home/pi/Signage/Edge/client.py -g True  -c 0 -w http://127.0.0.1:5000/api/v1/signage/signage_upload  -l signage-analysis-demo -i signage-camera-1
-
-
-  * -c rtsp address for IP camera. 0 if USB camera is used
-  * -w address for application server
-  * -g to include gender detection
-  * -l name for the location
-  * -i name for the camera
-
-Set up `/etc/network/interfaces` to allow access to necessary IP cameras.
-
-### Automation
- 
-Add this to `/etc/rc.local`:
-
-    printf "Starting signage script.\n" >> /home/pi/startup.log
-    runuser -l pi -c "screen -dmS gender"
-    runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 /home/pi/Signage/Edge/Gender.py\n'"
-    runuser -l pi -c "screen -dmS video"
-    runuser -l pi -c "screen -S video -p 0 -X stuff 'watch -n 1 python3 /home/pi/Signage/Edge/Player.py\n'"
-    runuser -l pi -c "screen -dmS webservice"
-    runuser -l pi -c "screen -S webservice -p 0 -X stuff 'watch -n 1 /home/pi/Signage/webservice/Akshi/run.sh\n"
-    runuser -l pi -c "screen -dmS signage"
-    runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 /home/pi/Signage/singlerun.sh\n'"
-    printf "started signage screen session" >> /home/pi/startup.log
- 
-  * `singlerun.sh` is our main script
-  * `watch` re-runs the script when it see the script complete.
-  * `/etc/rc.local` creates a screen session for `watch` on system startup.
-
-
-
 
 # Setting up the edge device for signage app.
+
+This all should be moved to `install.sh`
+
 ## Operating System
 
   lsb_release -a
@@ -116,15 +91,6 @@ Add this to `/etc/rc.local`:
   sudo pip3 install pillow
 
 
-## Signage Setup
-
-create a folder 'signage' in /opt
-
-  sudo mkdir /opt/signage
-  chown pi:root /opt/signage
-
-  mkdir /opt/signage/gender
-
 Download the model files from google drive https://drive.google.com/open?id=1dLg4izlUYVTRkrGyTVv5OJ60awa69zwN
   * from gender folder in google drive, copy the models to  /opt/signage/gender/
   mkdir /opt/signage/videos
@@ -132,3 +98,23 @@ Download the model files from google drive https://drive.google.com/open?id=1dLg
 
 ## pexpect
   pip3 install pexpect
+
+### Automation
+ 
+Add this to `/etc/rc.local`:
+
+    printf "Starting signage script.\n" >> /home/pi/startup.log
+    runuser -l pi -c "screen -dmS gender"
+    runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 /home/pi/Signage/Edge/Gender.py\n'"
+    runuser -l pi -c "screen -dmS video"
+    runuser -l pi -c "screen -S video -p 0 -X stuff 'watch -n 1 python3 /home/pi/Signage/Edge/Player.py\n'"
+    runuser -l pi -c "screen -dmS webservice"
+    runuser -l pi -c "screen -S webservice -p 0 -X stuff 'watch -n 1 /home/pi/Signage/webservice/Akshi/run.sh\n"
+    runuser -l pi -c "screen -dmS signage"
+    runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 /home/pi/Signage/singlerun.sh\n'"
+    printf "started signage screen session" >> /home/pi/startup.log
+ 
+  * `singlerun.sh` is our main script
+  * `watch` re-runs the script when it see the script complete.
+  * `/etc/rc.local` creates a screen session for `watch` on system startup.
+

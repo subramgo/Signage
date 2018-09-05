@@ -1,0 +1,21 @@
+%YAML 1.1
+---
+# Configs for all Edge services
+
+serve_ads             : True
+gender_classification : True
+cam_uri               : rtsp://root:pass@192.168.1.168/usecondstream
+cam_location_name     : signage-analysis-demo
+cam_name              : signage-camera-1
+logfile_path          : signage.log
+logfile_maxbytes      : 375000000
+
+data_reporting_uri    : http://michael:irkbin@127.0.0.1:5000/api/v1/signage/signage_upload
+
+gender classification :
+    - localhost # server
+    - 18862     # port
+
+ad server             :
+    - localhost # server
+    - 18861     # port

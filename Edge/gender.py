@@ -10,8 +10,6 @@ from keras.layers import DepthwiseConv2D
 
 rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
-
-
 class  GenderClassifier(rpyc.Service):
 
     def __init__(self, conn, model,graph):
