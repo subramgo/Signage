@@ -3,9 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# SQLite Databases
+*.db
+
 # C extensions
 *.so
 
+# R Stuff
 *.Rhistory
 
 # Distribution / packaging
