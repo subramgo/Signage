@@ -22,7 +22,9 @@ class  GenderClassifier():
         self.__load_model()
 
     def __load_model(self):
-      self.model =model_from_json('/opt/signage/gender/4_try.json')
+      with open('/opt/signage/gender/4_try.json','r') as f:
+        json = f.read()
+      self.model =model_from_json(json)
       self.model.load_weights('/opt/signage/gender/4_try.h5')
       print("Gender Model Loaded")
 
