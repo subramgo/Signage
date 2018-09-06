@@ -9,25 +9,39 @@ library(jsonlite)
 library(dplyr)
 library(anytime)
 
-app_name <- "Signage Data Analysis"
-company_uri <- 'http://www.johnsoncontrols.com/buildings/building-management/data-enabled-business/digital-midmarket-platform'
 
-
+source('config.R')
 ##################### Pull data from web service #####################
 
-url = "http://178.128.68.231:5000/api/v1/signage/"
-result <- GET(url)
+result <- GET(url_)
 data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
 data['date'] <- anydate(data$date_created)
 data['timestamp'] <- anytime(data$date_created)
 
 
-url = "http://178.128.68.231:5000/api/v1/signage/object_track"
-result <- GET(url)
+result <- GET(url.object.track)
 tracker.data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
 tracker.data['date'] <- anydate(tracker.data$date_created)
+tracker.data$idx <- as.numeric(rownames(tracker.data))
 
   
+##########################################################################
+
+getAMPM <- function(x){
+  a <- as.numeric(format(strptime(x,"%Y-%m-%d %H:%M:%S"),'%H'))
+  split.afternoon <- 12
+  split.evening <- 17
+  greeting <- "Morning"
+  if (a >= split.afternoon && a <= split.evening){
+    greeting <- "Afternnon"
+  }else if (a > split.evening){
+    greeting <- "Evening"
+  }
+  return(greeting)
+}
+
+data$greeting <- sapply(data$timestamp, getAMPM)
+
 ###################### Distance from Pedestal Calcs ######################
 getDistance <- function(windows){
   x_min = windows[1]

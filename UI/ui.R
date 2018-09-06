@@ -30,23 +30,33 @@ dashboardPage(
       )
     , fluidRow(
         tabBox(
-        width = 12
-        , tabPanel(
-          title = "Distance"
-          , h3("Statistics on how far viewers are from the pedestal")
-          , fluidRow(
-              box(width=6,plotOutput("densityPlot"))
-            , box(width=6,tableOutput("distSummaryTable"))
+        width = 12,
+        tabPanel(
+          title ="Mission Control"
+          ,fluidRow(
+                    column(3, plotOutput("faceCountPlot"))
+                    ,column(3, plotOutput("distAvgPlot"))
+                    ,column(3, plotOutput("timeAlivePlot"))
+                    )
+
+          ,fluidRow(
+            column(3, plotOutput("densityPlot")),
+            column(3, plotOutput("viewTimePlot")),
+            column(3, plotOutput("viewGroupPlot"))
+          ))
+        
+              
+          ,fluidRow(
+             column(3,tableOutput("personCountTable"))
+            ,column(3, tableOutput(("personSummaryTable"))
+            ,column(3, tableOutput("distSummaryTable"))
+                    
           )
+          
+          
+          
         )
-        , tabPanel(
-          title = "Unique Views"
-          , h2("Unique Views")
-          , fluidRow(column(8, h3("How much time people spend watching the display")))
-          , fluidRow(column(4, plotOutput("viewTimePlot")),
-                     column(8,tableOutput("personCountTable")))
-          , fluidRow(column(4,tableOutput(("personSummaryTable")) ))
-          )
+        
         )
       )
     )
