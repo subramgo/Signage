@@ -2,15 +2,23 @@
 ---
 # Configs for all Edge services
 
-serve_ads             : True
-gender_classification : True
+###########################################################
+####            Orchestration and Image Feed           ####
+###########################################################
 cam_uri               : rtsp://root:pass@192.168.1.168/usecondstream
 cam_location_name     : signage-analysis-demo
 cam_name              : signage-camera-1
 logfile_path          : signage.log
 logfile_maxbytes      : 375000000
 
-data_reporting_uri    : http://michael:irkbin@127.0.0.1:5000/api/v1/signage/signage_upload
+
+# Enable/Disable Services
+serve_ads             : True
+gender_classification : True
+
+
+# Interfaces
+data_reporting_uri    : http://united:irkbin@127.0.0.1:5000/api/v1/signage/signage_upload
 
 gender classification :
     - localhost # server
@@ -19,3 +27,15 @@ gender classification :
 ad server             :
     - localhost # server
     - 18861     # port
+
+
+
+###########################################################
+####                     Ad Server                     ####
+###########################################################
+ad_server       :
+  source_camera_inset : True
+  debug_positions     : False
+
+
+

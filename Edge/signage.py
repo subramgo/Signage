@@ -48,8 +48,15 @@ else:
 
 # Gender Classifier
 if cfg['gender_classification']:
-    gender_connection = rpyc.connect(*cfg['gender classification'])
-    gender_object = gender_connection.root
+    gender_object = None
+    while not gender_object:
+        try:
+            gender_connection = rpyc.connect(*cfg['gender classification'])
+            gender_object = gender_connection.root
+        except:
+            logger.info("Waiting then trying to connect to gender service.")
+            time.sleep(3)
+            continue
     logger.info("Connected to gender classification.")
 else:
     gender_object = None

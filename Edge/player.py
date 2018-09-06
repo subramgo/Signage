@@ -3,6 +3,16 @@ import os
 import pexpect
 import time
 import rpyc
+import yaml
+
+###########################################################
+##############         Configuration         ##############
+###########################################################
+with open("/boot/signage/config.yml", 'r') as ymlfile:
+    cfg = yaml.load(ymlfile)['ad_server']
+
+# TODO if cfg['source_camera_inset'], overlay source camera feed
+# TODO? if cfg['debug_positions'], make main player show behind other windows so the screen can be used?
 
 class Player(rpyc.Service):
     def on_connect(self, conn):

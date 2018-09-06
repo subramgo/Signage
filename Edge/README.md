@@ -26,93 +26,42 @@ A template with default values is in `config.template.yml`
   *  `gender/4_try.h5` and `gender/4_try.json`
 
 
-# Setting up the edge device for signage app.
+# Edge Deployment.
 
-This all should be moved to `install.sh`
+## Dependencies
 
-## Operating System
-
-  lsb_release -a
-  Raspbian Strech 9.4
-
-## Python Version
-
-  3.5.3
-
-  $ sudo apt-get install python3-dev python3-pip
-  $ sudo pip3 install numpy
-  $ sudo ln -sf /usr/bin/python3 /usr/bin/python
-
-## opencv installation
-
-### Dependencies
+  * Raspbian Stretch 9.4
+    * `lsb_release -a` to check
+  * Python 3+
 
 #### Developer tools
-  $ sudo apt-get install build-essential git cmake pkg-config
-  $ sudo apt-get install screen
+  $ sudo apt-get install build-essential git cmake pkg-config screen vim
+
 #### Image
-  $ sudo apt-get install libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev
-#### Video
-  $ sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
-  $ sudo apt-get install libxvidcore-dev libx264-dev
+  $ sudo apt-get install libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libgtk2.0-dev install libatlas-base-dev gfortran
 
-#### GUI
-  $ sudo apt-get install libgtk2.0-dev
-#### Math
-  $ sudo apt-get install libatlas-base-dev gfortran
-#### Get opencv
-  $ wget -O opencv-3.3.0.tgz https://github.com/opencv/opencv/archive/3.3.0.tar.gz
-  $ tar -xvzf opencv-3.3.0.tgz
-  $ wget -O opencv_contrib-3.3.0.tgz https://github.com/opencv/opencv_contrib/archive/3.3.0.tar.gz
-  $ tar -xvzf opencv_contrib-3.3.0.tgz
+#### Important Data Processing Packages
+  * numpy
+  * opencv
+  * tensorflow
+  * keras
+  * dlib
 
-#### Prepare build
-  $ cd ~/opencv-3.0.0/
-  $ mkdir build
-  $ cd build
-  $ cmake -D CMAKE_BUILD_TYPE=RELEASE \
-    -D CMAKE_INSTALL_PREFIX=/usr/local \
-    -D INSTALL_C_EXAMPLES=ON \
-    -D INSTALL_PYTHON_EXAMPLES=ON \
-    -D OPENCV_EXTRA_MODULES_PATH=~/src/opencv_contrib-3.3.0/modules \
-    -D BUILD_EXAMPLES=ON ..
-#### Run Build
-  $ screen -S opencv-build
-  $ make 2>&1 | tee buildLog.out
-#### Install
-  $ sudo make install
-  $ sudo ldconfig
-
-## tensorflow
-  sudo pip3 install tensorflow
-  sudo pip3 install keras
-  sudo pip3 install dlib
-  sudo pip3 install requests
-  sudo pip3 install pillow
-
-
+#### Models
 Download the model files from google drive https://drive.google.com/open?id=1dLg4izlUYVTRkrGyTVv5OJ60awa69zwN
-  * from gender folder in google drive, copy the models to  /opt/signage/gender/
-  mkdir /opt/signage/videos
+  * from gender folder in google drive, copy the models to  `/opt/signage/gender/`
+
+#### Ad Media
+  `mkdir /opt/signage/videos`
   * move the videos to this folder
 
-## pexpect
-  pip3 install pexpect
+#### Everything else
 
-### Automation
- 
-Add this to `/etc/rc.local`:
+    install.sh
 
-    printf "Starting signage script.\n" >> /home/pi/startup.log
-    runuser -l pi -c "screen -dmS gender"
-    runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 /home/pi/Signage/Edge/Gender.py\n'"
-    runuser -l pi -c "screen -dmS video"
-    runuser -l pi -c "screen -S video -p 0 -X stuff 'watch -n 1 python3 /home/pi/Signage/Edge/Player.py\n'"
-    runuser -l pi -c "screen -dmS webservice"
-    runuser -l pi -c "screen -S webservice -p 0 -X stuff 'watch -n 1 /home/pi/Signage/webservice/Akshi/run.sh\n"
-    runuser -l pi -c "screen -dmS signage"
-    runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 /home/pi/Signage/singlerun.sh\n'"
-    printf "started signage screen session" >> /home/pi/startup.log
+## Automation
+
+We auto-start the services by creating screen sessions for each via commands added to `/etc/rc.local`.
  
   * `singlerun.sh` is our main script
   * `watch` re-runs the script when it see the script complete.
