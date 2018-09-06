@@ -1,3 +1,4 @@
+import subprocess
 from subprocess import Popen
 import os
 import pexpect
@@ -9,16 +10,23 @@ import yaml
 ##############         Configuration         ##############
 ###########################################################
 with open("/boot/signage/config.yml", 'r') as ymlfile:
-    cfg = yaml.load(ymlfile)['ad_server']
+    all_cfg = yaml.load(ymlfile)
+
+cfg = all_cfg['ad_server']
 
 # TODO if cfg['source_camera_inset'], overlay source camera feed
 # TODO? if cfg['debug_positions'], make main player show behind other windows so the screen can be used?
 
 class Player(rpyc.Service):
     def on_connect(self, conn):
-        self.video_file = '/opt/signage/videos/multi_ads.mov'
-        #self.control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,640,480 ' + self.video_file)
-        self.control = pexpect.spawn('/usr/bin/omxplayer ' + self.video_file)
+        self.video_file = cfg['video_uri']
+        if cfg['debug_positions']:
+        	self.control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,640,480 ' + self.video_file)
+        	#Popen(debug_stream,preexec_fn=os.setsid,stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE,close_fds=True)
+        	self.debug_control = pexpect.spawn('/usr/bin/omxplayer  --win 641,480,1280,960 --avdict rtsp_transport:tcp ' + all_cfg['cam_uri'])
+        	self.debug_control.expect("Video")
+        else:
+        	self.control = pexpect.spawn('/usr/bin/omxplayer ' + self.video_file)
         print("Video Loaded")
 
     def on_disconnect(self, conn):
@@ -67,7 +75,8 @@ class Player(rpyc.Service):
 def main():
     from rpyc.utils.server import ThreadedServer
     t = ThreadedServer(Player, port=18861)
-    print("Video Loaded")
+    print("Video Player Loaded")
+
     t.start()
 
 

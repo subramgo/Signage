@@ -36,6 +36,7 @@ ad server             :
 ad_server       :
   source_camera_inset : True
   debug_positions     : False
+  video_uri : /opt/signage/videos/multi_ads.mov
 
 
 
