@@ -8,7 +8,7 @@
 cam_uri               : rtsp://root:pass@192.168.1.168/usecondstream
 cam_location_name     : signage-analysis-demo
 cam_name              : signage-camera-1
-logfile_path          : signage.log
+logfile_path          : /home/pi/signage.log
 logfile_maxbytes      : 375000000
 
 

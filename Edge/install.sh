@@ -42,18 +42,18 @@ watching()
 ####                  Configuration                    ####
 ###########################################################
 func(){
-  sudo mkdir -p /boot/signage 2>/dev/null
+  sudo mkdir -p /boot/signage
   sudo cp -n config.template.yml /boot/signage/config.yml
 
   ### Resource Storage
-  sudo mkdir -p /opt/signage  2>/dev/null
+  sudo mkdir -p /opt/signage
   sudo chown -R `whoami`:`id -gn` /opt/signage
 
   # ad videos
-  mkdir /opt/signage/videos   2>/dev/null
+  mkdir -p /opt/signage/videos
 
   # ML models
-  mkdir /opt/signage/gender   2>/dev/null
+  mkdir -p /opt/signage/gender
 }
 watching func "Creating config directories."
 
@@ -115,29 +115,28 @@ echo "Installed dependent libraries."
 INSTALL_PATH=~/.local/bin/signage
 
 mkdir -p $INSTALL_PATH      2>/dev/null
-cp ./* $INSTALL_PATH
+cp ./*.py $INSTALL_PATH
 printf "Installed signage to $INSTALL_PATH\n"
 
 if [[ $(grep 'signage' /etc/rc.local) ]]
 then
     echo "Signage already autostarting in \`rc.local\`."
 else
-  sudo tee -a /etc/rc.local << EOF
+  sudo tee -a /etc/rc.local >/dev/null << EOF
+runuser -l pi -c 'printf "Starting signage script.\n"  >> /home/pi/startup.log'
+runuser -l pi -c "screen -dmS gender"
+runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/gender.py >> /home/pi/startup.log\n'"
+sleep 10
+runuser -l pi -c "screen -dmS adserver"
+runuser -l pi -c "screen -S adserver -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/player.py >> /home/pi/startup.log\n'"
 
-  printf "Starting signage script.\n"  >> /home/pi/startup.log
-  runuser -l pi -c "screen -dmS gender"
-  runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/gender.py >> /home/pi/startup.log\n'"
-  sleep 10
-  runuser -l pi -c "screen -dmS adserver"
-  runuser -l pi -c "screen -S adserver -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/player.py >> /home/pi/startup.log\n'"
-
-  runuser -l pi -c "screen -dmS signage"
-  runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/signage.py >> /home/pi/startup.log\n'"
-  printf "Started signage services.\n" >> /home/pi/startup.log
+runuser -l pi -c "screen -dmS signage"
+runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/signage.py >> /home/pi/startup.log\n'"
+runuser -l pi -c 'printf "Started signage services.\n" >> /home/pi/startup.log'
 EOF
 
   sudo sed -i 's|exit 0||' /etc/rc.local
-  printf "\nexit 0\n" | sudo tee -a /etc/rc.local
+  printf "\nexit 0\n" | sudo tee -a /etc/rc.local >/dev/null
 
   echo "Signage autostarting in \`rc.local\`."
 fi
@@ -146,6 +145,6 @@ fi
 ####                      Security                     ####
 ###########################################################
 
-
+# TODO disable SSH on the Pi
 
 

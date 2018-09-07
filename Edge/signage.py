@@ -32,7 +32,7 @@ with open("/boot/signage/config.yml", 'r') as ymlfile:
 logging.basicConfig(format="[%(thread)-5d]%(asctime)s: %(message)s")
 logger = logging.getLogger('client')
 logger.setLevel(logging.INFO)
-hdlr = RotatingFileHandler(cfg.get('logfile_path','/home/pi/Desktop/signage.log'),maxBytes=cfg.get('logfile_maxbytes',375000000))
+hdlr = RotatingFileHandler(cfg.get('logfile_path','/home/pi/signage.log'),maxBytes=cfg.get('logfile_maxbytes',375000000))
 logger.addHandler(hdlr)
 
 
@@ -41,9 +41,18 @@ logger.addHandler(hdlr)
 ###########################################################
 # Ad Server
 if cfg['serve_ads']:
-    ad_player = rpyc.connect(*cfg['ad server']).root
-    logger.info("Connected to ad server.")
+    ad_player = None
+
+    while not ad_player:
+        try:
+            ad_player = rpyc.connect(*cfg['ad server']).root
+            logger.info("Connected to ad server.")
+        except:
+            logger.info("Waiting then trying to connect to ad service.")
+            time.sleep(3)
+            continue
 else:
+    ad_player = None
     logger.info("Ad service is disabled.")
 
 # Gender Classifier
@@ -51,8 +60,8 @@ if cfg['gender_classification']:
     gender_object = None
     while not gender_object:
         try:
-            gender_connection = rpyc.connect(*cfg['gender classification'])
-            gender_object = gender_connection.root
+            gender_object = rpyc.connect(*cfg['gender classification']).root
+            logger.info("Connected to gender classification.")
         except:
             logger.info("Waiting then trying to connect to gender service.")
             time.sleep(3)
@@ -98,7 +107,10 @@ def detect_faces(frame):
         cv2.rectangle(frame, (d.left(), d.top()), (d.right(), d.bottom()), (255, 0, 255), 2)
         faces.append(frame[d.top():d.bottom(), d.left():d.right()])
 
-    logger.info("Count of faces detected: {}".format(len(faces)))
+    if faces:
+        logger.info("Count of faces detected: {}".format(len(faces)))
+    else:
+        logger.info("No faces detected.")
 
     return (faces,windows)
 
