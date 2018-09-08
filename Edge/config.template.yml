@@ -15,7 +15,7 @@ logfile_maxbytes      : 375000000
 # Enable/Disable Services
 serve_ads             : True
 gender_classification : True
-
+data_report           : True
 
 # Interfaces
 data_reporting_uri    : http://united:irkbin@127.0.0.1:5000/api/v1/signage/signage_upload

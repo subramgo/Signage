@@ -73,26 +73,30 @@ else:
 
 
 # Data Server
-data_uri = cfg['data_reporting_uri']
-try:
-    requests.get(data_uri)
-    logger.info("Database is available.")
-except (requests.exceptions.ConnectionError,requests.exceptions.Timeout,requests.exceptions.HTTPError) as err: 
-    logger.error("Cannot reach data reporting service; "+str(err))
+if cfg['data_report']:
+    data_uri = cfg['data_reporting_uri']
+    try:
+        requests.get(data_uri)
+        logger.info("Database is available.")
+    except (requests.exceptions.ConnectionError,requests.exceptions.Timeout,requests.exceptions.HTTPError) as err: 
+        logger.error("Cannot reach data reporting service; "+str(err))
 
-def upload_data(camera_id,people_count,windows,location):
-    data = {
-            'camera_id' : camera_id
-           ,'no_faces'  : str(people_count)
-           ,'windows'   : ",".join(str(r) for v in windows for r in v)
-           ,'location'  : location
-            }
-    headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    def upload_data(camera_id,people_count,windows,location):
+        data = {
+                'camera_id' : camera_id
+               ,'no_faces'  : str(people_count)
+               ,'windows'   : ",".join(str(r) for v in windows for r in v)
+               ,'location'  : location
+                }
+        headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
-    logger.info("Uploading detections...")
-    r = requests.post(data_uri,json=data,headers=headers)
-    logger.info("Data upload: "+str(r))
-
+        logger.info("Uploading detections...")
+        r = requests.post(data_uri,json=data,headers=headers)
+        logger.info("Data upload: "+str(r))
+else:
+    logger.info("Data reporting is disabled.")
+    def upload_data(camera_id,people_count,windows,location):
+        pass
 
 # Face Detector
 detector = dlib.get_frontal_face_detector()
@@ -132,8 +136,7 @@ def grab_frame():
     global _old_frame
     if cameraurl != 0:
         for i in range(discard_frames):
-            f = cap.read()
-            f = None
+            cap.read()
 
     logger.info("Camera connection is "+("opened."if cap.isOpened() else "closed."))
 

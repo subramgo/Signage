@@ -89,7 +89,7 @@ fi
 
 echo "Installing ML Python packages"
 # `pip list` can be slow so only check once
-installed=$(pip3 list 2>/dev/null)
+installed=$(pip3 list --format=columns 2>/dev/null)
 pip_installed() {
     echo $installed | grep -i $1 2>/dev/null
 }
