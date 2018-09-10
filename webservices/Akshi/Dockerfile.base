@@ -11,8 +11,6 @@ RUN rm /usr/bin/python3; ln -s /usr/bin/python3.5 /usr/bin/python3
 RUN apt-mark hold python3
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
-COPY . /Akshi
-WORKDIR /Akshi
 RUN apt-get update && apt-get install -y libgtk2.0-dev
 
 
