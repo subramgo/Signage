@@ -8,9 +8,12 @@ import yaml
 ###########################################################
 with open("/boot/signage/config.yml", 'r') as ymlfile:
     all_cfg = yaml.load(ymlfile)
+with open("/opt/signage/credentials.yml",'r') as ymlfile:
+    credentials = yaml.load(ymlfile)
 
 cfg = all_cfg['ad_server']
 
+cam_uri = all_cfg['cam_protocol']+credentials['video_stream']+"@"+all_cfg['cam_stream_address']
 # TODO if cfg['source_camera_inset'], overlay source camera feed
 
 class Player(rpyc.Service):
@@ -19,7 +22,7 @@ class Player(rpyc.Service):
         if cfg['debug_positions']:
         	self.control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,640,480 ' + self.video_file)
         	#Popen(debug_stream,preexec_fn=os.setsid,stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE,close_fds=True)
-        	self.debug_control = pexpect.spawn('/usr/bin/omxplayer  --win 641,480,1280,960 --avdict rtsp_transport:tcp ' + all_cfg['cam_uri'])
+        	self.debug_control = pexpect.spawn('/usr/bin/omxplayer  --win 641,480,1280,960 --avdict rtsp_transport:tcp ' + cam_uri)
         	self.debug_control.expect("Video")
         else:
         	self.control = pexpect.spawn('/usr/bin/omxplayer ' + self.video_file)

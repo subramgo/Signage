@@ -6,7 +6,7 @@
   * Camera interface
   * Face detection
 
-## [Cloud](Cloud/README.md)
+## [Cloud](webservices/README.md)
 
   * Object tracking
   * Activity Monitoring Logic

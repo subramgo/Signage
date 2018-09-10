@@ -1,6 +1,7 @@
 %YAML 1.1
 ---
 # Configs for all Edge services
+# this file should be located at /boot/signage/config.yml
 
 ###########################################################
 ####            Orchestration and Image Feed           ####
@@ -35,6 +36,7 @@ ad server             :
 ###########################################################
 ####                     Ad Server                     ####
 ###########################################################
+# these should become a separate configuration e.g. /opt/signage/ads.yml
 ad_server       :
   source_camera_inset : True
   debug_positions     : False

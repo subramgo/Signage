@@ -154,7 +154,7 @@ def detect_faces(frame):
 # Camera
 def cam_address():
     try:
-        return cfg['cam_protocol']+credentials['video_stream']+cfg['cam_stream_address']
+        return cfg['cam_protocol']+credentials['video_stream']+"@"+cfg['cam_stream_address']
     except:
         return 0
 
