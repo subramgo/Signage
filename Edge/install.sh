@@ -1,21 +1,24 @@
 #!/bin/bash
 ###########################################################
 # Install and set up environment for edge-device programs #
+# Update in case of existing installations                #
 ###########################################################
+
+LOG=~/install.log
 
 watching()
 {
     local func=$1
     local desc=""
     if [ -n "$2" ]; then desc=$2; fi; 
-    local log=~/install.log
+    local log=$LOG
     if [ -n "$3" ]; then log=$3; fi; 
 
     $func >> $log 2>&1 &
     local pid=$!
     local delay=0.5
     local spinstr='|/-\'
-    printf "$desc" 
+    printf "$desc" | tee $LOG
     tput civis
     stty -echo
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
@@ -37,6 +40,8 @@ watching()
     stty echo
     tput cnorm
 }
+
+echo `date` - Signage Install/Update Run: >> $LOG
 
 ###########################################################
 ####                  Configuration                    ####
@@ -125,13 +130,13 @@ else
   sudo tee -a /etc/rc.local >/dev/null << EOF
 runuser -l pi -c 'printf "Starting signage script.\n"  >> /home/pi/startup.log'
 runuser -l pi -c "screen -dmS gender"
-runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/gender.py >> /home/pi/startup.log\n'"
+runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/gender.py >> /home/pi/signage.log\n'"
 sleep 10
 runuser -l pi -c "screen -dmS adserver"
-runuser -l pi -c "screen -S adserver -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/player.py >> /home/pi/startup.log\n'"
+runuser -l pi -c "screen -S adserver -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/player.py >> /home/pi/signage.log\n'"
 
 runuser -l pi -c "screen -dmS signage"
-runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/signage.py >> /home/pi/startup.log\n'"
+runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/signage.py >> /home/pi/signage.log\n'"
 runuser -l pi -c 'printf "Started signage services.\n" >> /home/pi/startup.log'
 EOF
 
