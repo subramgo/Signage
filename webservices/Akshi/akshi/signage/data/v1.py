@@ -1,6 +1,5 @@
 from flask import Blueprint, request, Response, abort, g, jsonify
 import json
-import dlib
 
 from ..models import  signage_db,FaceSignage, User
 from ..ObjectTracking import track_objects
@@ -10,7 +9,6 @@ auth = HTTPBasicAuth()
 
 
 signage_v1 = Blueprint('signage1', __name__, url_prefix='/api/v1/signage', template_folder = 'templates', static_folder = 'static')
-face_detector = dlib.get_frontal_face_detector()
 
 
 @signage_v1.route('/', methods =['GET'])
