@@ -1,27 +1,19 @@
-from flask import render_template, flash, redirect, Blueprint, request, send_from_directory, Response,abort,g,jsonify,url_for
+from flask import Blueprint, request, Response, abort, g, jsonify
 import json
-import numpy as np 
-import cv2
-from .models import  signage_db,FaceSignage, User
-from .ObjectTracking import track_objects
-
-from sqlalchemy import func
-import sys
 import dlib
-from flask import current_app as app
-import os
-import time
-import json
+
+from ..models import  signage_db,FaceSignage, User
+from ..ObjectTracking import track_objects
 
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
-signage_api = Blueprint('signage', __name__, url_prefix='/api/v1/signage', template_folder = 'templates', static_folder = 'static')
+
+signage_v1 = Blueprint('signage1', __name__, url_prefix='/api/v1/signage', template_folder = 'templates', static_folder = 'static')
 face_detector = dlib.get_frontal_face_detector()
 
 
-
-@signage_api.route('/', methods =['GET'])
+@signage_v1.route('/', methods =['GET'])
 @auth.login_required
 def signage_page():
     signs = FaceSignage.query.order_by(FaceSignage.date_created.desc()).all()
@@ -29,7 +21,7 @@ def signage_page():
     return Response(signs_json, mimetype="application/json")
  
 
-@signage_api.route('/object_track',methods=['GET'])
+@signage_v1.route('/object_track',methods=['GET'])
 @auth.login_required
 def object_track():
     signs = FaceSignage.query.order_by(FaceSignage.date_created.desc()).all()
@@ -38,8 +30,7 @@ def object_track():
     return Response(json.dumps(object_log), mimetype="application/json")
 
 
-
-@signage_api.route('/signage_upload', methods=['POST'])
+@signage_v1.route('/signage_upload', methods=['POST'])
 @auth.login_required
 def signage_upload():
     payload = request.json
@@ -48,6 +39,7 @@ def signage_upload():
     signage_db.session.add(signage_obj)
     signage_db.session.commit()
     return  Response(response={'status': 'SUCCESS'}, status=200, mimetype="application/json")
+
 
 @auth.verify_password
 def verify_password(username, password):
@@ -58,7 +50,8 @@ def verify_password(username, password):
     g.user = user
     return True
 
-@signage_api.route('/users', methods = ['POST'])
+
+@signage_v1.route('/users', methods = ['POST'])
 def new_user():
     payload = request.json
     print(payload['username'])

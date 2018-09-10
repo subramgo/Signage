@@ -18,14 +18,12 @@ class User(signage_db.Model):
 
 class FaceSignage(signage_db.Model):
     id = signage_db.Column(signage_db.Integer, primary_key=True, autoincrement=True)
+    location   = signage_db.Column(signage_db.String)
     camera_id = signage_db.Column(signage_db.String)
     date_created = signage_db.Column(signage_db.DateTime, default=signage_db.func.current_timestamp())
+    image_id = signage_db.Column(signage_db.String)
     no_faces = signage_db.Column(signage_db.Integer)
     windows = signage_db.Column(signage_db.String)
-    image_id = signage_db.Column(signage_db.String)
-    location   = signage_db.Column(signage_db.String)
-
-
 
     def get_json(self):
     	return_value = {}
@@ -41,10 +39,27 @@ class FaceSignage(signage_db.Model):
 
     	return return_value
 
-
-
     def __repr__(self):
         return '<id {} date_created {} camera_id {} no_faces {} windows {} image_id {} location {}>'.format(self.id, 
         	self.date_created, self.camera_id, self.no_faces, self.windows, self.image_id,self.location)
 
+class Demographics(signage_db.Model):
+    id = signage_db.Column(signage_db.Integer, primary_key=True, autoincrement=True)
+    date_created = signage_db.Column(signage_db.DateTime, default=signage_db.func.current_timestamp())
+    location   = signage_db.Column(signage_db.String)
+    camera_id = signage_db.Column(signage_db.String)
+    male_count = signage_db.Column(signage_db.Integer)
+    female_count = signage_db.Column(signage_db.Integer)
     
+    def get_json(self):
+        return_value = {}
+        return_value["id"] = self.id 
+        epoch = datetime.datetime(1970,1,1)
+        delta_time = (self.date_created - epoch).total_seconds()
+        return_value['date_created'] = delta_time
+        return_value['location'] = self.location
+        return_value['camera_id'] = self.camera_id
+        return_value['male_count'] = self.male_count
+        return_value['female_count'] = self.female_count
+
+        return return_value

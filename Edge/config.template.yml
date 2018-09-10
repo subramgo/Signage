@@ -5,7 +5,9 @@
 ###########################################################
 ####            Orchestration and Image Feed           ####
 ###########################################################
-cam_uri               : rtsp://root:pass@192.168.1.168/usecondstream
+cam_stream_address    : 192.168.1.168/usecondstream
+cam_protocol          : rtsp://
+
 cam_location_name     : signage-analysis-demo
 cam_name              : signage-camera-1
 logfile_path          : /home/pi/signage.log
@@ -18,7 +20,8 @@ gender_classification : True
 data_report           : True
 
 # Interfaces
-data_reporting_uri    : http://united:irkbin@127.0.0.1:5000/api/v1/signage/signage_upload
+data_address_port     : 127.0.0.1:5000
+data_protocol         : http://
 
 gender classification :
     - localhost # server
@@ -27,7 +30,6 @@ gender classification :
 ad server             :
     - localhost # server
     - 18861     # port
-
 
 
 ###########################################################

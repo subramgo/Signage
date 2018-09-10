@@ -29,6 +29,9 @@ rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 with open("/boot/signage/config.yml", 'r') as ymlfile:
     cfg = yaml.load(ymlfile)
 
+with open("/opt/signage/credentials.yml",'r') as ymlfile:
+    credentials = yaml.load(ymlfile)
+
 logging.basicConfig(format="[%(thread)-5d]%(asctime)s: %(message)s")
 logger = logging.getLogger('client')
 logger.setLevel(logging.INFO)
@@ -74,29 +77,59 @@ else:
 
 # Data Server
 if cfg['data_report']:
-    data_uri = cfg['data_reporting_uri']
     try:
-        requests.get(data_uri)
+        requests.get(cfg['data_protocol']+cfg['data_address_port'])
         logger.info("Database is available.")
     except (requests.exceptions.ConnectionError,requests.exceptions.Timeout,requests.exceptions.HTTPError) as err: 
         logger.error("Cannot reach data reporting service; "+str(err))
-
-    def upload_data(camera_id,people_count,windows,location):
-        data = {
-                'camera_id' : camera_id
-               ,'no_faces'  : str(people_count)
-               ,'windows'   : ",".join(str(r) for v in windows for r in v)
-               ,'location'  : location
-                }
-        headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-
-        logger.info("Uploading detections...")
-        r = requests.post(data_uri,json=data,headers=headers)
-        logger.info("Data upload: "+str(r))
 else:
     logger.info("Data reporting is disabled.")
-    def upload_data(camera_id,people_count,windows,location):
-        pass
+
+def upload_faces(windows):
+    if not cfg['data_report']:
+        return
+    protocol=cfg['data_protocol']
+    uri=cfg['data_address_port']
+    cred=credentials['data_uploading']
+    path='/api/v2/signage/faces'
+
+    camera_id=cfg['cam_name']
+    location=cfg['cam_location_name']
+    data = {
+            'camera_id' : camera_id
+           ,'no_faces'  : str(len(windows))
+           ,'windows'   : ",".join(str(r) for v in windows for r in v)
+           ,'location'  : location
+            }
+    headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+    logger.info("Uploading detections...")
+    r = requests.post(protocol+cred+"@"+uri+path,json=data,headers=headers)
+    logger.info("Data upload: "+str(r))
+
+
+def upload_demographics(genders):
+    if not cfg['data_report']:
+        return
+    protocol=cfg['data_protocol']
+    uri=cfg['data_address_port']
+    cred=credentials['data_uploading']
+    path='/api/v2/signage/demographics'
+
+    camera_id=cfg['cam_name']
+    location=cfg['cam_location_name'] 
+    data = {
+            'camera_id'    : camera_id
+           ,'location'     : location
+           ,'male_count'   : sum([1 for g in genders if g=='male'])
+           ,'female_count' : sum([1 for g in genders if g=='female'])
+    }
+    headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+    logger.info("Uploading demographics...")
+    r = requests.post(protocol+cred+"@"+uri+path,json=data,headers=headers)
+    logger.info("Data upload: "+str(r))
+
 
 # Face Detector
 detector = dlib.get_frontal_face_detector()
@@ -119,8 +152,14 @@ def detect_faces(frame):
     return (faces,windows)
 
 # Camera
+def cam_address():
+    try:
+        return cfg['cam_protocol']+credentials['video_stream']+cfg['cam_stream_address']
+    except:
+        return 0
+
 discard_frames = cfg.get('discard_frames',30)
-cameraurl = cfg.get('cam_uri',0) # default to USB Cam
+cameraurl = cam_address()
 frame_ind = 1
 old_frame = None
 frame = None
@@ -168,8 +207,12 @@ while True:
     faces, windows = detect_faces(frame)
     
     ### Find genders if faces detected.
-    if faces and cfg['gender_classification']:
-        genders = [gender_object.process(x_test=face, y_test=None, batch_size=1) for face in faces]
+    if faces:
+        upload_faces(windows)
+
+        if cfg['gender_classification']:
+            genders = [gender_object.process(x_test=face, y_test=None, batch_size=1) for face in faces]
+            upload_demographics(genders)
 
         # Switch ads based on gender        
         if cfg['serve_ads']:
@@ -180,11 +223,6 @@ while True:
                 logger.info("more females now")
                 ad_player.play_female()
 
-        # Upload data
-        upload_data(camera_id=cfg['cam_name']
-                  , people_count=len(faces)
-                  , windows=windows
-                  , location=cfg['cam_location_name'])
 
     logger.info("Finished processing frame {}".format(frame_ind))
     frame_ind+=1

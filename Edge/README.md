@@ -1,29 +1,24 @@
 # Signage Edge Processing
 
 
-### Configuration
+## Configuration
 Configuration is located in `/boot/signage/config.yml`
-A template with default values is in `config.template.yml`
+A template is in `config.template.yml`
 
-## Code Structure
+Sensitive credentials are in `/opt/signage/credentials.yml`
+A template is in `credentials.template.yml`
 
-  * `face_detection.py`
+## Components
+
+  * `signage.py`
     * reads from IP Cam 
     * performs face detection
     * orchestrates data flow
   * `gender.py` service to determine the gender
+    * Gender Model download from https://drive.google.com/open?id=1dLg4izlUYVTRkrGyTVv5OJ60awa69zwN
+    *  `gender/4_try.h5` and `gender/4_try.json`
   * `player.py` service to play video
-  * `singlerun.sh` runs the client with set configuration.
-
-  * [optional]
-  * `Folder /home/pi/Signage/webservice/Akshi/`
-  *  Flask web service.
-  *  ./run.sh to start the web service. 
-
-
-  * Videos to be stored in `/opt/signage/videos`
-  * Gender Model download from https://drive.google.com/open?id=1dLg4izlUYVTRkrGyTVv5OJ60awa69zwN
-  *  `gender/4_try.h5` and `gender/4_try.json`
+    * Videos to be stored in `/opt/signage/videos`
 
 
 # Edge Deployment.
@@ -62,8 +57,4 @@ Download the model files from google drive https://drive.google.com/open?id=1dLg
 ## Automation
 
 We auto-start the services by creating screen sessions for each via commands added to `/etc/rc.local`.
- 
-  * `singlerun.sh` is our main script
-  * `watch` re-runs the script when it see the script complete.
-  * `/etc/rc.local` creates a screen session for `watch` on system startup.
 

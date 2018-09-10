@@ -41,30 +41,20 @@ watching()
     tput cnorm
 }
 
-echo `date` - Signage Install/Update Run: >> $LOG
+echo `date` - Webservices Install/Update Run: >> $LOG
 
 ###########################################################
 ####                  Configuration                    ####
 ###########################################################
 func(){
-  sudo mkdir -p /boot/signage
-  echo "copying configuration template"
-  sudo cp -n config.template.yml /boot/signage/config.yml
-
   ### Resource Storage
   sudo mkdir -p /opt/signage
   sudo chown -R `whoami`:`id -gn` /opt/signage
   sudo chmod -R 700 /opt/signage
 
   # credentials
-  echo "copying credential template"
-  cp -n credentials.template.yml /opt/signage/credentials.yml
-
-  # ad videos
-  mkdir -p /opt/signage/videos
-
-  # ML models
-  mkdir -p /opt/signage/gender
+  echo "copying credential template if not present"
+  cp -n credentials.template.yml /opt/signage/web.yml
 }
 watching func "Config and resource directories."
 
@@ -72,39 +62,13 @@ watching func "Config and resource directories."
 ####                    Dependencies                   ####
 ###########################################################
 
-apt_installed() {
-    dpkg-query -f '${Package}\n' -W | grep "^$1\$" 2>/dev/null
-}
-echo "Installing OS utilities"
-utils="screen git vim pv omxplayer"
-for p in $utils
-do
-    if [[ $(apt_installed $p) ]]
-    then
-        echo "  - $p already installed"
-    else
-        func() {
-            sudo apt install -y $p
-        }
-        watching func "  - $p"
-    fi
-done
-
-if ! hash pip3 2>/dev/null
-then
-    func() {
-        sudo apt install python3-pip -y
-    }
-    watching func "installing pip3"
-fi
-
 echo "Installing ML Python packages"
 # `pip list` can be slow so only check once
 installed=$(pip3 list --format=columns 2>/dev/null)
 pip_installed() {
     echo $installed | grep -i $1 2>/dev/null
 }
-pyml="requests pyyaml pillow passlib rpyc pexpect"
+pyml=`cat Akshi/requirements.txt`
 for p in $pyml
 do
     if [[ $(pip_installed $p) ]]
@@ -118,31 +82,23 @@ do
     fi
 done
 
-echo "Installed dependent libraries."
-
 ###########################################################
 ####                     Deployment                    ####
 ###########################################################
-INSTALL_PATH=~/.local/bin/signage
+INSTALL_PATH=~/.local/bin/signage-web
 
 mkdir -p $INSTALL_PATH      2>/dev/null
-cp ./*.py $INSTALL_PATH
-printf "Installed signage to $INSTALL_PATH\n"
+cp -r Akshi/* $INSTALL_PATH
+printf "Installed signage-web to $INSTALL_PATH\n"
 
 if [[ $(grep 'signage' /etc/rc.local) ]]
 then
     echo "Signage already autostarting in \`rc.local\`."
 else
   sudo tee -a /etc/rc.local >/dev/null << EOF
-runuser -l pi -c 'printf "Starting signage script.\n"  >> /home/pi/startup.log'
-runuser -l pi -c "screen -dmS gender"
-runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/gender.py >> /home/pi/signage.log\n'"
-sleep 10
-runuser -l pi -c "screen -dmS adserver"
-runuser -l pi -c "screen -S adserver -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/player.py >> /home/pi/signage.log\n'"
-
-runuser -l pi -c "screen -dmS signage"
-runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/signage.py >> /home/pi/signage.log\n'"
+runuser -l pi -c 'printf "Starting signage web script.\n"  >> /home/pi/startup.log'
+runuser -l pi -c "screen -dmS signage-web"
+runuser -l pi -c "screen -S signage-web -p 0 -X stuff 'watch -n 1 $INSTALL_PATH/run.sh >> /home/pi/signage-web.log\n'"
 runuser -l pi -c 'printf "Started signage services.\n" >> /home/pi/startup.log'
 EOF
 
@@ -151,11 +107,4 @@ EOF
 
   echo "Signage autostarting in \`rc.local\`."
 fi
-
-###########################################################
-####                      Security                     ####
-###########################################################
-
-# TODO disable SSH on the Pi
-
 
