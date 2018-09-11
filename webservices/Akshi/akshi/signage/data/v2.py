@@ -63,7 +63,7 @@ def get_demographics():
 def post_demographics():
     payload = request.json
     signage_obj = Demographics(male_count=payload['male_count'], female_count=payload['female_count'], 
-        camera_id = payload['camera_id'], location=payload['location'])
+        camera_id = payload['camera_id'], location=payload['location'], gender_list=payload['gender_list'],age_list=payload['age_list'])
     signage_db.session.add(signage_obj)
     signage_db.session.commit()
     return  Response(response={'status': 'SUCCESS'}, status=200, mimetype="application/json")

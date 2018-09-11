@@ -50,7 +50,10 @@ class Demographics(signage_db.Model):
     camera_id = signage_db.Column(signage_db.String)
     male_count = signage_db.Column(signage_db.Integer)
     female_count = signage_db.Column(signage_db.Integer)
-    
+    gender_list = signage_db.Column(signage_db.String)
+    age_list = signage_db.Column(signage_db.String)
+
+
     def get_json(self):
         return_value = {}
         return_value["id"] = self.id 
@@ -61,5 +64,8 @@ class Demographics(signage_db.Model):
         return_value['camera_id'] = self.camera_id
         return_value['male_count'] = self.male_count
         return_value['female_count'] = self.female_count
+        return_value['gender_list'] = self.gender_list
+        return_value['age_list'] = self.age_list
+
 
         return return_value

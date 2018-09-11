@@ -60,10 +60,10 @@ else:
 
 # Gender Classifier
 if cfg['gender_classification']:
-    gender_object = None
-    while not gender_object:
+    demographics_object = None
+    while not demographics_object:
         try:
-            gender_object = rpyc.connect(*cfg['gender classification']).root
+            demographics_object = rpyc.connect(*cfg['gender classification']).root
             logger.info("Connected to gender classification.")
         except:
             logger.info("Waiting then trying to connect to gender service.")
@@ -71,8 +71,12 @@ if cfg['gender_classification']:
             continue
     logger.info("Connected to gender classification.")
 else:
-    gender_object = None
+    demographics_object = None
     logger.info("Gender classification is disabled.")
+
+
+if cfg['serve_ads']:
+    ad_player.play_default()
 
 
 # Data Server
@@ -118,11 +122,18 @@ def upload_demographics(genders):
 
     camera_id=cfg['cam_name']
     location=cfg['cam_location_name'] 
+
+    gender_list = ','.join(str( g[0] ) for g in genders)
+    print(gender_list)
+    age_list = ','.join(str( "-".join(g[1] ) ) for g in genders)
+    print(age_list)
     data = {
             'camera_id'    : camera_id
            ,'location'     : location
-           ,'male_count'   : sum([1 for g in genders if g=='male'])
-           ,'female_count' : sum([1 for g in genders if g=='female'])
+           ,'male_count'   : sum([1 for g in genders if g[0]=='male'])
+           ,'female_count' : sum([1 for g in genders if g[0]=='female'])
+           ,'gender_list'     : ','.join(str( g[0] ) for g in genders)
+           ,'age_list' : ','.join(str( g[1] ) for g in genders)
     }
     headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
@@ -211,12 +222,12 @@ while True:
         upload_faces(windows)
 
         if cfg['gender_classification']:
-            genders = [gender_object.process(x_test=face, y_test=None, batch_size=1) for face in faces]
+            genders = [(demographics_object.process(x_test=face, y_test=None, batch_size=1)) for face in faces]
             upload_demographics(genders)
 
         # Switch ads based on gender        
         if cfg['serve_ads']:
-            if sum([1 for g in genders if g=='male']) > (len(genders)/2):
+            if sum([1 for g in genders if g[0]=='male']) > (len(genders)/2):
                 logger.info("more males now")
                 ad_player.play_male()
             else:
@@ -230,7 +241,8 @@ while True:
     # Restart the video for every 10th frame
     # TODO remove this when ad player supports it
     if frame_ind%20 == 0:
-        ad_player.play_default()
+        if cfg['serve_ads']:
+            ad_player.play_default()
 
     frame_limit = 500
     if frame_ind >= frame_limit:
