@@ -13,34 +13,38 @@ library(anytime)
 source('config.R')
 ##################### Pull data from web service #####################
 
-result <- GET(url_)
-data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
-data['date'] <- anydate(data$date_created)
-data['timestamp'] <- anytime(data$date_created)
+#result <- GET(url_)
+#data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
+#data['date'] <- anydate(data$date_created)
+#data['timestamp'] <- anytime(data$date_created)
 
+data <- readRDS("data.rds")
 
-result <- GET(url.object.track)
-tracker.data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
-tracker.data['date'] <- anydate(tracker.data$date_created)
-tracker.data$idx <- as.numeric(rownames(tracker.data))
+#result <- GET(url.object.track)
+#tracker.data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
+#tracker.data['date'] <- anydate(tracker.data$date_created)
+#tracker.data$idx <- as.numeric(rownames(tracker.data))
 
-  
+tracker.data <- readRDS("tracker.rds")
+
+data <- data[data$location == 'nordstrom.store5' & data$camera_id == 'Faceftpcam1.usecondstream',]
+tracker.data <- tracker.data[tracker.data$camera_id == 'Faceftpcam1.usecondstream',]
 ##########################################################################
 
-getAMPM <- function(x){
-  a <- as.numeric(format(strptime(x,"%Y-%m-%d %H:%M:%S"),'%H'))
-  split.afternoon <- 12
-  split.evening <- 17
-  greeting <- "Morning"
-  if (a >= split.afternoon && a <= split.evening){
-    greeting <- "Afternnon"
-  }else if (a > split.evening){
-    greeting <- "Evening"
-  }
-  return(greeting)
-}
-
-data$greeting <- sapply(data$timestamp, getAMPM)
+# getAMPM <- function(x){
+#   a <- as.numeric(format(strptime(x,"%Y-%m-%d %H:%M:%S"),'%H'))
+#   split.afternoon <- 12
+#   split.evening <- 17
+#   greeting <- "Morning"
+#   if (a >= split.afternoon && a <= split.evening){
+#     greeting <- "Afternnon"
+#   }else if (a > split.evening){
+#     greeting <- "Evening"
+#   }
+#   return(greeting)
+# }
+# 
+# data$greeting <- sapply(data$timestamp, getAMPM)
 
 ###################### Distance from Pedestal Calcs ######################
 getDistance <- function(windows){
@@ -72,7 +76,7 @@ find_distance <- function(no_faces, windows){
 
 data$distance <- mapply(find_distance, data$no_faces, data$windows)
 
-
+data <- data[data$windows != '',]
 ########################################################################
 
 
