@@ -79,7 +79,6 @@ def load_model():
     age_model.load_weights('/opt/signage/age/2_try.h5')
     print("Age Model Loaded")
 
-
     return gender_model, age_model
 
 

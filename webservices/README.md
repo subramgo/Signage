@@ -1,9 +1,9 @@
-# Signage Web Services
+# Signage Data Server
 
 ## Setup
 
   1. Run `install.sh`
-  2. Configure upload user in `/opt/signage/web.yml`
+  2. Configure upload user for database in `/opt/signage/web.yml`
 
 ### Setup Docker on a fresh instance
 

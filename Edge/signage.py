@@ -64,7 +64,6 @@ if cfg['gender_classification']:
     while not demographics_object:
         try:
             demographics_object = rpyc.connect(*cfg['gender classification']).root
-            logger.info("Connected to gender classification.")
         except:
             logger.info("Waiting then trying to connect to gender service.")
             time.sleep(3)
@@ -73,11 +72,6 @@ if cfg['gender_classification']:
 else:
     demographics_object = None
     logger.info("Gender classification is disabled.")
-
-
-if cfg['serve_ads']:
-    ad_player.play_default()
-
 
 # Data Server
 if cfg['data_report']:

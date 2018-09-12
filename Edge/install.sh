@@ -18,7 +18,7 @@ watching()
     local pid=$!
     local delay=0.5
     local spinstr='|/-\'
-    printf "$desc" | tee $LOG
+    printf "$desc\n" | tee $LOG
     tput civis
     stty -echo
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
@@ -134,16 +134,15 @@ then
     echo "Signage already autostarting in \`rc.local\`."
 else
   sudo tee -a /etc/rc.local >/dev/null << EOF
-runuser -l pi -c 'printf "Starting signage script.\n"  >> /home/pi/startup.log'
-runuser -l pi -c "screen -dmS gender"
-runuser -l pi -c "screen -S gender -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/gender.py 2>&1 | tee -a /home/pi/signage.log\n'"
+runuser -l pi -c 'printf "%s Starting signage scripts.\n" "$(date)"  >> /home/pi/startup.log'
+runuser -l pi -c "screen -dmS demographics"
+runuser -l pi -c "screen -S demographics -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/demographics.py 2>&1 | tee -a /home/pi/signage.log\n'"
 sleep 10
 runuser -l pi -c "screen -dmS adserver"
 runuser -l pi -c "screen -S adserver -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/player.py 2>&1 | tee -a /home/pi/signage.log\n'"
 
 runuser -l pi -c "screen -dmS signage"
 runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/signage.py 2>&1 | tee -a /home/pi/signage.log\n'"
-runuser -l pi -c 'printf "Started signage services.\n" >> /home/pi/startup.log'
 EOF
 
   sudo sed -i 's|exit 0||' /etc/rc.local
@@ -151,6 +150,11 @@ EOF
 
   echo "Signage autostarting in \`rc.local\`."
 fi
+
+
+echo "Starting xtrlock with shell login."
+printf "\nxtrlock -f\n" >> /home/pi/.bashrc
+
 
 ###########################################################
 ####                      Security                     ####
