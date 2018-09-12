@@ -18,7 +18,7 @@ watching()
     local pid=$!
     local delay=0.5
     local spinstr='|/-\'
-    printf "$desc" | tee $LOG
+    printf "$desc\n" | tee $LOG
     tput civis
     stty -echo
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
@@ -150,6 +150,11 @@ EOF
 
   echo "Signage autostarting in \`rc.local\`."
 fi
+
+
+echo "Starting xtrlock with shell login."
+printf "\nxtrlock -f\n" >> /home/pi/.bashrc
+
 
 ###########################################################
 ####                      Security                     ####
