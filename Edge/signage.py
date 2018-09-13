@@ -11,235 +11,111 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import sys
-import cv2
-import dlib
-import requests
-import requests.exceptions
-import yaml
-import numpy as np
-import time
-import rtsp
 import rpyc
+
+import config
+import data
+import demographics
+import ads
+import faces
+import camera
 
 rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 ###########################################################
 ##############         Configuration         ##############
 ###########################################################
-with open("/boot/signage/config.yml", 'r') as ymlfile:
-    cfg = yaml.load(ymlfile)
 
-with open("/opt/signage/credentials.yml",'r') as ymlfile:
-    credentials = yaml.load(ymlfile)
+cfg_defaults = { 
+     'cam_stream_address'    : '192.168.1.168/usecondstream'
+   , 'cam_protocol'          : 'rtsp://'
 
+   , 'cam_location_name'     : 'signage-analysis-demo'
+   , 'cam_name'              : 'signage-camera-1'
+   , 'logfile_path'          : '/home/pi/logs_signage.log'
+   , 'logfile_maxbytes'      : 375000000
+
+   , 'log_service'           : True
+   , 'ad_service'            : True
+   , 'demographics_service'  : True
+   , 'data_service'          : True
+
+   , 'data_server'           : '127.0.0.1:5000'
+   , 'data_protocol'         : 'http://'
+   , 'demographics_server'   : ['localhost',18862]
+   , 'ad_server'             : ['localhost',18861]
+    }
+
+cfg = config.Config(
+      filepath = "/boot/signage/config.yml"
+    , description = "Orchestration and Image Feed"
+    , dictionary = cfg_defaults)
+
+credentials = config.Config(filepath="/opt/signage/credentials.yml")
+
+
+if cfg['log_service']:
+    print("Logging to {}".format(cfg['logfile_path']))
+    hdlr = RotatingFileHandler(cfg['logfile_path'],maxBytes=cfg['logfile_maxbytes'])
+else:
+    print("No logging.")
+    hdlr = logging.NullHandler()
 logging.basicConfig(format="[%(thread)-5d]%(asctime)s: %(message)s")
-logger = logging.getLogger('client')
+logger = logging.getLogger('SignageEdge)')
 logger.setLevel(logging.INFO)
-hdlr = RotatingFileHandler(cfg.get('logfile_path','/home/pi/signage.log'),maxBytes=cfg.get('logfile_maxbytes',375000000))
 logger.addHandler(hdlr)
 
 
 ###########################################################
 ##############           Interfaces           #############
 ###########################################################
-# Ad Server
-if cfg['serve_ads']:
-    ad_player = None
+camera = camera.CamClient(logger,cfg,credentials)
+face_detector = faces.FaceDetector(logger)
+dataClient = data.DataClient(logger,cfg,credentials)
+ads = ads.get_client(logger,cfg)
+demographics = demographics.get_client(logger,cfg)
 
-    while not ad_player:
-        try:
-            ad_player = rpyc.connect(*cfg['ad server']).root
-            logger.info("Connected to ad server.")
-        except:
-            logger.info("Waiting then trying to connect to ad service.")
-            time.sleep(3)
-            continue
-else:
-    ad_player = None
-    logger.info("Ad service is disabled.")
-
-# Gender Classifier
-if cfg['gender_classification']:
-    demographics_object = None
-    while not demographics_object:
-        try:
-            demographics_object = rpyc.connect(*cfg['gender classification']).root
-        except:
-            logger.info("Waiting then trying to connect to gender service.")
-            time.sleep(3)
-            continue
-    logger.info("Connected to gender classification.")
-else:
-    demographics_object = None
-    logger.info("Gender classification is disabled.")
-
-# Data Server
-if cfg['data_report']:
-    try:
-        requests.get(cfg['data_protocol']+cfg['data_address_port'])
-        logger.info("Database is available.")
-    except (requests.exceptions.ConnectionError,requests.exceptions.Timeout,requests.exceptions.HTTPError) as err: 
-        logger.error("Cannot reach data reporting service; "+str(err))
-else:
-    logger.info("Data reporting is disabled.")
-
-def upload_faces(windows):
-    if not cfg['data_report']:
-        return
-    protocol=cfg['data_protocol']
-    uri=cfg['data_address_port']
-    cred=credentials['data_uploading']
-    path='/api/v2/signage/faces'
-
-    camera_id=cfg['cam_name']
-    location=cfg['cam_location_name']
-    data = {
-            'camera_id' : camera_id
-           ,'no_faces'  : str(len(windows))
-           ,'windows'   : ",".join(str(r) for v in windows for r in v)
-           ,'location'  : location
-            }
-    headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-
-    logger.info("Uploading detections...")
-    r = requests.post(protocol+cred+"@"+uri+path,json=data,headers=headers)
-    logger.info("Data upload: "+str(r))
-
-
-def upload_demographics(genders):
-    if not cfg['data_report']:
-        return
-    protocol=cfg['data_protocol']
-    uri=cfg['data_address_port']
-    cred=credentials['data_uploading']
-    path='/api/v2/signage/demographics'
-
-    camera_id=cfg['cam_name']
-    location=cfg['cam_location_name'] 
-
-    gender_list = ','.join(str( g[0] ) for g in genders)
-    print(gender_list)
-    age_list = ','.join(str( "-".join(g[1] ) ) for g in genders)
-    print(age_list)
-    data = {
-            'camera_id'    : camera_id
-           ,'location'     : location
-           ,'male_count'   : sum([1 for g in genders if g[0]=='male'])
-           ,'female_count' : sum([1 for g in genders if g[0]=='female'])
-           ,'gender_list'     : ','.join(str( g[0] ) for g in genders)
-           ,'age_list' : ','.join(str( g[1] ) for g in genders)
-    }
-    headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-
-    logger.info("Uploading demographics...")
-    r = requests.post(protocol+cred+"@"+uri+path,json=data,headers=headers)
-    logger.info("Data upload: "+str(r))
-
-
-# Face Detector
-detector = dlib.get_frontal_face_detector()
-
-
-def detect_faces(frame):
-    dets = detector(frame, 1)
-    windows = []
-    faces = []
-    for i, d in enumerate(dets):
-        windows.append([d.left(), d.top(), d.right(), d.bottom()])
-        cv2.rectangle(frame, (d.left(), d.top()), (d.right(), d.bottom()), (255, 0, 255), 2)
-        faces.append(frame[d.top():d.bottom(), d.left():d.right()])
-
-    if faces:
-        logger.info("Count of faces detected: {}".format(len(faces)))
-    else:
-        logger.info("No faces detected.")
-
-    return (faces,windows)
-
-# Camera
-def cam_address():
-    try:
-        return cfg['cam_protocol']+credentials['video_stream']+"@"+cfg['cam_stream_address']
-    except:
-        return 0
-
-discard_frames = cfg.get('discard_frames',30)
-cameraurl = cam_address()
-frame_ind = 1
-old_frame = None
-frame = None
-logger.info("Connecting to "+str(cameraurl))
-
-cap = rtsp.Client(cameraurl,drop_frame_limit=5, retry_connection=False, verbose=True)
-
-_old_frame = None
-
-def grab_frame():
-    # Clear the buffer
-    # TODO remove this when rtsp package supports is
-    global _old_frame
-    if cameraurl != 0:
-        for i in range(discard_frames):
-            cap.read()
-
-    logger.info("Camera connection is "+("opened."if cap.isOpened() else "closed."))
-
-    frame = cap.read()
-
-    while frame == _old_frame or not cap.isOpened():
-        logger.error("No new image yet.")
-        time.sleep(3)
-        frame = cap.read()
-        if not cap.isOpened():
-            logger.info("Attempting reconnect to "+cameraurl+"...")
-            cap.open(cameraurl)
-    logger.info("Grabbed new image")
-    _old_frame = frame
-    return frame
+def dprint(processed_output):
+    # print results of `process` for human readers
+    rpt = "Demographics on faces: "
+    rpt += ", ".join(["{} aged {}".format(gender,age) for gender,age in processed_output])
+    rpt += "."
+    return rpt
 
 ###########################################################
 ##############          Orchestration         #############
 ###########################################################
-while True:
-    logger.info("Processing frame {}".format(frame_ind))
-    frame = grab_frame()
+def main():
+    while True:
+        frame = camera.grab_frame()
 
-    # for dlib detector    
-    frame = np.asarray(frame)
-    frame.setflags(write=True)
+        ### Detection
+        faces, windows = face_detector.detect_faces(frame)
+        
+        ### Find genders if faces detected.
+        if faces:
+            dataClient.upload_faces(windows)
 
-    ### Detection
-    faces, windows = detect_faces(frame)
-    
-    ### Find genders if faces detected.
-    if faces:
-        upload_faces(windows)
+            if demographics:
+                _demographics = [(demographics.process(x_test=face, y_test=None, batch_size=1)) for face in faces]
+                logger.info(dprint(_demographics))
+                dataClient.upload_demographics(_demographics)
 
-        if cfg['gender_classification']:
-            genders = [(demographics_object.process(x_test=face, y_test=None, batch_size=1)) for face in faces]
-            upload_demographics(genders)
+                # Switch ads based on demographics        
+                if ads:
+                    ads.demographics(_demographics)
+       
+        # Restart the video for every 10th frame
+        # TODO remove this when ad player supports it
+        if camera.frame_ind%20 == 0:
+            if ads:
+                ads.play_default()
 
-        # Switch ads based on gender        
-        if cfg['serve_ads']:
-            if sum([1 for g in genders if g[0]=='male']) > (len(genders)/2):
-                logger.info("more males now")
-                ad_player.play_male()
-            else:
-                logger.info("more females now")
-                ad_player.play_female()
+        frame_limit = 500
+        if camera.frame_ind >= frame_limit:
+            logger.info("Retrieved {} frames. Stopping to help manage video buffer.".format(frame_limit))
+            sys.exit(0)
 
 
-    logger.info("Finished processing frame {}".format(frame_ind))
-    frame_ind+=1
-   
-    # Restart the video for every 10th frame
-    # TODO remove this when ad player supports it
-    if frame_ind%20 == 0:
-        if cfg['serve_ads']:
-            ad_player.play_default()
-
-    frame_limit = 500
-    if frame_ind >= frame_limit:
-        logger.info("Retrieved {} frames. Stopping to help manage video buffer.".format(frame_limit))
-        sys.exit(0)
-
+if __name__ == "__main__":
+    main()

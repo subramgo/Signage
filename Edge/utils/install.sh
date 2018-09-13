@@ -47,14 +47,13 @@ echo `date` - Signage Install/Update Run: >> $LOG
 ####                  Configuration                    ####
 ###########################################################
 func(){
-  sudo mkdir -p /boot/signage
-  echo "copying configuration template"
-  sudo cp -n config.template.yml /boot/signage/config.yml
-
   ### Resource Storage
+  sudo mkdir -p /boot/signage
   sudo mkdir -p /opt/signage
   sudo chown -R `whoami`:`id -gn` /opt/signage
   sudo chmod -R 700 /opt/signage
+  echo "copying configuration templates"
+  sudo python3 ./dump_config_defaults.py
 
   # credentials
   echo "copying credential template"
@@ -150,16 +149,5 @@ EOF
 
   echo "Signage autostarting in \`rc.local\`."
 fi
-
-
-echo "Starting xtrlock with shell login."
-printf "\nxtrlock -f\n" >> /home/pi/.bashrc
-
-
-###########################################################
-####                      Security                     ####
-###########################################################
-
-# TODO disable SSH on the Pi
 
 

@@ -3,6 +3,10 @@ import cv2
 import numpy as np
 import rpyc
 import tensorflow as tf
+import time
+
+import config as _config
+_cfg = _config.Config(filepath = "/boot/signage/config.yml")
 
 rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
@@ -16,7 +20,11 @@ class  DemographicsClassifier(rpyc.Service):
     def __call__(self, conn):
         return self.__class__(conn, self.gender_model, self.age_model ,self.graph)
 
+    def on_connect(self,conn):
+        print("Client connected")
+
     def on_disconnect(self, conn):
+        print("Client disconnected")
         self.__cleanup()
 
     def __predict(self,model,image,batch_size):
@@ -66,19 +74,37 @@ class  DemographicsClassifier(rpyc.Service):
         return gender, age
 
 
+def get_client(logger,cfg):
+    demographics_object = None
+    if not cfg['demographics_service']:
+        logger.info("Gender classification is disabled.")
+    else:
+        logger.info("Connecting to demographics service...")
+        while not demographics_object:
+            try:
+                demographics_object = rpyc.connect(*cfg['demographics_server']).root
+            except:
+                time.sleep(3)
+                continue
+        logger.info("Connected to demographics service.")
+
+    return demographics_object
+
 def load_model():
+    print("Loading models...")
     with open('/opt/signage/gender/4_try.json','r') as f:
         json = f.read()
     gender_model = model_from_json(json)
     gender_model.load_weights('/opt/signage/gender/4_try.h5')
-    print("Gender Model Loaded")
+    print("  - gender model loaded")
 
     with open('/opt/signage/age/2_try.json','r') as f:
         json = f.read()
     age_model = model_from_json(json)
     age_model.load_weights('/opt/signage/age/2_try.h5')
-    print("Age Model Loaded")
+    print("  - age model loaded")
 
+    print("All models loaded.")
     return gender_model, age_model
 
 
