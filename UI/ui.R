@@ -26,39 +26,23 @@ dashboardPage(
           , collapsible = FALSE
           , uiOutput("choose_camera")
           , width=6
-          )
+        )
       )
     , fluidRow(
-        tabBox(
-        width = 12,
-        tabPanel(
-          title ="Mission Control"
-          ,fluidRow(
-                    column(3, plotOutput("faceCountPlot"))
-                    ,column(3, plotOutput("distAvgPlot"))
-                    ,column(3, plotOutput("timeAlivePlot"))
-                    )
-
-          ,fluidRow(
-            column(3, plotOutput("densityPlot")),
-            column(3, plotOutput("viewTimePlot")),
-            column(3, plotOutput("viewGroupPlot"))
-          ))
-        
-              
-          ,fluidRow(
-             column(3,tableOutput("personCountTable"))
-            ,column(3, tableOutput(("personSummaryTable"))
-            ,column(3, tableOutput("distSummaryTable"))
-                    
-          )
-          
-          
-          
-        )
-        
-        )
+        box(width=4, plotOutput("impressionsPlot"))
+      , box(width=4, plotOutput("distAvgPlot"))
+      , box(width=4, plotOutput("viewTimeScatter"))
       )
+    ,fluidRow(
+        box(width=4, plotOutput("groupingsPlot"))
+      , box(width=4, plotOutput("distanceDensity"))
+      , box(width=4, plotOutput("viewTimeDensity"))
     )
+    ,fluidRow(
+       box(width=4,tableOutput("personCountTable"))
+      ,box(width=4, tableOutput("personSummaryTable"))
+      ,box(width=4, tableOutput("distSummaryTable"))
+    )
+  )
 )
 

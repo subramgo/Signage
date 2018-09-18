@@ -12,6 +12,7 @@ Accounts.yml
 
 # R Stuff
 *.Rhistory
+*.rds
 
 # Distribution / packaging
 .Python

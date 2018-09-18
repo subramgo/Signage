@@ -30,6 +30,8 @@ function(input, output) {
     selections$cameras <- unique( data[data$location == locationid ,c('camera_id')] )
     selections$data <- data[data$location == locationid & data$camera_id == cameraid,]
     
+    # TODO remove outliers from selections.data
+    
     # Face Count by day
     face.count <- selections$data %>% group_by(date) %>% summarise(Face_Count = sum(no_faces))
     #face.count$date <- as.character(face.count$date)
@@ -73,9 +75,9 @@ function(input, output) {
     selections$tracker.stats
   },bordered = TRUE)
   
-  output$personSummaryTable <- renderTable(({
+  output$personSummaryTable <- renderTable({
     selections$tracker.summary
-  }), bordered = TRUE)
+  }, bordered = TRUE)
   
   
   
@@ -92,50 +94,7 @@ function(input, output) {
   
   ####################### Render Plots ############################
 
-  output$densityPlot <- renderPlot({
-    #### Distance Plot data calculation
-    plot.data.1 <- selections$distance.data %>%
-      group_by(ceiling(mean_distance)) %>%
-      summarise(count = n())
-    plot.final <- read.table(text = "",
-                             col.names = c("Feet", "Points"))
-
-    for (row in 1:nrow(plot.data.1)){
-      no.points <- as.numeric(plot.data.1[row, 'count'])
-      feet      <- as.numeric(plot.data.1[row,'ceiling(mean_distance)'])
-
-
-      df.inter <- data.frame(Feet = rep(feet, no.points),
-                             Points = sample(1:9, no.points, replace=TRUE)/10)
-
-      plot.final <- rbind(plot.final, df.inter)
-    }
-
-    plot.final$Feet <- as.factor(plot.final$Feet)
-
-
-    p <- ggplot(plot.final, aes(x=Points, y=Feet, color = Feet, shape = Feet)) +
-      geom_jitter(height=0.2) +
-      xlim(-0.25,1.25)
-
-    p <- p + scale_color_brewer(palette="Dark2") + theme_minimal() +
-      theme(axis.text.x=element_blank(), plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18),legend.position="none",panel.border = element_rect(colour = "lightblue", fill=NA, size=2)) +
-      xlab("Screen") + ggtitle("Distance from Pedestal")
-
-    p
-
-  })
-  
-  
-  
-    output$viewTimePlot <- renderPlot({
-    ggplot(tracker.data, aes(x=time_alive)) + geom_histogram(color="olivedrab",fill="olivedrab2") + 
-      theme_minimal() + xlab("View time (seconds)") + ylab("Number of Unique Persons") +
-      theme(panel.border = element_rect(colour = "lightblue", fill=NA, size=2),plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18)) +
-      ggtitle("Persons")
-  })
-
-  output$faceCountPlot <- renderPlot({
+  output$impressionsPlot <- renderPlot({
     ggplot(selections$face.count, aes(x=factor(date), y=Face_Count)) + 
       geom_col(color="darkorange",fill="darkorange2") +
       scale_color_brewer(palette="Dark2") + theme_minimal() +
@@ -146,29 +105,71 @@ function(input, output) {
   output$distAvgPlot <- renderPlot({
     ggplot(selections$dist.avg, aes(x=factor(date), y=Distance)) + 
       geom_col(color="goldenrod",fill="goldenrod3") +
-      scale_color_brewer(palette="Light") + 
+      scale_color_brewer(palette="BrBG") + 
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 90, hjust = 1),plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18),legend.position="none",panel.border = element_rect(colour = "lightblue", fill=NA, size=2)) + 
-      ggtitle("Distance") + ylab("Average Distance") + xlab("")
+      ggtitle("Distance") + ylab("Average Distance (feet)") + xlab("")
   })
   
-  output$timeAlivePlot <- renderPlot({
-    
+  output$viewTimeScatter <- renderPlot({
     p<-ggplot(tracker.data, aes(x=factor(date), y=time_alive, color=factor(date))) + 
           geom_jitter(position=position_jitter(0.2)) + theme_minimal() +
       theme(axis.text.x = element_text(angle = 90, hjust = 1),plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18),legend.position="none",panel.border = element_rect(colour = "lightblue", fill=NA, size=2)) +   
-      ggtitle("Time Alive") + xlab("Date") + ylab("Time Alive (seconds")
+      ggtitle("View Time") + xlab("Date") + ylab("View Time (seconds)")
+    p
+  })
+    
+  # TODO there's an error with the aesthetics in this plot
+  output$groupingsPlot <- renderPlot({
+    ggplot(selections$group.data, aes(x="", y=Size, fill=factor(no_faces))) +
+      geom_bar(stat="identity",show.legend = TRUE) + theme_classic() +
+      ggtitle("Imp. Group Size") + xlab("") + ylab("") + scale_fill_discrete(name = "Group Size") +
+      theme(
+        axis.text.x=element_blank(),axis.text.y=element_blank()
+        ,plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5)
+        ,axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18)
+        ,panel.border = element_rect(colour = "lightblue", fill=NA, size=2)
+      )
+  })
+  
+  # TODO error
+  output$distanceDensity <- renderPlot({
+    #### Distance Plot data calculation
+    plot.data.1 <- selections$distance.data %>%
+      group_by(ceiling(mean_distance)) %>%
+      summarise(count = n())
+    plot.final <- read.table(text = "",col.names = c("Feet", "Points"))
+    
+    for (row in 1:nrow(plot.data.1)){
+      no.points <- as.numeric(plot.data.1[row, 'count'])
+      feet      <- as.numeric(plot.data.1[row,'ceiling(mean_distance)'])
+      
+      df.inter <- data.frame(Feet = rep(feet, no.points),
+                             Points = sample(1:9, no.points, replace=TRUE)/10)
+      
+      plot.final <- rbind(plot.final, df.inter)
+    }
+    
+    plot.final$Feet <- as.factor(plot.final$Feet)
+    
+    
+    p <- ggplot(plot.final, aes(x=Points, y=Feet, color = Feet, shape = Feet)) +
+      geom_jitter(height=0.2) +
+      xlim(-0.25,1.25)
+    
+    p <- p + scale_color_brewer(palette="Dark2") + theme_minimal() +
+      theme(axis.text.x=element_blank(), plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18),legend.position="none",panel.border = element_rect(colour = "lightblue", fill=NA, size=2)) +
+      xlab("Screen") + ggtitle("Distance")
     
     p
     
-      })
-    
-  output$viewGroupPlot <- renderPlot({
-    ggplot(selections$group.data, aes(x="", y=Size, fill=factor(no_faces))) + 
-      geom_bar(stat="identity",width=1,show.legend = TRUE) + theme_classic() +
-      ggtitle("Groups Split") + xlab("") + ylab("") + scale_fill_discrete(name = "People Groups") +
-      theme(axis.text.x=element_blank(),axis.text.y=element_blank(),plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18),panel.border = element_rect(colour = "lightblue", fill=NA, size=2))
-    
+  })
+  
+  output$viewTimeDensity <- renderPlot({
+    ggplot(tracker.data, aes(x=time_alive)) + geom_histogram(color="olivedrab",fill="olivedrab2") + 
+      theme_minimal() + xlab("View time (seconds)") + ylab("Number of Unique Persons") +
+      theme(panel.border = element_rect(colour = "lightblue", fill=NA, size=2),plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18)) +
+      ggtitle("View Time")
   })
   
 }
