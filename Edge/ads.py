@@ -8,12 +8,10 @@ import rtsp
 
 import config
 
-# TODO if cfg['source_camera_inset'], overlay source camera feed
-
 ###########################################################
 ##############         Configuration         ##############
 ###########################################################
-cfg_defaults = { 
+cfg_defaults = {
         'source_camera_inset'    : True
       , 'source_camera_protocol' : 'rtsp://'
       , 'source_camera_address'  : '192.168.1.168/usecondstream'
@@ -52,11 +50,14 @@ class Player(rpyc.Service):
         super().__init__()
         if cfg['debug_positions']:
             control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,640,480 ' + video_file, timeout=60)
-            if all_cfg['cam_stream_address'] == 'picam':
+            if all_cfg['cam_protocol'] == 'picam':
+                control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,400,480 ' + video_file, timeout=60)
                 import picamera
                 cam = picamera.PiCamera()
-                cam.resolution = picamera.PiResolution(480,400)
-                cam.start_preview(rotation=270,fullscreen=False,window=(400,0,400,480))
+                cam.start_preview(rotation=270
+                        ,fullscreen=False
+                        ,window=(400,0,400,480)
+                        )
             elif all_cfg['cam_stream_address'] == 0:
                 rtsp.Client(0).preview()
             else:

@@ -13,10 +13,11 @@ class FaceDetector:
     def detect_faces(self,frame):
         """ Given a PIL image, return faces and windows. """
 
-        # for dlib detector    
+        # for dlib detector
+        frame = frame.convert('RGB')
         frame = np.asarray(frame)
         frame.setflags(write=True)
-        
+
         dets = self.detector(frame, 1)
         windows = []
         faces = []

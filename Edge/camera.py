@@ -5,7 +5,10 @@ import time
 class CamClient():
     def __init__(self,logger,cfg,credentials):
         try:
-            self.cam_address = cfg['cam_protocol']+credentials[cfg['cam_stream_address']]+"@"+cfg['cam_stream_address']
+            if cfg['cam_protocol'] in 'picamera':
+                self.cam_address = 'picam'
+            else:
+                self.cam_address = cfg['cam_protocol']+credentials[cfg['cam_stream_address']]+"@"+cfg['cam_stream_address']
         except:
             self.cam_address = 0
 
@@ -24,11 +27,9 @@ class CamClient():
     def grab_frame(self):
         # Clear the buffer
         # TODO remove this when rtsp package supports
-        if self.cam_address != 0:
+        if isinstance(self.cam_address,str) and self.cam_address.lower() not in 'picamera':
             for i in range(self.discard_frames):
                 self.cap.read()
-
-        self.logger.info("Camera connection is "+("opened."if self.cap.isOpened() else "closed."))
 
         frame = self.cap.read()
 
@@ -43,4 +44,7 @@ class CamClient():
 
         self.logger.info("Retrieved frame {}".format(self.frame_ind))
         self.frame_ind+=1
+
+        # TODO parameterize rotation back to config file
+        #frame = frame.rotate(90)
         return frame
