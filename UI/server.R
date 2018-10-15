@@ -29,6 +29,7 @@ function(input, output) {
     }
     selections$cameras <- unique( data[data$location == locationid ,c('camera_id')] )
     selections$data <- data[data$location == locationid & data$camera_id == cameraid,]
+    selection$gender.overall <- demograph.data[demograph.data$location == locationid & demograph.data$camera_id == cameraid,]
     
     # TODO remove outliers from selections.data
     
@@ -36,6 +37,14 @@ function(input, output) {
     face.count <- selections$data %>% group_by(date) %>% summarise(Face_Count = sum(no_faces))
     #face.count$date <- as.character(face.count$date)
     selections$face.count <- face.count
+    
+    # Gender Overall Count
+    gender.overall <- selection$gender.overall[c('male_count','female_count')]
+    gender.overall <- gender.overall %>% replace(is.na(.), 0) %>% summarise_all(funs(sum))
+    gender.overall <- melt(gender.overall)
+    names(gender.overall) <- c("Gender","Count")
+    selection$gender.overall <- gender.overall
+    
     
 
     # Distance data - mean distance by date -
@@ -170,6 +179,14 @@ function(input, output) {
       theme_minimal() + xlab("View time (seconds)") + ylab("Number of Unique Persons") +
       theme(panel.border = element_rect(colour = "lightblue", fill=NA, size=2),plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18)) +
       ggtitle("View Time")
+  })
+  
+  output$genderPlot <- renderPlot({
+    ggplot(selections$gender.overall, aes(x="", y=Count, fill=factor(Gender))) + 
+      geom_bar(stat="identity",width=1,show.legend = TRUE) + theme_classic() +
+      ggtitle("Gender Split") + xlab("") + ylab("") + scale_fill_discrete(name = "Gender") +
+      theme(axis.text.x=element_blank(),axis.text.y=element_blank(),plot.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=24, hjust = 0.5),axis.title = element_text(family = "Trebuchet MS", color="#666666", face="bold", size=18),panel.border = element_rect(colour = "lightblue", fill=NA, size=2))
+    
   })
   
 }

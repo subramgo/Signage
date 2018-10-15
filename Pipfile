@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+opencv-python = "*"
+dlib = "*"
+requests = "*"
+pillow = "*"
+six = "*"
+rtsp = "*"
+flask = "*"
+flask-bootstrap = "*"
+flask-sqlalchemy = "*"
+flask-httpauth = "*"
+flask-uploads = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.5"

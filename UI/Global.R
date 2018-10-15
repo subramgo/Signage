@@ -8,27 +8,45 @@ library(httr)
 library(jsonlite)
 library(dplyr)
 library(anytime)
-
+library(reshape2)
 
 source('config.R')
 ##################### Pull data from web service #####################
 
-#result <- GET(url_)
+#result <- GET(url_,authenticate("united", "irkbin"))
 #data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
 #data['date'] <- anydate(data$date_created)
 #data['timestamp'] <- anytime(data$date_created)
 
-data <- readRDS("data.rds")
+saveRDS(data,file="data.rds")
 
-#result <- GET(url.object.track)
+#data <- readRDS("data.rds")
+
+#result <- GET(url.object.track,authenticate("united", "irkbin"))
 #tracker.data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
 #tracker.data['date'] <- anydate(tracker.data$date_created)
 #tracker.data$idx <- as.numeric(rownames(tracker.data))
 
-tracker.data <- readRDS("tracker.rds")
+saveRDS(tracker.data,file="tracker.rds")
+
+#tracker.data <- readRDS("tracker.rds")
+
+
+result <- GET(url.demographics, authenticate("united","irkbin"))
+demograph.data <- jsonlite::fromJSON(content(result, as="text"),  flatten=TRUE)
+demograph.data['date'] <- anydate(demograph.data$date_created)
+demograph.data$idx <- as.numeric(rownames(demograph.data))
+
+
+saveRDS(demograph.data, file="demograph.rds")
+
+#demographics.data <- readRDS("demograph.rds")
 
 data <- data[data$location == 'nordstrom.store5' & data$camera_id == 'Faceftpcam1.usecondstream',]
 tracker.data <- tracker.data[tracker.data$camera_id == 'Faceftpcam1.usecondstream',]
+demograph.data <- demograph.data[demograph.data$camera_id == 'Faceftpcam1.usecondstream',]
+
+
 ##########################################################################
 
 # getAMPM <- function(x){
