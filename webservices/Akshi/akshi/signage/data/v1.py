@@ -1,6 +1,6 @@
 from flask import Blueprint, request, Response, abort, g, jsonify
 import json
-
+import datetime
 from ..models import  signage_db,FaceSignage, User
 from ..ObjectTracking import track_objects
 
@@ -11,10 +11,16 @@ auth = HTTPBasicAuth()
 signage_v1 = Blueprint('signage1', __name__, url_prefix='/api/v1/signage', template_folder = 'templates', static_folder = 'static')
 
 
+
+
+tday = datetime.datetime.now()
+lday = tday - datetime.timedelta(days=7)
+limit = lday.timestamp()
+
 @signage_v1.route('/', methods =['GET'])
 @auth.login_required
 def signage_page():
-    signs = FaceSignage.query.order_by(FaceSignage.date_created.desc()).all()
+    signs = FaceSignage.query.filter(FaceSignage.date_created >= limit).order_by(FaceSignage.date_created.desc()).all()
     signs_json = json.dumps([sign.get_json() for sign in signs])
     return Response(signs_json, mimetype="application/json")
  
@@ -22,7 +28,7 @@ def signage_page():
 @signage_v1.route('/object_track',methods=['GET'])
 @auth.login_required
 def object_track():
-    signs = FaceSignage.query.order_by(FaceSignage.date_created.desc()).all()
+    signs = FaceSignage.query.filter(FaceSignage.date_created >= limit).order_by(FaceSignage.date_created.desc()).all() 
     signs_json = [sign.get_json() for sign in signs]
     object_log = track_objects(signs_json)
     return Response(json.dumps(object_log), mimetype="application/json")

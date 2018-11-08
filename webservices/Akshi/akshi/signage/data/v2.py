@@ -3,7 +3,7 @@ import json
 
 from ..models import signage_db,FaceSignage,Demographics,User
 from ..ObjectTracking import track_objects
-
+import datetime
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
@@ -11,10 +11,15 @@ auth = HTTPBasicAuth()
 signage_v2 = Blueprint('signage2', __name__, url_prefix='/api/v2/signage', template_folder = 'templates', static_folder = 'static')
 
 
+
+tday = datetime.datetime.now()
+lday = tday - datetime.timedelta(days=7)
+limit = lday.timestamp()
+
 @signage_v2.route('/faces', methods =['GET'])
 @auth.login_required
 def get_faces():
-    signs = FaceSignage.query.order_by(FaceSignage.date_created.desc()).all()
+    signs = FaceSignage.query.filter(FaceSignage.date_created >= limit).order_by(FaceSignage.date_created.desc()).all()
     signs_json = json.dumps([sign.get_json() for sign in signs])
     return Response(signs_json, mimetype="application/json")
 
@@ -33,7 +38,7 @@ def post_faces():
 @signage_v2.route('/activity',methods=['GET'])
 @auth.login_required
 def get_activity():
-    signs = FaceSignage.query.order_by(FaceSignage.date_created.desc()).all()
+    signs = FaceSignage.query.filter(FaceSignage.date_created >= limit).order_by(FaceSignage.date_created.desc()).all()
     signs_json = [sign.get_json() for sign in signs]
     object_log = track_objects(signs_json)
     return Response(json.dumps(object_log), mimetype="application/json")
@@ -53,7 +58,7 @@ def get_activity():
 @signage_v2.route('/demographics', methods=['GET'])
 @auth.login_required
 def get_demographics():
-    demographics = Demographics.query.order_by(Demographics.date_created.desc()).all()
+    demographics = Demographics.query.filter(Demographics.date_created >= limit).order_by(Demographics.date_created.desc()).all()
     list_json = [demo.get_json() for demo in demographics]
     return Response(json.dumps(list_json), mimetype="application/json")
 
