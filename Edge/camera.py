@@ -3,18 +3,17 @@ import rtsp
 import time
 
 class CamClient():
-    def __init__(self,logger,cfg,credentials):
+    def __init__(self,logger,cfg):
         try:
             if cfg['cam_protocol'] in 'picamera':
                 self.cam_address = 'picam'
             else:
-                self.cam_address = cfg['cam_protocol']+credentials[cfg['cam_stream_address']]+"@"+cfg['cam_stream_address']
+                self.cam_address = cfg['cam_protocol']+cfg['cam_credentials']+"@"+cfg['cam_stream_address']
         except:
             self.cam_address = 0
 
         self.logger = logger
         self.cfg = cfg
-        self.credentials = credentials
 
         self.discard_frames = self.cfg.get('discard_frames',30)
         self.frame_ind = 1

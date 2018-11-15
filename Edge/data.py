@@ -3,10 +3,9 @@ import requests as _requests
 
 class DataClient:
     """ Uses the signage.py configuration object and credentials. """
-    def __init__(self,logger,cfg,credentials):
+    def __init__(self,logger,cfg):
         self.logger = logger
         self.cfg = cfg
-        self.credentials = credentials
 
         if self.cfg['data_service']:
             try:
@@ -24,7 +23,7 @@ class DataClient:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']
-        cred=self.credentials[self.cfg['data_server']]
+        cred=self.cfg['data_credentials']
         path='/api/v2/signage/faces'
 
         camera_id=self.cfg['cam_name']
@@ -47,7 +46,7 @@ class DataClient:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']
-        cred=self.credentials[self.cfg['data_server']]
+        cred=self.cfg['data_credentials']
         path='/api/v2/signage/demographics'
 
         camera_id=self.cfg['cam_name']

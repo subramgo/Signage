@@ -11,7 +11,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import sys
-import rpyc
 
 import config
 import data
@@ -20,7 +19,6 @@ import ads
 import faces
 import camera
 
-rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 ###########################################################
 ##############         Configuration         ##############
@@ -44,15 +42,19 @@ cfg_defaults = {
    , 'data_protocol'         : 'http://'
    , 'demographics_server'   : ['localhost',18862]
    , 'ad_server'             : ['localhost',18861]
+
+   , 'data_credentials'      : '*user*:*pass*'
+   , 'cam_credentials'       : '*user*:*pass*'
     }
 
 cfg = config.Config(
       filepath = "/boot/signage/config.yml"
     , description = "Orchestration and Image Feed"
-    , dictionary = cfg_defaults)
+    , dictionary = cfg_defaults
+    , internalpath = "/opt/signage/credentials.yml")
 
-credentials = config.Config(filepath="/opt/signage/credentials.yml")
-
+cfg.mask('data_credentials','*user*:*pass*')
+cfg.mask('cam_credentials' ,'*user*:*pass*')
 
 if cfg['log_service']:
     print("Logging to {}".format(cfg['logfile_path']))
@@ -69,7 +71,7 @@ logger.addHandler(hdlr)
 ###########################################################
 ##############           Interfaces           #############
 ###########################################################
-camera = camera.CamClient(logger,cfg,credentials)
+camera = camera.CamClient(logger,cfg)
 face_detector = faces.FaceDetector(logger)
 dataClient = data.DataClient(logger,cfg,credentials)
 ads = ads.get_client(logger,cfg)
