@@ -9,12 +9,11 @@ class DataClient:
 
         if self.cfg['data_service']:
             try:
-                self.logger.info("Connecting to data service...")
+                logger.info("Connecting to data service...")
                 _requests.get(self.cfg['data_protocol']+self.cfg['data_server'])
-                self.logger.info("Database is available.")
+                logger.info("Database is available.")
             except (_requests.exceptions.ConnectionError,_requests.exceptions.Timeout,_requests.exceptions.HTTPError) as err: 
-                self.logger.error("Cannot reach data reporting service; "+str(err))
-            logger.info("Connected to data server.")
+                logger.error("Cannot reach data reporting service; "+str(err))
         else:
             logger.info("Data reporting is disabled.")
 

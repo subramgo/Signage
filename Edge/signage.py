@@ -73,7 +73,7 @@ logger.addHandler(hdlr)
 ###########################################################
 camera = camera.CamClient(logger,cfg)
 face_detector = faces.FaceDetector(logger)
-dataClient = data.DataClient(logger,cfg,credentials)
+dataClient = data.DataClient(logger,cfg)
 ads = ads.get_client(logger,cfg)
 demographics = demographics.get_client(logger,cfg)
 

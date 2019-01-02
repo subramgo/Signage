@@ -83,7 +83,9 @@ def get_client(logger,cfg):
         while not demographics_object:
             try:
                 demographics_object = rpyc.connect(*cfg['demographics_server']).root
-            except:
+            except Exception as e:
+                logger.error(e)
+                logger.info("Waiting then trying to connect to ad service.")
                 time.sleep(3)
                 continue
         logger.info("Connected to demographics service.")

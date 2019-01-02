@@ -21,7 +21,7 @@ class CamClient():
         self.frame = None
         self.logger.info("Connecting to "+str(self.cam_address))
 
-        self.cap = rtsp.Client(self.cam_address,drop_frame_limit=5, retry_connection=False, verbose=True)
+        self.cap = rtsp.Client(self.cam_address,verbose=True)
 
     def grab_frame(self):
         # Clear the buffer
