@@ -15,13 +15,16 @@ class CamClient():
         self.logger = logger
         self.cfg = cfg
 
-        self.discard_frames = self.cfg.get('discard_frames',30)
-        self.frame_ind = 1
-        self.old_frame = None
-        self.frame = None
-        self.logger.info("Connecting to "+str(self.cam_address))
+        if not cfg['enabled']:
+            logger.info("Camera is disabled.")
+        else:
+            self.discard_frames = self.cfg.get('discard_frames',30)
+            self.frame_ind = 1
+            self.old_frame = None
+            self.frame = None
+            self.logger.info("Connecting to "+str(self.cam_address))
 
-        self.cap = rtsp.Client(self.cam_address,verbose=True)
+            self.cap = rtsp.Client(self.cam_address,verbose=True)
 
     def grab_frame(self):
         # Clear the buffer

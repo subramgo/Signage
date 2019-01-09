@@ -94,7 +94,7 @@ class Player(rpyc.Service):
 
 def get_client(logger,cfg):
     ad_player = None
-    if not cfg['ad_service']:
+    if not cfg['enabled']:
         logger.info("Ad service is disabled.")
     else:
         while not ad_player:

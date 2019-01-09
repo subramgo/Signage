@@ -1,5 +1,6 @@
 
 import yaml
+from functools import reduce as _reduce
 
 class Config(dict):
     """ Dictionary with optional YAML text file to override its values.
@@ -31,13 +32,11 @@ class Config(dict):
 
     def dump(self,filepath=None):
         """ Serialize to YAML """
-        # TODO: have to serialize the masks
         if filepath:
             self._filepath = filepath
         try:
+            self._mask()
             with open(self.filepath,'w') as ymlfile:
-                if self._masks:
-                    self._intered.update({'_masks':self._masks})
                 ymlfile.write("%YAML 1.1\n---\n")
                 ymlfile.write("# this file should be located at {}\n".format(self.filepath))
                 ymlfile.write("\n\n")
@@ -48,47 +47,68 @@ class Config(dict):
                 _yaml = yaml.dump(dict(self.items()),default_flow_style=False,indent=4)
                 ymlfile.write(_yaml)
                 ymlfile.write("\n\n")
-                if self._masks:
-                    self._intered.dump()
-                    self._intered.pop('_masks')
 
         except Exception as e:
             print("Couldn't write to {} : {}".format(self.filepath,e))
-
-    def load(self):
+        
+    def load(self,verbose=True):
         """ Load from filepath and overwrite local items. """
         try:
             with open(self.filepath,'r') as ymlfile:
                 newstuff = yaml.load(ymlfile)
                 if newstuff:
                     self.update(newstuff)
-                if self._intered:
-                    try:
-                        self._masks.update(self._intered.pop('_masks'))
-                        self.update(self._intered.items())
-                    except KeyError:
-                        pass
-                    #self._unmask()
-        except FileNotFoundError:
-            pass
-            #print("No YAML file to load from.")
+            self._unmask()
         except Exception as e:
-            import pdb
-            pdb.set_trace()
-            print("Couldn't load from {} : {}".format(self.filepath,e))
+            if verbose:
+                print("Didn't load from {} : {}".format(self.filepath,e))
+
+    def _nestupdate(self,key,val):
+        cfg = self
+        key = key.split('.')
+        if len(key) > 1:
+            cfg = cfg[key.pop(0)]
+        cfg[key[0]] = val
+
+    def _nestread(self,key):
+        if len(key.split('.')) > 1:
+            return _reduce(dict.get, key.split('.'), self) 
+        else:
+            return self[key] 
 
     def mask(self,cfg_key,mask):
-        """ Hide a configuration internally. Check external mask for updates.
-            Good for sensitive credentials. Must have supplied an `internalpath`. """
+        """ Good for sensitive credentials.
+            Mask is serialized to `self.filepath`.
+            True value serialized to `self.internalpath`. """
         self._masks[cfg_key] = mask
+        self._intered[cfg_key] = self._nestread(cfg_key)
         self._unmask()
 
-    def _unmask(self):
-        self._intered.load()
-        for key,default in self._masks.items():
-            if self[key] != default:
-                self._intered[key] = self.get(key)
-                self._intered.dump() # write to protected YAML
+    def _mask(self):
+        if self._masks:
+            self._intered.update({'_masks':self._masks})
+            self._intered.dump()
 
-                self.update({key:default})
-                self.dump()         # write to external YAML
+            for key,mask in self._intered.pop('_masks').items():
+                self._nestupdate(key,mask)
+
+    def _unmask(self):
+        """ resolve hierarchy: {new_val > interred > mask} """
+        if not self._intered:
+            return
+        self._intered.load(verbose=False)
+
+        try:
+            self._masks.update(self._intered.pop('_masks'))
+        except KeyError:
+            pass
+        
+        for key,mask in self._masks.items():
+            current = self._nestread(key) 
+
+            if current != mask:
+                self._intered[key] = current
+                self._intered.dump() # write to protected YAML
+                self.dump()          # write to external YAML
+                
+            self._nestupdate(key,self._intered[key])

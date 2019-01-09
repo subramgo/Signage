@@ -5,9 +5,6 @@ import rpyc
 import tensorflow as tf
 import time
 
-import config as _config
-_cfg = _config.Config(filepath = "/boot/signage/config.yml")
-
 rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 class  DemographicsClassifier(rpyc.Service):
@@ -76,7 +73,7 @@ class  DemographicsClassifier(rpyc.Service):
 
 def get_client(logger,cfg):
     demographics_object = None
-    if not cfg['demographics_service']:
+    if not cfg['enabled']:
         logger.info("Gender classification is disabled.")
     else:
         logger.info("Connecting to demographics service...")

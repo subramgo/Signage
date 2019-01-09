@@ -7,7 +7,7 @@ class DataClient:
         self.logger = logger
         self.cfg = cfg
 
-        if self.cfg['data_service']:
+        if self.cfg['enabled']:
             try:
                 logger.info("Connecting to data service...")
                 _requests.get(self.cfg['data_protocol']+self.cfg['data_server'])
@@ -18,7 +18,7 @@ class DataClient:
             logger.info("Data reporting is disabled.")
 
     def upload_faces(self,windows):
-        if not self.cfg['data_service']:
+        if not self.cfg['enabled']:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']

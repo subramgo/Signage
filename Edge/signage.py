@@ -25,26 +25,39 @@ import camera
 ###########################################################
 
 cfg_defaults = { 
-     'cam_stream_address'    : '192.168.1.168/usecondstream'
-   , 'cam_protocol'          : 'rtsp://'
+      'camera'                : {
+          'enabled'           : False
+        , 'stream_address'    : '192.168.1.168/usecondstream'
+        , 'protocol'          : 'rtsp://'
+        , 'location_name'     : 'signage-analysis-demo'
+        , 'name'              : 'signage-camera-1'
+        , 'credentials'       : '*user*:*pass*'
+    }
+    
+    , 'logging'               : {
+          'enabled'           : True
+        , 'logfile_path'      : 'signage.log'
+        , 'logfile_maxbytes'  : 375000000
+    }
+ 
+    , 'ads'                   : {
+          'enabled'           : False
+        , 'server'            : ['localhost',18861]
+        , 'rotation'          : 0
+        , 'window'            : (400,0,400,480)
+    }
 
-   , 'cam_location_name'     : 'signage-analysis-demo'
-   , 'cam_name'              : 'signage-camera-1'
-   , 'logfile_path'          : '/home/pi/logs_signage.log'
-   , 'logfile_maxbytes'      : 375000000
+    , 'data'                  : {
+          'enabled'           : False
+        , 'credentials'       : '*user*:*pass*'
+        , 'data_server'       : '127.0.0.1:5000'
+        , 'data_protocol'     : 'http://'
+    }
 
-   , 'log_service'           : True
-   , 'ad_service'            : True
-   , 'demographics_service'  : True
-   , 'data_service'          : True
-
-   , 'data_server'           : '127.0.0.1:5000'
-   , 'data_protocol'         : 'http://'
-   , 'demographics_server'   : ['localhost',18862]
-   , 'ad_server'             : ['localhost',18861]
-
-   , 'data_credentials'      : '*user*:*pass*'
-   , 'cam_credentials'       : '*user*:*pass*'
+    , 'demographics'          : {
+          'enabled'           : False
+        , 'server'            : ['localhost',18862]
+    }
     }
 
 cfg = config.Config(
@@ -53,12 +66,12 @@ cfg = config.Config(
     , dictionary = cfg_defaults
     , internalpath = "/opt/signage/credentials.yml")
 
-cfg.mask('data_credentials','*user*:*pass*')
-cfg.mask('cam_credentials' ,'*user*:*pass*')
+cfg.mask('data.credentials'   ,'*user*:*pass*')
+cfg.mask('camera.credentials' ,'*user*:*pass*')
 
-if cfg['log_service']:
-    print("Logging to {}".format(cfg['logfile_path']))
-    hdlr = RotatingFileHandler(cfg['logfile_path'],maxBytes=cfg['logfile_maxbytes'])
+if cfg['logging']['enabled']:
+    print("Logging to {}".format(cfg['logging']['logfile_path']))
+    hdlr = RotatingFileHandler(cfg['logging']['logfile_path'],maxBytes=cfg['logging']['logfile_maxbytes'])
 else:
     print("No logging.")
     hdlr = logging.NullHandler()
@@ -71,11 +84,11 @@ logger.addHandler(hdlr)
 ###########################################################
 ##############           Interfaces           #############
 ###########################################################
-camera = camera.CamClient(logger,cfg)
+camera = camera.CamClient(logger,cfg['camera'])
 face_detector = faces.FaceDetector(logger)
-dataClient = data.DataClient(logger,cfg)
-ads = ads.get_client(logger,cfg)
-demographics = demographics.get_client(logger,cfg)
+dataClient = data.DataClient(logger,cfg['data'])
+ads = ads.get_client(logger,cfg['ads'])
+demographics = demographics.get_client(logger,cfg['demographics'])
 
 def dprint(processed_output):
     # print results of `process` for human readers
