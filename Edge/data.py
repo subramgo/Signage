@@ -41,7 +41,7 @@ class DataClient:
 
 
     def upload_demographics(self,genders):
-        if not self.cfg['data_service']:
+        if not self.cfg['enabled']:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']

@@ -9,20 +9,20 @@ class Config(dict):
           1. provide a secure path for internal storage
           2. give a 'mask' or default value to store
           3. internal storage is updated when default has been changed
-     """
+    """
 
     @property
     def filepath(self):
         return self._filepath
 
-    def __init__(self,description = None, filepath = None, dictionary = None, internalpath = None):
+    def __init__(self,description = None, filepath = None, dictionary = None, maskedpath = None):
         self.description = description
         self._filepath = filepath
         self._intered = None
         self._masks = {}
 
-        if internalpath:
-            self._intered = Config(filepath=internalpath,description="masked configs")
+        if maskedpath:
+            self._intered = Config(filepath=maskedpath,description="masked configs")
 
         ### This order defines precedence.
         if dictionary:
@@ -47,7 +47,8 @@ class Config(dict):
                 _yaml = yaml.dump(dict(self.items()),default_flow_style=False,indent=4)
                 ymlfile.write(_yaml)
                 ymlfile.write("\n\n")
-
+            self._unmask()
+            
         except Exception as e:
             print("Couldn't write to {} : {}".format(self.filepath,e))
         
@@ -79,9 +80,10 @@ class Config(dict):
     def mask(self,cfg_key,mask):
         """ Good for sensitive credentials.
             Mask is serialized to `self.filepath`.
-            True value serialized to `self.internalpath`. """
+            True value serialized to `self.maskedpath`. """
         self._masks[cfg_key] = mask
-        self._intered[cfg_key] = self._nestread(cfg_key)
+        if self._nestread(cfg_key) != mask:
+            self._intered[cfg_key] = self._nestread(cfg_key)
         self._unmask()
 
     def _mask(self):

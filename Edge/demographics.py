@@ -52,8 +52,7 @@ class  DemographicsClassifier(rpyc.Service):
         resized = cv2.resize(image, (image_w, image_h))
         return resized.reshape(1,image_w,image_h,3)
 
-
-    def exposed_process(self,x_test,y_test,batch_size):
+    def process_face(self,x_test,y_test,batch_size):
         # Gender Prediction
         w, h = self.gender_target_size[0], self.gender_target_size[1]
         image = self.input_preprocessing(x_test, w,h)
@@ -70,19 +69,29 @@ class  DemographicsClassifier(rpyc.Service):
 
         return gender, age
 
+    def exposed_process(self,faces):
+        return [(self.process_face(x_test=face, y_test=None, batch_size=1)) for face in faces]
+
+def log_summary(logger,processed_output):
+    # print for human readers
+    rpt = "Demographics on faces: "
+    rpt += ", ".join(["{} aged {}".format(gender,age) for gender,age in processed_output])
+    rpt += "."
+    logger.info(rpt)
+
 
 def get_client(logger,cfg):
     demographics_object = None
     if not cfg['enabled']:
-        logger.info("Gender classification is disabled.")
+        logger.info("Demographics classification is disabled.")
     else:
         logger.info("Connecting to demographics service...")
         while not demographics_object:
             try:
-                demographics_object = rpyc.connect(*cfg['demographics_server']).root
+                demographics_object = rpyc.connect(*cfg['server']).root
             except Exception as e:
                 logger.error(e)
-                logger.info("Waiting then trying to connect to ad service.")
+                logger.info("Waiting then trying to connect to demographics service.")
                 time.sleep(3)
                 continue
         logger.info("Connected to demographics service.")

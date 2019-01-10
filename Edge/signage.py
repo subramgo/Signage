@@ -8,11 +8,10 @@
       * face detection
 """
 
-import logging
-from logging.handlers import RotatingFileHandler
 import sys
 
 import config
+import log
 import data
 import demographics
 import ads
@@ -64,44 +63,34 @@ cfg = config.Config(
       filepath = "/boot/signage/config.yml"
     , description = "Orchestration and Image Feed"
     , dictionary = cfg_defaults
-    , internalpath = "/opt/signage/credentials.yml")
+    , maskedpath = "/opt/signage/credentials.yml")
 
 cfg.mask('data.credentials'   ,'*user*:*pass*')
 cfg.mask('camera.credentials' ,'*user*:*pass*')
-
-if cfg['logging']['enabled']:
-    print("Logging to {}".format(cfg['logging']['logfile_path']))
-    hdlr = RotatingFileHandler(cfg['logging']['logfile_path'],maxBytes=cfg['logging']['logfile_maxbytes'])
-else:
-    print("No logging.")
-    hdlr = logging.NullHandler()
-logging.basicConfig(format="[%(thread)-5d]%(asctime)s: %(message)s")
-logger = logging.getLogger('SignageEdge)')
-logger.setLevel(logging.INFO)
-logger.addHandler(hdlr)
+#cfg.dump()
 
 
 ###########################################################
 ##############           Interfaces           #############
 ###########################################################
+logger = log.get_logger(cfg)
 camera = camera.CamClient(logger,cfg['camera'])
 face_detector = faces.FaceDetector(logger)
 dataClient = data.DataClient(logger,cfg['data'])
 ads = ads.get_client(logger,cfg['ads'])
-demographics = demographics.get_client(logger,cfg['demographics'])
+demo = demographics.get_client(logger,cfg['demographics'])
 
-def dprint(processed_output):
-    # print results of `process` for human readers
-    rpt = "Demographics on faces: "
-    rpt += ", ".join(["{} aged {}".format(gender,age) for gender,age in processed_output])
-    rpt += "."
-    return rpt
 
 ###########################################################
 ##############          Orchestration         #############
 ###########################################################
+def refresh():
+    """ Check configuration files for new settings and update interfaces """
+    global cfg
+    cfg.load()
+
 def main():
-    while True:
+    while cfg['camera']['enabled']:
         frame = camera.grab_frame()
 
         ### Detection
@@ -111,9 +100,9 @@ def main():
         if faces:
             dataClient.upload_faces(windows)
 
-            if demographics:
-                _demographics = [(demographics.process(x_test=face, y_test=None, batch_size=1)) for face in faces]
-                logger.info(dprint(_demographics))
+            if demo:
+                _demographics = demo.process(faces)
+                demographics.log_summary(logger,_demographics)
                 dataClient.upload_demographics(_demographics)
 
                 # Switch ads based on demographics        
@@ -130,7 +119,6 @@ def main():
         if camera.frame_ind >= frame_limit:
             logger.info("Retrieved {} frames. Stopping to help manage video buffer.".format(frame_limit))
             sys.exit(0)
-
 
 if __name__ == "__main__":
     main()
