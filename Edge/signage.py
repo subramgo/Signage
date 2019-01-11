@@ -8,85 +8,89 @@
       * face detection
 """
 
-import logging
-from logging.handlers import RotatingFileHandler
 import sys
-import rpyc
 
 import config
+import log
 import data
 import demographics
 import ads
 import faces
 import camera
 
-rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 ###########################################################
 ##############         Configuration         ##############
 ###########################################################
 
 cfg_defaults = { 
-     'cam_stream_address'    : '192.168.1.168/usecondstream'
-   , 'cam_protocol'          : 'rtsp://'
+      'camera'                : {
+          'enabled'           : False
+        , 'stream_address'    : '192.168.1.168/usecondstream'
+        , 'protocol'          : 'rtsp://'
+        , 'location_name'     : 'signage-analysis-demo'
+        , 'name'              : 'signage-camera-1'
+        , 'credentials'       : '*user*:*pass*'
+    }
+    
+    , 'logging'               : {
+          'enabled'           : True
+        , 'logfile_path'      : 'signage.log'
+        , 'logfile_maxbytes'  : 375000000
+    }
+ 
+    , 'ads'                   : {
+          'enabled'           : False
+        , 'server'            : ['localhost',18861]
+        , 'rotation'          : 0
+        , 'window'            : (400,0,400,480)
+    }
 
-   , 'cam_location_name'     : 'signage-analysis-demo'
-   , 'cam_name'              : 'signage-camera-1'
-   , 'logfile_path'          : '/home/pi/logs_signage.log'
-   , 'logfile_maxbytes'      : 375000000
+    , 'data'                  : {
+          'enabled'           : False
+        , 'credentials'       : '*user*:*pass*'
+        , 'data_server'       : '127.0.0.1:5000'
+        , 'data_protocol'     : 'http://'
+    }
 
-   , 'log_service'           : True
-   , 'ad_service'            : True
-   , 'demographics_service'  : True
-   , 'data_service'          : True
-
-   , 'data_server'           : '127.0.0.1:5000'
-   , 'data_protocol'         : 'http://'
-   , 'demographics_server'   : ['localhost',18862]
-   , 'ad_server'             : ['localhost',18861]
+    , 'demographics'          : {
+          'enabled'           : False
+        , 'server'            : ['localhost',18862]
+    }
     }
 
 cfg = config.Config(
       filepath = "/boot/signage/config.yml"
     , description = "Orchestration and Image Feed"
-    , dictionary = cfg_defaults)
+    , dictionary = cfg_defaults
+    , maskedpath = "/opt/signage/credentials.yml")
 
-credentials = config.Config(filepath="/opt/signage/credentials.yml")
-
-
-if cfg['log_service']:
-    print("Logging to {}".format(cfg['logfile_path']))
-    hdlr = RotatingFileHandler(cfg['logfile_path'],maxBytes=cfg['logfile_maxbytes'])
-else:
-    print("No logging.")
-    hdlr = logging.NullHandler()
-logging.basicConfig(format="[%(thread)-5d]%(asctime)s: %(message)s")
-logger = logging.getLogger('SignageEdge)')
-logger.setLevel(logging.INFO)
-logger.addHandler(hdlr)
+cfg.mask('data.credentials'   ,'*user*:*pass*')
+cfg.mask('camera.credentials' ,'*user*:*pass*')
+#cfg.dump()
 
 
 ###########################################################
 ##############           Interfaces           #############
 ###########################################################
-camera = camera.CamClient(logger,cfg,credentials)
+logger = log.get_logger(cfg)
+camera = camera.CamClient(logger,cfg['camera'])
 face_detector = faces.FaceDetector(logger)
-dataClient = data.DataClient(logger,cfg,credentials)
-ads = ads.get_client(logger,cfg)
-demographics = demographics.get_client(logger,cfg)
+dataClient = data.DataClient(logger,cfg['data'])
+ads = ads.get_client(logger,cfg['ads'])
+demo = demographics.get_client(logger,cfg['demographics'])
 
-def dprint(processed_output):
-    # print results of `process` for human readers
-    rpt = "Demographics on faces: "
-    rpt += ", ".join(["{} aged {}".format(gender,age) for gender,age in processed_output])
-    rpt += "."
-    return rpt
 
 ###########################################################
 ##############          Orchestration         #############
 ###########################################################
+def refresh():
+    """ Check configuration files for new settings and update interfaces """
+    global cfg
+    cfg.load()
+
 def main():
-    while True:
+    while cfg['camera']['enabled']:
         frame = camera.grab_frame()
 
         ### Detection
@@ -96,9 +100,9 @@ def main():
         if faces:
             dataClient.upload_faces(windows)
 
-            if demographics:
-                _demographics = [(demographics.process(x_test=face, y_test=None, batch_size=1)) for face in faces]
-                logger.info(dprint(_demographics))
+            if demo:
+                _demographics = demo.process(faces)
+                demographics.log_summary(logger,_demographics)
                 dataClient.upload_demographics(_demographics)
 
                 # Switch ads based on demographics        
@@ -115,7 +119,6 @@ def main():
         if camera.frame_ind >= frame_limit:
             logger.info("Retrieved {} frames. Stopping to help manage video buffer.".format(frame_limit))
             sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

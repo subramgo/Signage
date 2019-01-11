@@ -8,49 +8,18 @@ import rtsp
 
 import config
 
-###########################################################
-##############         Configuration         ##############
-###########################################################
-cfg_defaults = {
-        'source_camera_inset'    : True
-      , 'source_camera_protocol' : 'rtsp://'
-      , 'source_camera_address'  : '192.168.1.168/usecondstream'
-      , 'debug_positions'        : False
-      , 'video_path'             : '/opt/signage/videos/multi_ads.mov'
-      , 'log_service'            : False
-      , 'logfile_path'           : '/home/pi/logs_ads.log'
-      , 'logfile_maxbytes'       : 375000000
-    }
-
-cfg = config.Config(
-      filepath = "/boot/signage/ads.yml"
-    , description = "Ad Service"
-    , dictionary = cfg_defaults)
-
-if cfg['log_service']:
-    hdlr = RotatingFileHandler(cfg.get('logfile_path'),maxBytes=cfg.get('logfile_maxbytes'))
-else:
-    hdlr = RotatingFileHandler('/dev/null')
-
-logging.basicConfig(format="[%(thread)-5d]%(asctime)s: %(message)s")
-logger = logging.getLogger('client')
-logger.setLevel(logging.INFO)
-logger.addHandler(hdlr)
-
-
-credentials = config.Config(filepath="/opt/signage/credentials.yml")
-all_cfg     = config.Config(filepath="/boot/signage/config.yml")
-
-cam_uri = "{}{}@{}".format(all_cfg['cam_protocol'],credentials['video_stream'],all_cfg['cam_stream_address'])
-video_file = cfg['video_path']
 
 class Player(rpyc.Service):
 
-    def __init__(self):
+    def __init__(self,cfg):
         super().__init__()
+
+        self.cam_uri = "{}{}@{}".format(cfg['cam_protocol'],credentials['video_stream'],cfg['cam_stream_address'])
+        self.video_file = cfg['video_path']
+
         if cfg['debug_positions']:
             control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,640,480 ' + video_file, timeout=60)
-            if all_cfg['cam_protocol'] == 'picam':
+            if cfg['cam_protocol'] == 'picam':
                 control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,400,480 ' + video_file, timeout=60)
                 import picamera
                 cam = picamera.PiCamera()
@@ -58,7 +27,7 @@ class Player(rpyc.Service):
                         ,fullscreen=False
                         ,window=(400,0,400,480)
                         )
-            elif all_cfg['cam_stream_address'] == 0:
+            elif cfg['cam_stream_address'] == 0:
                 rtsp.Client(0).preview()
             else:
                 debug_control = pexpect.spawn('/usr/bin/omxplayer  --win 641,0,1281,480 --avdict rtsp_transport:tcp ' + cam_uri)
@@ -123,16 +92,17 @@ class Player(rpyc.Service):
             logger.info("more females now")
             self.play_female()
 
-def get_client(logger,client_cfg):
+def get_client(logger,cfg):
     ad_player = None
-    if not client_cfg['ad_service']:
+    if not cfg['enabled']:
         logger.info("Ad service is disabled.")
     else:
         while not ad_player:
             try:
-                ad_player = rpyc.connect(*cfg['ad server']).root
+                ad_player = rpyc.connect(*cfg['ad_server']).root
                 logger.info("Connected to ad server.")
-            except:
+            except Exception as e:
+                logger.error(e)
                 logger.info("Waiting then trying to connect to ad service.")
                 time.sleep(3)
                 continue

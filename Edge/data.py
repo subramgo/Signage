@@ -3,28 +3,26 @@ import requests as _requests
 
 class DataClient:
     """ Uses the signage.py configuration object and credentials. """
-    def __init__(self,logger,cfg,credentials):
+    def __init__(self,logger,cfg):
         self.logger = logger
         self.cfg = cfg
-        self.credentials = credentials
 
-        if self.cfg['data_service']:
+        if self.cfg['enabled']:
             try:
-                self.logger.info("Connecting to data service...")
+                logger.info("Connecting to data service...")
                 _requests.get(self.cfg['data_protocol']+self.cfg['data_server'])
-                self.logger.info("Database is available.")
+                logger.info("Database is available.")
             except (_requests.exceptions.ConnectionError,_requests.exceptions.Timeout,_requests.exceptions.HTTPError) as err: 
-                self.logger.error("Cannot reach data reporting service; "+str(err))
-            logger.info("Connected to data server.")
+                logger.error("Cannot reach data reporting service; "+str(err))
         else:
             logger.info("Data reporting is disabled.")
 
     def upload_faces(self,windows):
-        if not self.cfg['data_service']:
+        if not self.cfg['enabled']:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']
-        cred=self.credentials[self.cfg['data_server']]
+        cred=self.cfg['data_credentials']
         path='/api/v2/signage/faces'
 
         camera_id=self.cfg['cam_name']
@@ -43,11 +41,11 @@ class DataClient:
 
 
     def upload_demographics(self,genders):
-        if not self.cfg['data_service']:
+        if not self.cfg['enabled']:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']
-        cred=self.credentials[self.cfg['data_server']]
+        cred=self.cfg['data_credentials']
         path='/api/v2/signage/demographics'
 
         camera_id=self.cfg['cam_name']

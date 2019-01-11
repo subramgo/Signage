@@ -52,18 +52,12 @@ func(){
   sudo mkdir -p /opt/signage
   sudo chown -R `whoami`:`id -gn` /opt/signage
   sudo chmod -R 700 /opt/signage
-  echo "copying configuration templates"
-  sudo python3 ./dump_config_defaults.py
-
-  # credentials
-  echo "copying credential template"
-  cp -n credentials.template.yml /opt/signage/credentials.yml
 
   # ad videos
   mkdir -p /opt/signage/videos
 
   # ML models
-  mkdir -p /opt/signage/gender
+  mkdir -p /opt/signage/models
 }
 watching func "Config and resource directories."
 
@@ -135,13 +129,13 @@ else
   sudo tee -a /etc/rc.local >/dev/null << EOF
 runuser -l pi -c 'printf "%s Starting signage scripts.\n" "$(date)"  >> /home/pi/startup.log'
 runuser -l pi -c "screen -dmS demographics"
-runuser -l pi -c "screen -S demographics -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/demographics.py 2>&1 | tee -a /home/pi/signage.log\n'"
+runuser -l pi -c "screen -S demographics -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/demographics.py 2>&1\n'"
 sleep 10
 runuser -l pi -c "screen -dmS adserver"
-runuser -l pi -c "screen -S adserver -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/player.py 2>&1 | tee -a /home/pi/signage.log\n'"
+runuser -l pi -c "screen -S adserver -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/player.py 2>&1\n'"
 
 runuser -l pi -c "screen -dmS signage"
-runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/signage.py 2>&1 | tee -a /home/pi/signage.log\n'"
+runuser -l pi -c "screen -S signage -p 0 -X stuff 'watch -n 1 python3 $INSTALL_PATH/signage.py 2>&1\n'"
 EOF
 
   sudo sed -i 's|exit 0||' /etc/rc.local

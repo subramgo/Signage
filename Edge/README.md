@@ -5,8 +5,7 @@
 Configuration is located in `/boot/signage/config.yml`
 A template is in `config.template.yml`
 
-Sensitive credentials are in `/opt/signage/credentials.yml`
-A template is in `credentials.template.yml`
+Sensitive credentials are masked from there and kept in `/opt/signage/credentials.yml` to be protected by OS login.
 
 ## Components
 
