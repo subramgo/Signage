@@ -1,6 +1,7 @@
 import pexpect
 import time
 import rpyc
+import sys
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -8,14 +9,23 @@ import rtsp
 
 import config
 
+def platform():
+    """
+    What platform are we running on? 
+      * Raspberry Pi
+      * Windows 10
+      * Ubuntu - 'linux'
+      * MacOS - 'darwin'
+    """
+    return sys.platform
 
-class Player(rpyc.Service):
+class OMXPlayer(rpyc.Service):
 
     def __init__(self,cfg):
         super().__init__()
 
         self.cam_uri = "{}{}@{}".format(cfg['cam_protocol'],credentials['video_stream'],cfg['cam_stream_address'])
-        self.video_file = cfg['video_path']
+        self.video_file = cfg['library']+'/multi_ads.mov'
 
         if cfg['debug_positions']:
             control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,640,480 ' + video_file, timeout=60)
@@ -109,7 +119,7 @@ def get_client(logger,cfg):
     return ad_player
 
 def main():
-    t = rpyc.utils.server.ThreadedServer(Player(), port=18861)
+    t = rpyc.utils.server.ThreadedServer(OMXPlayer(), port=18861)
     t.start()
 
 
