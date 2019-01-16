@@ -43,7 +43,7 @@ cfg_defaults = {
           'enabled'           : False
         , 'server'            : ['localhost',18861]
         , 'rotation'          : 0
-        , 'window'            : (400,0,400,480)
+        , 'window'            : [400,0,400,480]
         , 'library'           : '/opt/signage/videos'
     }
 
@@ -68,7 +68,6 @@ cfg = config.Config(
 
 cfg.mask('data.credentials'   ,'*user*:*pass*')
 cfg.mask('camera.credentials' ,'*user*:*pass*')
-#cfg.dump()
 
 
 ###########################################################

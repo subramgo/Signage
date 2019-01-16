@@ -62,7 +62,11 @@ class Config(dict):
             self._unmask()
         except Exception as e:
             if verbose:
-                print("Didn't load from {} : {}".format(self.filepath,e))
+                if 'No such file' in e.strerror:
+                    self.dump()
+                    print("Initialized config file {}".format(self.filepath))
+                else:
+                    print("Didn't load from {} : {}".format(self.filepath,e))
 
     def _nestupdate(self,key,val):
         cfg = self
@@ -112,5 +116,8 @@ class Config(dict):
                 self._intered[key] = current
                 self._intered.dump() # write to protected YAML
                 self.dump()          # write to external YAML
-                
-            self._nestupdate(key,self._intered[key])
+
+            try:
+                self._nestupdate(key,self._intered[key])
+            except KeyError:
+                pass
