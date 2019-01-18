@@ -9,29 +9,22 @@ Sensitive credentials are masked from there and kept in `/opt/signage/credential
 
 ## Components
 
-  * `signage.py`
-    * reads from IP Cam 
-    * performs face detection
-    * orchestrates data flow
-  * `gender.py` service to determine the gender
+  * `ads.py` service to play video
+    * depends on ad service platform
+  * `camera.py` manages camera input
+    * depends on edge device platform
+  * `data.py` manages data upload to signage data server
+  * `demographics.py.py` service determines gender and age of faces
     * Gender Model download from https://drive.google.com/open?id=1dLg4izlUYVTRkrGyTVv5OJ60awa69zwN
-    *  `gender/4_try.h5` and `gender/4_try.json`
-  * `player.py` service to play video
-    * Videos to be stored in `/opt/signage/videos`
+  * `faces.py` performs face detection
+  * `signage.py` orchestration
 
 
-# Edge Deployment.
+# Edge Deployment
 
-## Dependencies
+See `utils/install.sh`
 
-  * Raspbian Stretch 9.4
-    * `lsb_release -a` to check
-  * Python 3+
-
-#### Developer tools
-  $ sudo apt-get install build-essential git cmake pkg-config screen vim
-
-#### Image
+#### Image Dependencies
   $ sudo apt-get install libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libgtk2.0-dev install libatlas-base-dev gfortran
 
 #### Important Data Processing Packages
@@ -40,18 +33,6 @@ Sensitive credentials are masked from there and kept in `/opt/signage/credential
   * tensorflow
   * keras
   * dlib
-
-#### Models
-Download the model files from google drive https://drive.google.com/open?id=1dLg4izlUYVTRkrGyTVv5OJ60awa69zwN
-  * from gender folder in google drive, copy the models to  `/opt/signage/gender/`
-
-#### Ad Media
-  `mkdir /opt/signage/videos`
-  * move the videos to this folder
-
-#### Everything else
-
-    install.sh
 
 ## Automation
 
