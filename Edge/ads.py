@@ -5,29 +5,28 @@ import sys
 import logging
 from logging.handlers import RotatingFileHandler
 
+import signage
 import rtsp
-
 import config
 
-def platform():
-    """
-    What platform are we running on? 
-      * Raspberry Pi
-      * Windows 10
-      * Ubuntu - 'linux'
-      * MacOS - 'darwin'
-    """
-    return sys.platform
+class VLCPlayer(rpyc.Service):
+    def __init__(self,cfg):
+        #TODO
+        pass
+
 
 class OMXPlayer(rpyc.Service):
 
     def __init__(self,cfg):
         super().__init__()
 
-        self.cam_uri = "{}{}@{}".format(cfg['cam_protocol'],credentials['video_stream'],cfg['cam_stream_address'])
-        self.video_file = cfg['library']+'/multi_ads.mov'
+        self._cfg_refresh(cfg)
 
-        if cfg['debug_positions']:
+        self.cam_uri = "{}{}@{}".format(self.camfig['protocol'],self.camfig['credentials'],self.camfig['stream_address'])
+
+        self.video_file = self.adfig['library']+'/multi_ads.mov'
+
+        if self.adfig['debug_view']:
             control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,640,480 ' + video_file, timeout=60)
             if cfg['cam_protocol'] == 'picam':
                 control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,400,480 ' + video_file, timeout=60)
@@ -49,6 +48,14 @@ class OMXPlayer(rpyc.Service):
         control.send("i")
         print("Ad server starting.")
         self.control = control
+
+    def _cfg_refresh(self,newfig = None):
+        if newfig:
+            self.cfg = newfig
+
+        self.cfg.load()
+        self.camfig = self.cfg['camera']
+        self.adfig = self.cfg['ads']
 
     def on_connect(self, conn):
         print("Client connected to ad server.")
@@ -102,11 +109,37 @@ class OMXPlayer(rpyc.Service):
             logger.info("more females now")
             self.play_female()
 
+def platform():
+    """
+    What platform are we running on? 
+      * Raspberry Pi - 'linux'
+      * Windows 10 - ???
+      * Ubuntu - 'linux'
+      * MacOS - 'darwin'
+    """
+    if sys.platform == 'linux':
+        if os.uname().machine == 'armv7l':
+            return 'pi'
+    elif sys.platform == 'darwin':
+        return 'mac'
+    else:
+        return 'windows'
+
+def get_server(cfg):
+    player_map = { 
+          'pi' : OMXPlayer(cfg)
+        , 'mac' : VLCPlayer(cfg)
+        , 'windows' : VLCPlayer(cfg) 
+        }
+
+    return player_map[platform()]
+
 def get_client(logger,cfg):
     ad_player = None
     if not cfg['enabled']:
         logger.info("Ad service is disabled.")
     else:
+        logger.info("Ad service is enabled.")
         while not ad_player:
             try:
                 ad_player = rpyc.connect(*cfg['ad_server']).root
@@ -119,7 +152,7 @@ def get_client(logger,cfg):
     return ad_player
 
 def main():
-    t = rpyc.utils.server.ThreadedServer(OMXPlayer(), port=18861)
+    t = rpyc.utils.server.ThreadedServer(get_server(signage.cfg), port=18861)
     t.start()
 
 

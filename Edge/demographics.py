@@ -1,28 +1,32 @@
 from keras.models import model_from_json
 import cv2
 import numpy as np
-import rpyc
-import tensorflow as tf
 import time
 
-rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
+### Quiet Tensorflow Import
+# https://github.com/keras-team/keras/commit/83aaadaa9d69214880d20b1e2bd9715a6c37fbe6
+import sys as _sys
+import os as _os
+_stderr = _sys.stderr
+_sys.stderr = open(_os.devnull, 'w')
+# Do Importing Here
+import tensorflow as tf
+# Importing is Done; Restore Environment
+_sys.stderr = _stderr
+# disables some tensorflow noise (but not all)
+_os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+# silences ALL warnings, helps with tensorflow noise again
+import warnings as _warnings
+_warnings.simplefilter("ignore")
 
-class  DemographicsClassifier(rpyc.Service):
-    def __init__(self, conn, gender_model,age_model,graph):
+
+
+class  DemographicsClassifier():
+    def __init__(self, gender_model,age_model,graph):
         self.__cleanup()
         self.gender_model = gender_model
         self.age_model = age_model
         self.graph = graph
-
-    def __call__(self, conn):
-        return self.__class__(conn, self.gender_model, self.age_model ,self.graph)
-
-    def on_connect(self,conn):
-        print("Client connected")
-
-    def on_disconnect(self, conn):
-        print("Client disconnected")
-        self.__cleanup()
 
     def __predict(self,model,image,batch_size):
         with self.graph.as_default():
@@ -47,7 +51,6 @@ class  DemographicsClassifier(rpyc.Service):
         Apply resize, reshape, other scaling/whitening effects.
         image can be any image size greater than 100x100 and it will be resized
         """
-        image = rpyc.classic.obtain(image)
         image = image * (1./255.)
         resized = cv2.resize(image, (image_w, image_h))
         return resized.reshape(1,image_w,image_h,3)
@@ -69,7 +72,7 @@ class  DemographicsClassifier(rpyc.Service):
 
         return gender, age
 
-    def exposed_process(self,faces):
+    def process(self,faces):
         return [(self.process_face(x_test=face, y_test=None, batch_size=1)) for face in faces]
 
 def log_summary(logger,processed_output):
@@ -85,45 +88,25 @@ def get_client(logger,cfg):
     if not cfg['enabled']:
         logger.info("Demographics classification is disabled.")
     else:
-        logger.info("Connecting to demographics service...")
-        while not demographics_object:
-            try:
-                demographics_object = rpyc.connect(*cfg['server']).root
-            except Exception as e:
-                logger.error(e)
-                logger.info("Waiting then trying to connect to demographics service.")
-                time.sleep(3)
-                continue
-        logger.info("Connected to demographics service.")
-
-    return demographics_object
+        logger.info("Demographics service is enabled.")
+        graph = tf.get_default_graph()
+        gender_model, age_model = load_model()
+        return DemographicsClassifier(gender_model=gender_model,age_model=age_model, graph=graph)
 
 def load_model():
     print("Loading models...")
-    with open('/opt/signage/gender/4_try.json','r') as f:
+    with open('/opt/signage/models/gender.json','r') as f:
         json = f.read()
     gender_model = model_from_json(json)
-    gender_model.load_weights('/opt/signage/gender/4_try.h5')
+    gender_model.load_weights('/opt/signage/models/gender.h5')
     print("  - gender model loaded")
 
-    with open('/opt/signage/age/2_try.json','r') as f:
+    with open('/opt/signage/models/age.json','r') as f:
         json = f.read()
     age_model = model_from_json(json)
-    age_model.load_weights('/opt/signage/age/2_try.h5')
+    age_model.load_weights('/opt/signage/models/age.h5')
     print("  - age model loaded")
 
     print("All models loaded.")
     return gender_model, age_model
-
-
-def main():
-    from rpyc.utils.server import ThreadedServer
-    graph = tf.get_default_graph()
-    gender_model, age_model = load_model()
-    t = ThreadedServer(DemographicsClassifier(conn = None,gender_model=gender_model,age_model=age_model, graph=graph), port=18862)
-    t.start()
-
-
-if __name__ == '__main__':
-    main()
 

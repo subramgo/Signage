@@ -15,7 +15,7 @@ class FaceDetector:
 
         # for dlib detector
         frame = frame.convert('RGB')
-        frame = np.asarray(frame)
+        frame = np.copy(np.asarray(frame))
         frame.setflags(write=True)
 
         dets = self.detector(frame, 1)

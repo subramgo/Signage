@@ -36,7 +36,7 @@ cfg_defaults = {
     , 'logging'               : {
           'enabled'           : True
         , 'logfile_path'      : 'signage.log'
-        , 'logfile_maxbytes'  : 375000000
+        , 'logfile_maxbytes'  : 3750000
     }
  
     , 'ads'                   : {
@@ -44,6 +44,7 @@ cfg_defaults = {
         , 'server'            : ['localhost',18861]
         , 'rotation'          : 0
         , 'window'            : [400,0,400,480]
+        , 'debug_view'        : False
         , 'library'           : '/opt/signage/videos'
     }
 
@@ -56,7 +57,6 @@ cfg_defaults = {
 
     , 'demographics'          : {
           'enabled'           : False
-        , 'server'            : ['localhost',18862]
     }
     }
 
@@ -73,12 +73,16 @@ cfg.mask('camera.credentials' ,'*user*:*pass*')
 ###########################################################
 ##############           Interfaces           #############
 ###########################################################
-logger = log.get_logger(cfg)
-camera = camera.CamClient(logger,cfg['camera'])
-face_detector = faces.FaceDetector(logger)
-dataClient = data.DataClient(logger,cfg['data'])
-ads = ads.get_client(logger,cfg['ads'])
-demo = demographics.get_client(logger,cfg['demographics'])
+def get_interfaces():
+    
+    logger = log.get_logger(cfg)
+    camera = camera.CamClient(logger,cfg['camera'])
+    face_detector = faces.FaceDetector(logger)
+    dataClient = data.DataClient(logger,cfg['data'])
+    ads = ads.get_client(logger,cfg['ads'])
+    demo = demographics.get_client(logger,cfg['demographics'])
+
+    return logger,camera,face_detector,dataClient,ads,demo
 
 
 ###########################################################
@@ -90,6 +94,7 @@ def refresh():
     cfg.load()
 
 def main():
+    logger,camera,face_detector,dataClient,ads,demo = get_interfaces()
     while cfg['camera']['enabled']:
         frame = camera.grab_frame()
 
