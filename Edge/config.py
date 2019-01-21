@@ -6,9 +6,10 @@ class Config(dict):
     """ Dictionary with optional YAML text file to override its values.
         
         Mask sensitive credentials from the default filepath:
-          1. provide a secure path for internal storage
-          2. give a 'mask' or default value to store
-          3. internal storage is updated when default has been changed
+          1. provide
+            * 'mask' default value to store
+            * secure path for internal storage
+          2. internal storage is updated when default has been changed
     """
 
     @property
@@ -85,6 +86,9 @@ class Config(dict):
         """ Good for sensitive credentials.
             Mask is serialized to `self.filepath`.
             True value serialized to `self.maskedpath`. """
+        if self._intered is None:
+            raise Exception('Cannot mask without a maskedpath serializing path.')
+
         self._masks[cfg_key] = mask
         if self._nestread(cfg_key) != mask:
             self._intered[cfg_key] = self._nestread(cfg_key)
@@ -121,3 +125,9 @@ class Config(dict):
                 self._nestupdate(key,self._intered[key])
             except KeyError:
                 pass
+
+def rUpdate(a,b,strict=False):
+    """ recursive update: Preserve a.keys() not in b.keys()
+        strict mode: only overwrite existing a.keys() """
+    pass
+    #TODO

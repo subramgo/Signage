@@ -1,53 +1,84 @@
-import pexpect
+#!python3
+
 import time
-import rpyc
+import os
 import sys
+import pathlib
+
+import pexpect
+import rpyc
 import logging
 from logging.handlers import RotatingFileHandler
 
-import signage
+import random
+import vlc
+
 import rtsp
 import config
+import sharedconfig
 
-class VLCPlayer(rpyc.Service):
-    def __init__(self,cfg):
-        #TODO
+class Library:
+    """
+        Class to manage ad library & programming.
+        Uniform-random programming schedule.
+        Semantic programming by audience:
+          * program.yml within library root path
+          * need listed media to be present
+          * need demographics provided
+    """
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def catalogue(self):
+        return self._catalogue
+
+    def __init__(self,library_root_path = '/opt/signage/videos'):
+        self._path = pathlib.PurePath(library_root_path)
+
+        self.programming = config.Config(
+                      filepath = self.path.joinpath("program.yml").as_posix()
+                    , description = "Ad Programming")
+
+        self._catalogue = [x for x in os.listdir(self.path.as_posix()) if x.endswith('.mp4')]
+        self._now_playing = None # track & avoid repeats
+
+    def newMedia(self,filters = []):
+        """ Return file path for a new media item.
+            `filters`: list of keys to `self.programming`. """
+        newset = set(self.catalogue) - set([self._now_playing])
+        
+        for _filter in filters:
+            print("filtering for {}".format(_filter))
+            newset.intersection_update(self.programming[_filter])
+
+        if newset:
+            print("randomly sampling from {}".format(newset))
+            new = random.sample(newset,1)[0]
+        else:
+            print("defaulting to a random video")
+            new = random.sample(self.catalogue,1)[0]
+
+        self._now_playing = new
+        return self.path.joinpath(new).as_posix()
+
+class NullPlayer:
+    def demographics(self,demographics):
         pass
 
+    def catalogue(self):
+        return []
 
-class OMXPlayer(rpyc.Service):
-
-    def __init__(self,cfg):
+class VLCPlayer(rpyc.Service):
+    def __init__(self,cfg = sharedconfig.cfg):
         super().__init__()
 
         self._cfg_refresh(cfg)
 
-        self.cam_uri = "{}{}@{}".format(self.camfig['protocol'],self.camfig['credentials'],self.camfig['stream_address'])
-
-        self.video_file = self.adfig['library']+'/multi_ads.mov'
-
-        if self.adfig['debug_view']:
-            control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,640,480 ' + video_file, timeout=60)
-            if cfg['cam_protocol'] == 'picam':
-                control = pexpect.spawn('/usr/bin/omxplayer  --win 0,0,400,480 ' + video_file, timeout=60)
-                import picamera
-                cam = picamera.PiCamera()
-                cam.start_preview(rotation=270
-                        ,fullscreen=False
-                        ,window=(400,0,400,480)
-                        )
-            elif cfg['cam_stream_address'] == 0:
-                rtsp.Client(0).preview()
-            else:
-                debug_control = pexpect.spawn('/usr/bin/omxplayer  --win 641,0,1281,480 --avdict rtsp_transport:tcp ' + cam_uri)
-                debug_control.expect("Video", timeout=60)
-        else:
-            control = pexpect.spawn('/usr/bin/omxplayer ' + video_file)
-            debug_control = None
-
-        control.send("i")
-        print("Ad server starting.")
-        self.control = control
+        self.lib = Library(self.adfig['library'])
+        self._last_played = 0
+        self.play()
 
     def _cfg_refresh(self,newfig = None):
         if newfig:
@@ -63,87 +94,57 @@ class OMXPlayer(rpyc.Service):
     def on_disconnect(self, conn):
         print("Client disconnected from ad server.")
 
-    def exposed_start_video(self):
-        self.start_video()
+    def ready(self):
+        return self.adfig['enabled'] and \
+               self.adfig['pause_secs'] < (time.time()-self._last_played)
 
-    def exposed_play_default(self):
-        self.play_default()
+    def play(self,video_path = None):
+        if not self.ready():
+            return
+        if not video_path:
+            video_path = self.lib.newMedia()
 
-    def exposed_play_male(self):
-        self.play_male()
+        print(" *plays {} advertisingly*".format(video_path))
 
-    def exposed_play_female(self):
-        self.play_female()
+    def exposed_demographics(self,demographics):
+        filters = []
+        male_ct = sum([1 for g in demographics if g[0]=='male'])
+        mean_age = 45 # TODO fix this count
 
-    def start_video(self):
-        self.control.expect("Video")
-        #self.control.send('p') # Play
-
-    def play_default(self):
-        self.control.send("i")
-        """
-        if self.video_started:
-            self.control.send('i') # go to start of the video
+        if mean_age > 30:
+            filters.append('old')
         else:
-            self.video_started = True
-            self.start_video()
-        """
+            filters.append('young')
 
-    def play_male(self):
-        print("received command for male ad")
-        self.control.send('i')
-        time.sleep(.5)
-        self.control.send ('\x1b[C') # jump ahead 30 seconds
-
-    def play_female(self):
-        print("received command for female ad")
-        self.control.send("i")
-        time.sleep(.5)
-        self.control.send ('\x1b[C') # jump ahead 30 seconds
-
-    def demographics(self,demographics):
-        if sum([1 for g in demographics if g[0]=='male']) > (len(demographics)/2):
-            logger.info("more males now")
-            self.play_male()
+        if male_ct > (len(demographics)/2):
+            filters.append('male')
         else:
-            logger.info("more females now")
-            self.play_female()
+            filters.append('female')
 
-def platform():
-    """
-    What platform are we running on? 
-      * Raspberry Pi - 'linux'
-      * Windows 10 - ???
-      * Ubuntu - 'linux'
-      * MacOS - 'darwin'
-    """
-    if sys.platform == 'linux':
-        if os.uname().machine == 'armv7l':
-            return 'pi'
-    elif sys.platform == 'darwin':
-        return 'mac'
-    else:
-        return 'windows'
+        print("Processed demographics filters: {}".format(filters))
+        self.play(self.lib.newMedia(filters))
 
-def get_server(cfg):
-    player_map = { 
-          'pi' : OMXPlayer(cfg)
-        , 'mac' : VLCPlayer(cfg)
-        , 'windows' : VLCPlayer(cfg) 
-        }
-
-    return player_map[platform()]
+    def exposed_catalogue(self):
+        return self.lib.catalogue
 
 def get_client(logger,cfg):
     ad_player = None
     if not cfg['enabled']:
         logger.info("Ad service is disabled.")
+        return NullPlayer()
     else:
         logger.info("Ad service is enabled.")
         while not ad_player:
             try:
-                ad_player = rpyc.connect(*cfg['ad_server']).root
+                ad_player = rpyc.connect(*cfg['server']).root
                 logger.info("Connected to ad server.")
+                
+                import IPython
+                IPython.embed()
+
+                if not ad_player.catalogue():
+                    logger.info("No videos in catalogue.")
+                    ad_player = NullPlayer()
             except Exception as e:
                 logger.error(e)
                 logger.info("Waiting then trying to connect to ad service.")
@@ -151,11 +152,23 @@ def get_client(logger,cfg):
                 continue
     return ad_player
 
+
 def main():
-    t = rpyc.utils.server.ThreadedServer(get_server(signage.cfg), port=18861)
+    t = rpyc.utils.server.ThreadedServer(VLCPlayer(), port=18861)
     t.start()
 
 
 if __name__ == '__main__':
     main()
 
+def platform():
+    """ pi , ubuntu , mac , windows """
+    if sys.platform == 'linux':
+        if os.uname().machine == 'armv7l':
+            return 'pi'
+        else:
+            return 'ubuntu'
+    elif sys.platform == 'darwin':
+        return 'mac'
+    else:
+        return 'windows'

@@ -22,11 +22,19 @@ _warnings.simplefilter("ignore")
 
 
 class  DemographicsClassifier():
-    def __init__(self, gender_model,age_model,graph):
-        self.__cleanup()
-        self.gender_model = gender_model
-        self.age_model = age_model
-        self.graph = graph
+    def __init__(self,logger,cfg):
+        self.logger = logger
+        self.cfg = cfg
+        if not cfg['enabled']:
+            logger.info("Demographics classification is disabled.")
+
+        else:
+            logger.info("Demographics service is enabled.")
+            self.__cleanup()
+            gender_model, age_model = load_models()
+            self.gender_model = gender_model
+            self.age_model = age_model
+            self.graph = tf.get_default_graph()
 
     def __predict(self,model,image,batch_size):
         with self.graph.as_default():
@@ -73,27 +81,22 @@ class  DemographicsClassifier():
         return gender, age
 
     def process(self,faces):
-        return [(self.process_face(x_test=face, y_test=None, batch_size=1)) for face in faces]
+        if self.cfg['enabled']:
+            measures = [(self.process_face(x_test=face, y_test=None, batch_size=1)) for face in faces]
+            self.log_summary(measures)
+            return measures
+        else:
+            return None
 
-def log_summary(logger,processed_output):
-    # print for human readers
-    rpt = "Demographics on faces: "
-    rpt += ", ".join(["{} aged {}".format(gender,age) for gender,age in processed_output])
-    rpt += "."
-    logger.info(rpt)
+    def log_summary(self,processed_output):
+        # print for human readers
+        rpt = "Demographics on faces: "
+        rpt += ", ".join(["{} aged {}".format(gender,age) for gender,age in processed_output])
+        rpt += "."
+        self.logger.info(rpt)
 
 
-def get_client(logger,cfg):
-    demographics_object = None
-    if not cfg['enabled']:
-        logger.info("Demographics classification is disabled.")
-    else:
-        logger.info("Demographics service is enabled.")
-        graph = tf.get_default_graph()
-        gender_model, age_model = load_model()
-        return DemographicsClassifier(gender_model=gender_model,age_model=age_model, graph=graph)
-
-def load_model():
+def load_models():
     print("Loading models...")
     with open('/opt/signage/models/gender.json','r') as f:
         json = f.read()

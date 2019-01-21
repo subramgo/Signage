@@ -69,7 +69,7 @@ apt_installed() {
     dpkg-query -f '${Package}\n' -W | grep "^$1\$" 2>/dev/null
 }
 echo "Installing OS utilities"
-utils="screen build-essential pkg-config git vim pv omxplayer cmake make python-opencv"
+utils="screen build-essential pkg-config git vim pv vlc omxplayer cmake make python-opencv"
 for p in $utils
 do
     if [[ $(apt_installed $p) ]]

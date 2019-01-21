@@ -3,9 +3,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 def get_logger(cfg):
-	if cfg['logging']['enabled']:
-	    print("Logging to {}".format(cfg['logging']['logfile_path']))
-	    hdlr = RotatingFileHandler(cfg['logging']['logfile_path'],maxBytes=cfg['logging']['logfile_maxbytes'])
+	if cfg['enabled']:
+	    print("Logging to {}".format(cfg['logfile_path']))
+	    hdlr = RotatingFileHandler(cfg['logfile_path'],maxBytes=cfg['logfile_maxbytes'])
 	else:
 	    print("Logging disabled.")
 	    hdlr = logging.NullHandler()
