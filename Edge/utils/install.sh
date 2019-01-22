@@ -69,7 +69,7 @@ apt_installed() {
     dpkg-query -f '${Package}\n' -W | grep "^$1\$" 2>/dev/null
 }
 echo "Installing OS utilities"
-utils="screen build-essential pkg-config git vim pv vlc omxplayer cmake make python-opencv"
+utils="screen build-essential pkg-config git vim pv vlc omxplayer cmake make python3-tk python-opencv"
 for p in $utils
 do
     if [[ $(apt_installed $p) ]]
@@ -97,7 +97,7 @@ installed=$(pip3 list --format=columns 2>/dev/null)
 pip_installed() {
     echo $installed | grep -i '^$1' 2>/dev/null
 }
-pyml="requests pyyaml pillow passlib python-vlc rpyc rtsp pexpect numpy opencv-python tensorflow keras dlib"
+pyml="requests pyyaml pillow pathlib python-vlc rpyc rtsp pexpect numpy opencv-python tensorflow keras dlib"
 for p in $pyml
 do
     if [[ $(pip_installed $p) ]]

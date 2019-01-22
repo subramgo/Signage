@@ -11,6 +11,7 @@
 """
 
 import sys
+import time
 
 import log
 import data
@@ -66,7 +67,13 @@ def main():
             
             dataClient.upload_demographics(measures)
 
-            ads.demographics(measures)
+            try:
+                ads.demographics(measures)
+            except EOFError:
+                logger.error("Ad server was disconnected.")
+                ads = _ads = ads.get_client(logger,cfg['ads'])
+
+        time.sleep(5)
 
 if __name__ == "__main__":
     main()

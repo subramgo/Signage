@@ -5,17 +5,16 @@ import os
 import sys
 import pathlib
 
-import pexpect
+import threading
+import subprocess
 import rpyc
-import logging
-from logging.handlers import RotatingFileHandler
-
 import random
-import vlc
 
-import rtsp
+import log
 import config
 import sharedconfig
+
+# TODO collect demographics while on cooldown
 
 class Library:
     """
@@ -34,13 +33,13 @@ class Library:
     def catalogue(self):
         return self._catalogue
 
-    def __init__(self,library_root_path = '/opt/signage/videos'):
+    def __init__(self,library_root_path = '/opt/signage/videos',logger=None):
         self._path = pathlib.PurePath(library_root_path)
 
         self.programming = config.Config(
                       filepath = self.path.joinpath("program.yml").as_posix()
                     , description = "Ad Programming")
-
+        self.logger = logger
         self._catalogue = [x for x in os.listdir(self.path.as_posix()) if x.endswith('.mp4')]
         self._now_playing = None # track & avoid repeats
 
@@ -50,15 +49,14 @@ class Library:
         newset = set(self.catalogue) - set([self._now_playing])
         
         for _filter in filters:
-            print("filtering for {}".format(_filter))
             newset.intersection_update(self.programming[_filter])
 
         if newset:
-            print("randomly sampling from {}".format(newset))
             new = random.sample(newset,1)[0]
         else:
-            print("defaulting to a random video")
             new = random.sample(self.catalogue,1)[0]
+
+        self.logger.info("Selected random video {}".format(new) + (" using filters {}".format(','.join(filters)) if filters else '') )
 
         self._now_playing = new
         return self.path.joinpath(new).as_posix()
@@ -75,9 +73,18 @@ class VLCPlayer(rpyc.Service):
         super().__init__()
 
         self._cfg_refresh(cfg)
+        self.logger = log.get_ad_logger(self.adfig)
 
-        self.lib = Library(self.adfig['library'])
+
+        if not self.adfig['enabled']:
+            self.logger.info("Ad service is disabled.")
+        else:
+            self.logger.info("Starting ad server.")
+
+        self.lib = Library(self.adfig['library'],self.logger)
         self._last_played = 0
+        self._playing = False
+
         self.play()
 
     def _cfg_refresh(self,newfig = None):
@@ -89,77 +96,101 @@ class VLCPlayer(rpyc.Service):
         self.adfig = self.cfg['ads']
 
     def on_connect(self, conn):
-        print("Client connected to ad server.")
+        self.logger.info("Client connected to ad server.")
 
     def on_disconnect(self, conn):
-        print("Client disconnected from ad server.")
+        self.logger.info("Client disconnected from ad server.")
 
     def ready(self):
         return self.adfig['enabled'] and \
                self.adfig['pause_secs'] < (time.time()-self._last_played)
 
     def play(self,video_path = None):
+        self._cfg_refresh()
         if not self.ready():
             return
         if not video_path:
             video_path = self.lib.newMedia()
 
-        print(" *plays {} advertisingly*".format(video_path))
+        self._last_played = time.time()
+        if self._playing:
+            self._playing.kill()
+
+        geomy,geomx,height,width = [str(x) for x in self.adfig['display']['window']]
+        rotation = self.adfig['display']['rotation']
+        
+        popen_args = ['--disable-screensaver'
+                    , '--no-audio'
+                    , '--no-video-deco'
+                    , '--no-autoscale'
+                    , "--width={}".format(width)
+                    , "--height={}".format(height)
+                    , "--video-y={}".format(geomy)
+                    , "--video-x={}".format(geomx)
+                    ]
+
+        if platform()=='ubuntu':
+            popen_args = ['cvlc'] + popen_args
+        else:
+            popen_args = ['vlc'] + \
+                    popen_args + \
+                    [ "--transform-type={}".format(rotation)
+                    , '--video-filter="transform{true}"']
+        popen_args.append(video_path)
+
+        #self.logger.info(' '.join(popen_args))
+        self.popenAndCall(self.play,popen_args)
+
+
+    def popenAndCall(self,onExit, popenArgs):
+        """
+        Runs the given args in a subprocess.Popen, and then calls the function
+        onExit when the subprocess completes.
+        onExit is a callable object, and popenArgs is a list/tuple of args that 
+        would give to subprocess.Popen.
+        """
+        def runInThread(onExit, popenArgs):
+            if self._playing:
+                self._playing.kill()
+            self._playing = subprocess.Popen(' '.join(popenArgs),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,shell=True)
+            self._playing.wait()
+            onExit()
+            return
+        thread = threading.Thread(target=runInThread, args=(onExit, popenArgs))
+        thread.start()
+        # returns immediately after the thread starts
+        return thread
 
     def exposed_demographics(self,demographics):
+        if not self.ready():
+            cooldown = self.adfig['pause_secs'] - (time.time()-self._last_played)
+            if cooldown >=0:
+                self.logger.info("Received new demographics but still on cooldown - {:10.4} secs".format(cooldown))
+            return
+        
         filters = []
         male_ct = sum([1 for g in demographics if g[0]=='male'])
-        mean_age = 45 # TODO fix this count
+        gender_ratio = male_ct*1.0/len(demographics)
+        age_translate = {'(0, 2)': 1, '(4, 6)': 5 , '(8, 12)': 10, '(15, 20)':18, '(25, 32)':28 , '(38, 43)':40}
+        ages = [age_translate[x[1]] for x in demographics]
+        mean_age = sum(ages)/len(ages)
+
+        self.logger.info("Received demographics: male-gender-ratio={:10.2} and mean-age={}.".format(gender_ratio,int(mean_age)))
 
         if mean_age > 30:
             filters.append('old')
         else:
             filters.append('young')
 
-        if male_ct > (len(demographics)/2):
+        if gender_ratio > 0.5:
             filters.append('male')
         else:
             filters.append('female')
 
-        print("Processed demographics filters: {}".format(filters))
         self.play(self.lib.newMedia(filters))
 
     def exposed_catalogue(self):
         return self.lib.catalogue
-
-def get_client(logger,cfg):
-    ad_player = None
-    if not cfg['enabled']:
-        logger.info("Ad service is disabled.")
-        return NullPlayer()
-    else:
-        logger.info("Ad service is enabled.")
-        while not ad_player:
-            try:
-                ad_player = rpyc.connect(*cfg['server']).root
-                logger.info("Connected to ad server.")
-                
-                import IPython
-                IPython.embed()
-
-                if not ad_player.catalogue():
-                    logger.info("No videos in catalogue.")
-                    ad_player = NullPlayer()
-            except Exception as e:
-                logger.error(e)
-                logger.info("Waiting then trying to connect to ad service.")
-                time.sleep(3)
-                continue
-    return ad_player
-
-
-def main():
-    t = rpyc.utils.server.ThreadedServer(VLCPlayer(), port=18861)
-    t.start()
-
-
-if __name__ == '__main__':
-    main()
 
 def platform():
     """ pi , ubuntu , mac , windows """
@@ -172,3 +203,33 @@ def platform():
         return 'mac'
     else:
         return 'windows'
+
+
+def get_client(logger,cfg):
+    ad_player = None
+    if not cfg['enabled']:
+        logger.info("Ad service is disabled.")
+        return NullPlayer()
+    else:
+        logger.info("Ad service is enabled.")
+        while not ad_player:
+            try:
+                ad_player = rpyc.connect(*cfg['server']).root
+                logger.info("Connected to ad server.")
+
+                if not ad_player.catalogue():
+                    logger.info("No videos in catalogue.")
+                    ad_player = NullPlayer()
+            except Exception as e:
+                logger.error(e)
+                logger.info("Waiting then trying to connect to ad service.")
+                time.sleep(3)
+                continue
+    return ad_player
+
+def main():
+    t = rpyc.utils.server.ThreadedServer(VLCPlayer(), port=18861)
+    t.start()
+
+if __name__ == '__main__':
+    main()

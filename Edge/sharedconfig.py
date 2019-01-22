@@ -17,8 +17,7 @@ cfg_defaults = {
     }
     
     , 'logging'               : {
-          'enabled'           : True
-        , 'logfile_path'      : 'signage.log'
+          'logfile_path'      : None
         , 'logfile_maxbytes'  : 3750000
     }
  
@@ -26,10 +25,12 @@ cfg_defaults = {
           'enabled'           : False
         , 'server'            : ['localhost',18861]
         , 'library'           : '/opt/signage/videos'
+        , 'logfile_path'      : None
+        , 'logfile_maxbytes'  : 3750000
         , 'pause_secs'        : 5
         , 'display'           : {
               'rotation'          : 0
-            , 'window'            : [400,0,400,480]
+            , 'window'            : [0,0,480,640]
             , 'debug_view'        : False
             }
     }
@@ -49,7 +50,7 @@ cfg_defaults = {
 cfg = config.Config(
       filepath = "/boot/signage/config.yml"
     , description = "Orchestration and Image Feed"
-    , dictionary = cfg_defaults
+    , defaults_dict = cfg_defaults
     , maskedpath = "/opt/signage/credentials.yml")
 
 cfg.mask('data.credentials'   ,'*user*:*pass*')
