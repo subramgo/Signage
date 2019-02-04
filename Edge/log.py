@@ -22,7 +22,7 @@ def get_logger(cfg):
         return logger
     else:
         print("Logging disabled.")
-        hdlr = get_null_logger(name)
+        return get_null_logger(name)
 
 def get_ad_logger(cfg):
     name = 'SignageAds'

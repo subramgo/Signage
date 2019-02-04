@@ -61,10 +61,66 @@ class Library:
         self._now_playing = new
         return self.path.joinpath(new).as_posix()
 
+class Demographics:
+    @property
+    def audience(self):
+        try:
+            return self._audience
+        except:
+            self._audience = []
+            return self._audience
+    
+    @property
+    def summary(self):
+        return self.summarize()
+
+    @property
+    def ad_filters(self):
+        headcount,gender_ratio,mean_age = self.summary
+        filters = []
+        if mean_age:
+            if mean_age > 30:
+                filters.append('old')
+            else:
+                filters.append('young')
+
+        if gender_ratio:
+            if gender_ratio > 0.5:
+                filters.append('male')
+            else:
+                filters.append('female')
+        return filters
+
+    def __init__(self,logger):
+        self.logger = logger
+
+    def update(self,new_headcounts):
+        self._audience += new_headcounts
+
+    def target_ad(self,ad_library):
+        if self.audience:
+            self.logger.info("Serving ad by demographics: {}-count, male-ratio={:.2}, mean-age={}.".format(*self.summary))
+        ad = ad_library.newMedia(self.ad_filters)
+        self._audience = []
+        return ad
+
+    def summarize(self,ppl_log = None):
+        if not ppl_log:
+            if not self.audience:
+                return 0,None,None
+            ppl_log = self.audience
+
+        age_translate = {'(0, 2)': 1, '(4, 6)': 5 , '(8, 12)': 10, '(15, 20)':18, '(25, 32)':28 , '(38, 43)':40}
+        ages = [age_translate[x[1]] for x in ppl_log]
+
+        gender_ratio = sum([1.0 for g in ppl_log if g[0]=='male'])/len(ppl_log)
+        mean_age = int(sum(ages)/len(ages))
+
+        return len(ppl_log),gender_ratio,mean_age
+
 class NullPlayer:
     def demographics(self,demographics):
         pass
-
     def catalogue(self):
         return []
 
@@ -84,6 +140,7 @@ class VLCPlayer(rpyc.Service):
         self.lib = Library(self.adfig['library'],self.logger)
         self._last_played = 0
         self._playing = False
+        self._demographics = Demographics(self.logger)
 
         self.play()
 
@@ -102,6 +159,7 @@ class VLCPlayer(rpyc.Service):
         self.logger.info("Client disconnected from ad server.")
 
     def ready(self):
+        #print("Cooldown check: {} last : {} now".format(self._last_played,time.time()))
         return self.adfig['enabled'] and \
                self.adfig['pause_secs'] < (time.time()-self._last_played)
 
@@ -109,12 +167,11 @@ class VLCPlayer(rpyc.Service):
         self._cfg_refresh()
         if not self.ready():
             return
-        if not video_path:
-            video_path = self.lib.newMedia()
+        else:
+            self._last_played = time.time()
 
-        self._last_played = time.time()
-        if self._playing:
-            self._playing.kill()
+        if not video_path:        
+            video_path = self._demographics.target_ad(self.lib)
 
         geomy,geomx,height,width = [str(x) for x in self.adfig['display']['window']]
         rotation = self.adfig['display']['rotation']
@@ -151,7 +208,7 @@ class VLCPlayer(rpyc.Service):
         """
         def runInThread(onExit, popenArgs):
             if self._playing:
-                self._playing.kill()
+                self._playing.terminate()
             self._playing = subprocess.Popen(' '.join(popenArgs),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,shell=True)
             self._playing.wait()
             onExit()
@@ -162,32 +219,16 @@ class VLCPlayer(rpyc.Service):
         return thread
 
     def exposed_demographics(self,demographics):
-        if not self.ready():
-            cooldown = self.adfig['pause_secs'] - (time.time()-self._last_played)
-            if cooldown >=0:
-                self.logger.info("Received new demographics but still on cooldown - {:10.4} secs".format(cooldown))
+        if not demographics:
             return
-        
-        filters = []
-        male_ct = sum([1 for g in demographics if g[0]=='male'])
-        gender_ratio = male_ct*1.0/len(demographics)
-        age_translate = {'(0, 2)': 1, '(4, 6)': 5 , '(8, 12)': 10, '(15, 20)':18, '(25, 32)':28 , '(38, 43)':40}
-        ages = [age_translate[x[1]] for x in demographics]
-        mean_age = sum(ages)/len(ages)
+            
+        cooldown = self.adfig['pause_secs'] - (time.time()-self._last_played)
+        if cooldown >=0:
+            self.logger.info("Received new demographics but still on cooldown - {:.4} secs".format(cooldown))
 
-        self.logger.info("Received demographics: male-gender-ratio={:10.2} and mean-age={}.".format(gender_ratio,int(mean_age)))
+        self._demographics.update(demographics)
 
-        if mean_age > 30:
-            filters.append('old')
-        else:
-            filters.append('young')
-
-        if gender_ratio > 0.5:
-            filters.append('male')
-        else:
-            filters.append('female')
-
-        self.play(self.lib.newMedia(filters))
+        self.play()
 
     def exposed_catalogue(self):
         return self.lib.catalogue

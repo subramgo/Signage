@@ -69,7 +69,7 @@ def main():
 
             try:
                 ads.demographics(measures)
-            except EOFError:
+            except:
                 logger.error("Ad server was disconnected.")
                 ads = _ads = ads.get_client(logger,cfg['ads'])
 
