@@ -6,16 +6,26 @@
   * Camera interface
   * Face detection
       * face demographics classification
+  * Simple ad server
 
-## [Cloud](webservices/README.md)
+### Run
+
+    python3 Edge/signage.py &
+    python3 Edge/ads.py
+
+
+## [Cloud](Cloud/README.md)
 
   * Activity Monitoring Logic
       * Object tracking
   * Database for UI
+  * UI
+    * Flask Dashboard
 
-## UI
+### Run
 
-  * Shiny Dashboard
+    Cloud/SignageData/run.sh &
+    python3 Cloud/SignageGUI/index.py &
 
 
 # Releases

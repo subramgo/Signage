@@ -82,7 +82,13 @@ class  DemographicsClassifier():
 
     def process(self,faces):
         if self.cfg['enabled']:
-            measures = [(self.process_face(x_test=face, y_test=None, batch_size=1)) for face in faces]
+            measures = []
+            for face in faces:
+                try:
+                    measures.append(self.process_face(x_test=np.array(face), y_test=None, batch_size=1))
+                except e:
+                    self.logger.error("face processing error "+str(e))
+
             self.log_summary(measures)
             return measures
         else:
