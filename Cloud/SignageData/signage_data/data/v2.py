@@ -7,6 +7,7 @@ import datetime
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.contrib.cache import SimpleCache
 from sqlalchemy import func, and_
+from flask import current_app as app
 
 
 auth = HTTPBasicAuth()
@@ -14,6 +15,9 @@ cache = SimpleCache()
 
 signage_v2 = Blueprint('signage2', __name__, url_prefix='/api/v2/signage', 
     template_folder = 'templates', static_folder = 'static')
+
+TIMEOUT=10
+
 
 
 ############ Face Count Services #####################################
@@ -41,7 +45,6 @@ def get_faces_live(location):
     .all()
 
     signs_json = [sign.get_json() for sign in signs]
-    print(signs_json)
     signs_json = find_distance(signs_json)
 
     return Response(json.dumps(signs_json), mimetype="application/json")
@@ -56,7 +59,7 @@ def get_faces():
     signs_json = cache.get('signs-json')
     if signs_json is None:
         signs_json = return_faces()
-        cache.set('signs-json', signs_json, timeout = 100*60)
+        cache.set('signs-json', signs_json, timeout = TIMEOUT)
     return Response(json.dumps(signs_json), mimetype="application/json")
 
 
@@ -109,7 +112,7 @@ def get_activity():
     object_log = cache.get('object-log')
     if object_log is None:
         object_log = calculate_activity()
-        cache.set('object-log', object_log, timeout = 100*60)
+        cache.set('object-log', object_log, timeout = TIMEOUT)
     return Response(json.dumps(object_log), mimetype="application/json")
 
 
@@ -128,7 +131,7 @@ def get_demographics():
     
     if object_log is None:
         object_log = return_demographics()
-        cache.set('demographics-log', object_log, timeout = 100*60)
+        cache.set('demographics-log', object_log, timeout = TIMEOUT)
 
 
     return Response(json.dumps(object_log), mimetype="application/json")

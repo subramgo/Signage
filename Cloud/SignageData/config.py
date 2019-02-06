@@ -8,6 +8,8 @@ SQLALCHEMY_ECHO = True
 
 SQLALCHEMY_DATABASE_URI =  \
         'sqlite:///' + os.path.join(basedir, 'signage.db')
+
+TIMEOUT=20
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 UPLOADED_PHOTOS_DEST=os.path.join(basedir + '/uploads')
 UPLOADED_FACE_DEST=os.path.join(basedir + '/uploads/face')
