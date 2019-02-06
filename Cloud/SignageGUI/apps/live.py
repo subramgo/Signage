@@ -26,7 +26,7 @@ def get_locations():
     """
     faces = signage_manager.faces()
     if faces.empty == True:
-        return None
+        return ({'label': "NA", 'value': "NA"},"N/A")
 
     locations = faces['location'].unique()
 

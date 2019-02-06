@@ -90,6 +90,8 @@ class SignageManager():
 	def total_impressions(self):
 
 		faces = self.faces()
+		if faces.empty == True:
+			return 0
 		faces['date_created'] = pd.to_datetime(faces['date_created'],unit='s')
 		impressions_bydays = faces.groupby('date_created').agg({'no_faces':np.sum})
 		impressions_bydays.reset_index(inplace = True)
@@ -101,11 +103,16 @@ class SignageManager():
 
 	def avg_dwell_time(self):
 		activity = self.activity()
+		if activity.empty == True:
+			return 0
+
 		dwell = activity['time_alive'].mean()
 		return dwell
 
 	def engagement_range(self):
 		faces = self.faces()
+		if faces.empty == True:
+			return 0
 		faces_ = np.array(faces['distances'].tolist())
 		mean_values = []
 		for row in faces_:
@@ -114,12 +121,17 @@ class SignageManager():
 
 	def demographics_count(self):
 		demographics = self.demographics()
+		if demographics.empty == True:
+			return (0,0)
+
 		male_count = demographics['male_count'].sum()
 		female_count = demographics['female_count'].sum()
 		return (male_count, female_count)
 
 	def age_group_summary(self):
 		demographics = self.demographics()
+		if demographics.empty == True:
+			return 'None'
 		age_groups = demographics['age_list'].tolist()
 		return max(set(age_groups), key=age_groups.count)
 

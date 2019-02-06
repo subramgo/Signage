@@ -3,9 +3,10 @@ import requests as _requests
 
 class DataClient:
     """ Uses the signage.py configuration object and credentials. """
-    def __init__(self,logger,cfg):
+    def __init__(self,logger,cfg,camfig):
         self.logger = logger
         self.cfg = cfg
+        self.camfig = camfig
         
         if not cfg['enabled']:
             logger.info("Data reporting is disabled.")
@@ -22,11 +23,11 @@ class DataClient:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']
-        cred=self.cfg['data_credentials']
+        cred=self.cfg['credentials']
         path='/api/v2/signage/faces'
 
-        camera_id=self.cfg['cam_name']
-        location=self.cfg['cam_location_name']
+        camera_id=self.camfig['name']
+        location=self.camfig['location_name']
         data = {
                 'camera_id' : camera_id
                ,'no_faces'  : str(len(windows))
@@ -45,11 +46,11 @@ class DataClient:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']
-        cred=self.cfg['data_credentials']
+        cred=self.cfg['credentials']
         path='/api/v2/signage/demographics'
 
-        camera_id=self.cfg['cam_name']
-        location=self.cfg['cam_location_name'] 
+        camera_id=self.camfig['name']
+        location=self.camfig['location_name'] 
 
         data = {
                 'camera_id'    : camera_id

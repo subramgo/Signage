@@ -32,7 +32,7 @@ def get_interfaces():
     logger = log.get_logger(cfg['logging'])
     _camera = camera.CamClient(logger,cfg['camera'])
     face_detector = faces.FaceDetector(logger)
-    dataClient = data.DataClient(logger,cfg['data'])
+    dataClient = data.DataClient(logger,cfg['data'],cfg['camera'])
     _ads = ads.get_client(logger,cfg['ads'])
     demo = demographics.DemographicsClassifier(logger,cfg['demographics'])
 

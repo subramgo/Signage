@@ -164,11 +164,11 @@ def get_demographics_chart():
 def get_dwelltime_chart():
 
 	df = signage_manager.activity()
-	df = df[['location','time_alive']]
 
 	if df.empty == True:
 		return {"data":[],"layout":[]}
 
+	df = df[['location','time_alive']]
 	locations = df['location'].unique()
 	bar_data = []
 	for location in locations:
