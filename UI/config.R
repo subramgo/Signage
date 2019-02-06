@@ -7,3 +7,4 @@ url_ = paste(base_url,"api/v1/signage/",sep="/")
 
 url.object.track = paste(base_url, "api/v1/signage/object_track",sep="/")
 url.demographics = paste(base_url, "api/v2/signage/demographics",sep="/")
+
