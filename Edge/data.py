@@ -6,18 +6,18 @@ class DataClient:
     def __init__(self,logger,cfg):
         self.logger = logger
         self.cfg = cfg
-
-        if self.cfg['enabled']:
+        
+        if not cfg['enabled']:
+            logger.info("Data reporting is disabled.")
+        else:
             try:
                 logger.info("Connecting to data service...")
                 _requests.get(self.cfg['data_protocol']+self.cfg['data_server'])
                 logger.info("Database is available.")
             except (_requests.exceptions.ConnectionError,_requests.exceptions.Timeout,_requests.exceptions.HTTPError) as err: 
                 logger.error("Cannot reach data reporting service; "+str(err))
-        else:
-            logger.info("Data reporting is disabled.")
 
-    def upload_faces(self,windows):
+    def upload_windows(self,windows):
         if not self.cfg['enabled']:
             return
         protocol=self.cfg['data_protocol']
@@ -40,8 +40,8 @@ class DataClient:
         self.logger.info("Detections upload: "+str(r))
 
 
-    def upload_demographics(self,genders):
-        if not self.cfg['enabled']:
+    def upload_demographics(self,demographics):
+        if not self.cfg['enabled'] or not demographics:
             return
         protocol=self.cfg['data_protocol']
         uri=self.cfg['data_server']
@@ -54,15 +54,14 @@ class DataClient:
         data = {
                 'camera_id'    : camera_id
                ,'location'     : location
-               ,'male_count'   : sum([1 for g in genders if g[0]=='male'])
-               ,'female_count' : sum([1 for g in genders if g[0]=='female'])
-               ,'gender_list'     : ','.join(str( g[0] ) for g in genders)
-               ,'age_list' : ','.join(str( g[1] ) for g in genders)
+               ,'male_count'   : sum([1 for g in demographics if g[0]=='male'])
+               ,'female_count' : sum([1 for g in demographics if g[0]=='female'])
+               ,'gender_list'     : ','.join(str( g[0] ) for g in demographics)
+               ,'age_list' : ','.join(str( g[1] ) for g in demographics)
         }
         headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
         self.logger.info("Uploading demographics...")
         r = _requests.post(protocol+cred+"@"+uri+path,json=data,headers=headers)
         self.logger.info("Demographics upload: "+str(r))
-
 
