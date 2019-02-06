@@ -48,8 +48,6 @@ def refresh():
     cfg.load()
 
 def main():
-    refresh()
-
     logger,camera,face_detector,dataClient,ads,demo = get_interfaces()
 
     while cfg['camera']['enabled']:
@@ -74,6 +72,7 @@ def main():
                 ads = _ads = ads.get_client(logger,cfg['ads'])
 
         time.sleep(5)
+        refresh()
 
 if __name__ == "__main__":
     main()
