@@ -28,7 +28,8 @@ cfg_defaults = {
         , 'library'           : '/opt/signage/videos'
         , 'logfile_path'      : None
         , 'logfile_maxbytes'  : 3750000
-        , 'pause_secs'        : 5
+        , 'cooldown_secs'     : 5
+        , 'allow_repeats'     : False
         , 'display'           : {
               'rotation'          : 0
             , 'window'            : [0,0,480,640]

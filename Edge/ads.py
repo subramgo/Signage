@@ -14,8 +14,6 @@ import log
 import config
 import sharedconfig
 
-# TODO collect demographics while on cooldown
-
 class Library:
     """
         Class to manage ad library & programming.
@@ -33,30 +31,44 @@ class Library:
     def catalogue(self):
         return self._catalogue
 
-    def __init__(self,library_root_path = '/opt/signage/videos',logger=None):
+    def __init__(self,repeats=False,library_root_path = '/opt/signage/videos',logger=None):
         self._path = pathlib.PurePath(library_root_path)
 
+        self.allow_repeats = repeats
         self.programming = config.Config(
                       filepath = self.path.joinpath("program.yml").as_posix()
                     , description = "Ad Programming")
         self.logger = logger
-        self._catalogue = [x for x in os.listdir(self.path.as_posix()) if x.endswith('.mp4')]
+
+        self._catalogue = [x for x in os.listdir(self.path.as_posix()) if self._ismediafilename(x)]
         self._now_playing = None # track & avoid repeats
+
+    def _ismediafilename(self,filename):
+        return filename.endswith('.mp4') or filename.endswith('.png')
 
     def newMedia(self,filters = []):
         """ Return file path for a new media item.
             `filters`: list of keys to `self.programming`. """
-        newset = set(self.catalogue) - set([self._now_playing])
         
+        newset = set(self.catalogue)
+
+        if not self.allow_repeats:
+            newset -= set([self._now_playing])
+        
+        if not filters:
+            filters = ['default']
         for _filter in filters:
-            newset.intersection_update(self.programming[_filter])
+            try:
+                newset.intersection_update(self.programming[_filter])
+            except:
+                pass
 
         if newset:
             new = random.sample(newset,1)[0]
         else:
             new = random.sample(self.catalogue,1)[0]
 
-        self.logger.info("Selected random video {}".format(new) + (" using filters {}".format(','.join(filters)) if filters else '') )
+        self.logger.info("Selected media {}".format(new) + (" using filters {}".format(','.join(filters)) if filters else '') )
 
         self._now_playing = new
         return self.path.joinpath(new).as_posix()
@@ -94,6 +106,9 @@ class Demographics:
     def __init__(self,logger):
         self.logger = logger
 
+    def __nonzero__(self):
+        return len(self.audience) > 0
+
     def update(self,new_headcounts):
         self._audience += new_headcounts
 
@@ -124,31 +139,32 @@ class NullPlayer:
     def catalogue(self):
         return []
 
-class VLCPlayer(rpyc.Service):
+class ImagePlayer(rpyc.Service):
     def __init__(self,cfg = sharedconfig.cfg):
         super().__init__()
 
         self._cfg_refresh(cfg)
         self.logger = log.get_ad_logger(self.adfig)
 
-
         if not self.adfig['enabled']:
             self.logger.info("Ad service is disabled.")
         else:
             self.logger.info("Starting ad server.")
 
-        self.lib = Library(self.adfig['library'],self.logger)
+        self.lib = Library(self.adfig['allow_repeats'],self.adfig['library'],self.logger)
         self._last_played = 0
         self._playing = False
         self._demographics = Demographics(self.logger)
 
-        self.play()
+        thread = threading.Thread(target=self._playLoop)
+        thread.start()
 
     def _cfg_refresh(self,newfig = None):
         if newfig:
             self.cfg = newfig
 
         self.cfg.load()
+        self.cfg.dump()
         self.camfig = self.cfg['camera']
         self.adfig = self.cfg['ads']
 
@@ -158,71 +174,45 @@ class VLCPlayer(rpyc.Service):
     def on_disconnect(self, conn):
         self.logger.info("Client disconnected from ad server.")
 
-    def ready(self):
-        #print("Cooldown check: {} last : {} now".format(self._last_played,time.time()))
-        return self.adfig['enabled'] and \
-               self.adfig['pause_secs'] < (time.time()-self._last_played)
+    def cooling_down(self):
+        return self.adfig['cooldown_secs'] > (time.time()-self._last_played)
 
-    def play(self,video_path = None):
-        self._cfg_refresh()
-        if not self.ready():
+    def _playLoop(self):
+        """ Run in background thread """
+        if not self.adfig['enabled']:
             return
-        else:
+        self.playing = None
+        self.play()
+        while True:
+            self.play()
+            time.sleep(1)
+
+    def play(self):
+        """ Respecting cooldown, interrupt and refresh current playback"""
+        self._cfg_refresh()
+        if self.cooling_down():
+            return
+
+        if self._demographics:
             self._last_played = time.time()
 
-        if not video_path:        
-            video_path = self._demographics.target_ad(self.lib)
+        media_path = self._demographics.target_ad(self.lib)
 
-        geomy,geomx,height,width = [str(x) for x in self.adfig['display']['window']]
-        rotation = self.adfig['display']['rotation']
+        #geomy,geomx,height,width = [str(x) for x in self.adfig['display']['window']]
+        #rotation = self.adfig['display']['rotation']
         
-        popen_args = ['--disable-screensaver'
-                    , '--no-audio'
-                    , '--no-video-deco'
-                    , '--no-autoscale'
-                    , "--width={}".format(width)
-                    , "--height={}".format(height)
-                    , "--video-y={}".format(geomy)
-                    , "--video-x={}".format(geomx)
-                    ]
+        popen_args = ['xdg-open'] if platform()=='ubuntu' else ['open']
+        popen_args.append(media_path)
 
-        if platform()=='ubuntu':
-            popen_args = ['cvlc'] + popen_args
-        else:
-            popen_args = ['vlc'] + \
-                    popen_args + \
-                    [ "--transform-type={}".format(rotation)
-                    , '--video-filter="transform{true}"']
-        popen_args.append(video_path)
-
-        #self.logger.info(' '.join(popen_args))
-        self.popenAndCall(self.play,popen_args)
-
-
-    def popenAndCall(self,onExit, popenArgs):
-        """
-        Runs the given args in a subprocess.Popen, and then calls the function
-        onExit when the subprocess completes.
-        onExit is a callable object, and popenArgs is a list/tuple of args that 
-        would give to subprocess.Popen.
-        """
-        def runInThread(onExit, popenArgs):
-            if self._playing:
-                self._playing.terminate()
-            self._playing = subprocess.Popen(' '.join(popenArgs),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,shell=True)
-            self._playing.wait()
-            onExit()
-            return
-        thread = threading.Thread(target=runInThread, args=(onExit, popenArgs))
-        thread.start()
-        # returns immediately after the thread starts
-        return thread
+        if self.playing:
+            self.playing.terminate()
+        self.playing = subprocess.Popen(' '.join(popen_args),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,shell=True)
 
     def exposed_demographics(self,demographics):
         if not demographics:
             return
             
-        cooldown = self.adfig['pause_secs'] - (time.time()-self._last_played)
+        cooldown = self.adfig['cooldown_secs'] - (time.time()-self._last_played)
         if cooldown >=0:
             self.logger.info("Received new demographics but still on cooldown - {:.4} secs".format(cooldown))
 
@@ -269,7 +259,7 @@ def get_client(logger,cfg):
     return ad_player
 
 def main():
-    t = rpyc.utils.server.ThreadedServer(VLCPlayer(), port=18861)
+    t = rpyc.utils.server.ThreadedServer(ImagePlayer(), port=18861)
     t.start()
 
 if __name__ == '__main__':
