@@ -215,7 +215,7 @@ def get_live_age_chart(location):
 
 
     layout = go.Layout(
-        xaxis=dict(showgrid=False),
+        xaxis=dict(showgrid=True),
         paper_bgcolor="white",
         plot_bgcolor="white",
         title="Age distribution",
@@ -467,10 +467,12 @@ layout = [
                     html.P("     "),
                     dcc.Graph(
                         id = "live_engagement_chart",
-                        style = {"height": "500", "width": "98%"},
+                        style = {"height": "505", "width": "98%","margin":5},
                         config = dict(displayModeBar=False),
                     ),
                 ],
+                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
                 className="four columns",
 
 
@@ -482,19 +484,21 @@ layout = [
                     html.P(" "),
                     dcc.Graph(
                         id = "live_impressions_chart",
-                        style={"height": "230", "width": "98%"},
+                        style={"height": "250", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
 
                     html.P("        "),
                     dcc.Graph(
                         id = "live_gender_chart",
-                        style={"height": "230", "width": "98%"},
+                        style={"height": "250", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
 
 
                 ],
+                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
                 className = "four columns",
 
 
@@ -506,19 +510,21 @@ layout = [
                     html.P(" "),
                     dcc.Graph(
                         id = "live_dwell_chart",
-                        style={"height": "230", "width": "98%"},
+                        style={"height": "250", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
 
                     html.P("        "),
                     dcc.Graph(
                         id = "live_age_chart",
-                        style={"height": "230", "width": "98%"},
+                        style={"height": "250", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
 
 
                 ],
+                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
                 className = "four columns",
 
 

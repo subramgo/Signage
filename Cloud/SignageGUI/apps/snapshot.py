@@ -295,11 +295,13 @@ layout = [
                     html.P("Total Impressions"),
                     dcc.Graph(
                         id = "impressions_chart",
-                        style={"height": "90%", "width": "98%"},
+                        style={"height": "90%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                         figure =get_impressions_chart()
                     ),
                 ],
+                                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
                 className="six columns chart_div",
                 ),
             html.Div(
@@ -307,11 +309,13 @@ layout = [
                     html.P("Average Dwell time"),
                     dcc.Graph(
                         id = "dwelltime_chart",
-                        style = {"height": "90%", "width": "98%"},
+                        style = {"height": "90%", "width": "98%","margin":5},
                         config = dict(displayModeBar=False),
                         figure = get_dwelltime_chart()
                     ),
                 ],
+                                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
                 className="six columns chart_div",
                 ),
             
@@ -328,11 +332,13 @@ layout = [
                     html.P("Demographics"),
                     dcc.Graph(
                         id = "demograpics_chart",
-                        style={"height": "90%", "width": "98%"},
+                        style={"height": "90%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                         figure =get_demographics_chart()
                     ),
                 ],
+                                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
                 className="six columns chart_div",
                 ),
             html.Div(
@@ -340,11 +346,13 @@ layout = [
                     html.P("Engagement"),
                     dcc.Graph(
                         id = "engagement_chart",
-                        style = {"height": "90%", "width": "98%"},
+                        style = {"height": "90%", "width": "98%","margin":5},
                         config = dict(displayModeBar=False),
                         figure = get_age_bar(),
                     ),
                 ],
+                                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
                 className="six columns chart_div",
                 ),
             
