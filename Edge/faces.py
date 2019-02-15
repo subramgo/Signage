@@ -2,11 +2,11 @@
 import numpy as np
 import dlib
 import cv2
-
+import log
 
 class FaceDetector:
 
-    def __init__(self,logger):
+    def __init__(self,logger = log.get_null_logger('face detector')):
         self.detector = dlib.get_frontal_face_detector()
         self.logger = logger
 

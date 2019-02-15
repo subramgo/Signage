@@ -30,13 +30,13 @@ def get_interfaces():
     refresh()
 
     logger = log.get_logger(cfg['logging'])
-    _camera = camera.CamClient(logger,cfg['camera'])
+    cam = camera.CamClient(logger,cfg['camera'])
     face_detector = faces.FaceDetector(logger)
     dataClient = data.DataClient(logger,cfg['data'],cfg['camera'])
-    adserver = ads.get_client(logger,cfg['ads'])
     demo = demographics.DemographicsClassifier(logger,cfg['demographics'])
+    adserver = ads.get_client(logger,cfg['ads'])
 
-    return logger,_camera,face_detector,dataClient,adserver,demo
+    return logger,cam,face_detector,dataClient,adserver,demo
 
 
 ###########################################################
@@ -48,10 +48,14 @@ def refresh():
     cfg.load()
 
 def main():
-    logger,camera,face_detector,dataClient,adserver,demo = get_interfaces()
+    logger,cam,face_detector,dataClient,adserver,demo = get_interfaces()
 
-    while cfg['camera']['enabled']:
-        frame = camera.grab_frame()
+    while True:
+        if not cfg['camera']['enabled']:
+            time.sleep(5)
+            continue
+
+        frame = cam.grab_frame()
 
         ### Detection
         faces, windows = face_detector.detect_faces(frame)
@@ -71,7 +75,6 @@ def main():
                 logger.error("Ad server was disconnected.")
                 adserver = ads.get_client(logger,cfg['ads'])
 
-        time.sleep(5)
         refresh()
 
 if __name__ == "__main__":

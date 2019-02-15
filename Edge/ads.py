@@ -44,7 +44,8 @@ class Library:
         self._now_playing = None # track & avoid repeats
 
     def _ismediafilename(self,filename):
-        return filename.endswith('.mp4') or filename.endswith('.png')
+        return filename.endswith('.mp4') or filename.endswith('.png') and \
+           not filename.startswith('.')
 
     def newMedia(self,filters = []):
         """ Return file path for a new media item.

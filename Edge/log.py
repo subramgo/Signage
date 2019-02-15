@@ -2,7 +2,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-def get_null_logger(name):
+def get_null_logger(name = ''):
     hdlr = logging.NullHandler()
     logging.basicConfig(format="%(asctime)s: %(message)s")
     logger = logging.getLogger(name)
