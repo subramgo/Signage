@@ -51,18 +51,24 @@ app.layout = html.Div(
             dcc.Tabs(
                 id="tabs",
                 value="live_tab",
-
+        parent_className='custom-tabs',
+        className='custom-tabs-container',
                 children=[
-                    dcc.Tab(label="Live", value="live_tab"),
-                    dcc.Tab(label="Snapshot", value="snapshot_tab"),
-                    dcc.Tab(label="About", value="About_tab")
+                    dcc.Tab(label="Live", value="live_tab",className='custom-tab',
+                            selected_className='custom-tab--selected'),
+                    
+                    dcc.Tab(label="Snapshot", value="snapshot_tab",className='custom-tab',
+                            selected_className='custom-tab--selected'),
+                    
+                    dcc.Tab(label="About", value="About_tab",className='custom-tab',
+                            selected_className='custom-tab--selected')
 
 
                 ]
             )
 
             ],
-            className="row tabs_div"
+            className="row"
         ),
   
 
