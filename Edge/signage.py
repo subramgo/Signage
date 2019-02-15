@@ -10,7 +10,6 @@
       * face detection
 """
 
-import sys
 import time
 
 import log
@@ -74,6 +73,9 @@ def main():
             except:
                 logger.error("Ad server was disconnected.")
                 adserver = ads.get_client(logger,cfg['ads'])
+
+        else:
+            logger.info("No faces detected.")
 
         refresh()
 

@@ -1,4 +1,5 @@
-from keras.models import model_from_json
+from keras.models import load_model
+from keras.preprocessing.image import img_to_array
 import cv2
 import numpy as np
 import time
@@ -34,7 +35,7 @@ class DemographicsClassifier():
             logger.info("Demographics service is enabled.")
 
             self.model = None
-            self.model_path = '/opt/signage/models/wide_resnet_age_gender.h5'
+            self.model_path = self.cfg['model_path']
             self.__load_model()
 
     def __load_model(self):
@@ -42,7 +43,7 @@ class DemographicsClassifier():
       self.model = load_model(self.model_path)
       self.model._make_predict_function() 
 
-    def process_faces(self, in_image):
+    def process_face(self, in_image):
         
         image = in_image.resize((64, 64))
         image = img_to_array(image)
@@ -62,7 +63,7 @@ class DemographicsClassifier():
         else:
             return_gender = 'female'
 
-        return gender, age
+        return return_gender, age
 
     def process(self,faces):
         if self.cfg['enabled']:
@@ -70,7 +71,7 @@ class DemographicsClassifier():
             for face in faces:
                 try:
                     measures.append(self.process_face(in_image=face))
-                except e:
+                except Exception as e:
                     self.logger.error("face processing error "+str(e))
 
             self.log_summary(measures)
@@ -80,7 +81,7 @@ class DemographicsClassifier():
 
     def log_summary(self,processed_output):
         # print for human readers
-        rpt = "Demographics on faces: "
+        rpt = "Face summary: "
         rpt += ", ".join(["{} aged {}".format(gender,age) for gender,age in processed_output])
         rpt += "."
         self.logger.info(rpt)

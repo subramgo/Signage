@@ -7,7 +7,7 @@ import pathlib
 
 import threading
 import subprocess
-import rpyc
+#import rpyc
 import random
 
 import log
@@ -41,7 +41,7 @@ class Library:
         self.logger = logger
 
         self._catalogue = [x for x in os.listdir(self.path.as_posix()) if self._ismediafilename(x)]
-        self._now_playing = None # track & avoid repeats
+        self._last_played = None # track & avoid repeats
 
     def _ismediafilename(self,filename):
         return filename.endswith('.mp4') or filename.endswith('.png') and \
@@ -54,7 +54,7 @@ class Library:
         newset = set(self.catalogue)
 
         if not self.allow_repeats:
-            newset -= set([self._now_playing])
+            newset -= set([self._last_played])
         
         if not filters:
             filters = ['default']
@@ -69,27 +69,111 @@ class Library:
         else:
             new = random.sample(self.catalogue,1)[0]
 
-        self.logger.info("Selected media {}".format(new) + (" using filters {}".format(','.join(filters)) if filters else '') )
-
-        self._now_playing = new
         return self.path.joinpath(new).as_posix()
 
-class Demographics:
-    @property
-    def audience(self):
-        try:
-            return self._audience
-        except:
-            self._audience = []
-            return self._audience
-    
-    @property
-    def summary(self):
-        return self.summarize()
+class NullPlayer:
+    def demographics(self,demographics):
+        pass
+    def catalogue(self):
+        return []
 
-    @property
+class ImagePlayer:
+    def __init__(self,cfg = sharedconfig.cfg):
+        #super().__init__()
+
+        self._cfg_refresh(cfg)
+        self.logger = log.get_ad_logger(self.adfig)
+
+        if not self.adfig['enabled']:
+            self.logger.info("Ad service is disabled.")
+        else:
+            self.logger.info("Starting ad server.")
+
+        self.lib = Library(self.adfig['allow_repeats'],self.adfig['library'],self.logger)
+        self._last_played = 0
+        self._last_media = None
+        self.audience = []
+
+        thread = threading.Thread(target=self._playLoop)
+        thread.start()
+
+    def _cfg_refresh(self,newfig = None):
+        if newfig:
+            self.cfg = newfig
+
+        self.cfg.load()
+        #self.cfg.dump()
+        self.camfig = self.cfg['camera']
+        self.adfig = self.cfg['ads']
+
+    def on_connect(self, conn):
+        self.logger.info("Client connected to ad server.")
+
+    def on_disconnect(self, conn):
+        self.logger.info("Client disconnected from ad server.")
+
+    def cooling_down(self):
+        cld = self.adfig['cooldown_secs'] - (time.time()-self._last_played)
+        if cld > 0:
+            return cld
+        else:
+            return False
+
+    def _playLoop(self):
+        """ Run in background thread """
+        if not self.adfig['enabled']:
+            return
+        self.playing = None
+        self.play()
+        while True:
+            try:
+                self.play()
+                time.sleep(1)
+            except (EOFError,TimeoutError) as e:
+                continue
+
+    def play(self):
+        """ Respecting cooldown, interrupt and refresh current playback"""
+        self._cfg_refresh()
+        if self.cooling_down():
+            return
+
+        if len(self.audience) > 0:
+            self._last_played = time.time()
+
+        filters = self.ad_filters()
+        media_path = self.lib.newMedia(filters)
+
+        if self.adfig['allow_repeats'] and media_path == self._last_media:
+            return
+        else:
+            self.logger.info("Selected media {}".format(media_path) + (" using filters \'{}\'".format('\',\''.join(filters)) if filters else '') )
+            self._last_media = media_path
+
+        #geomy,geomx,height,width = [str(x) for x in self.adfig['display']['window']]
+        #rotation = self.adfig['display']['rotation']
+        
+        if platform()=='ubuntu':
+            popen_args = "eog -w {}".format(media_path).split(' ')
+        else:
+            popen_args = ['open',media_path]
+            if self.playing:
+                self.playing.terminate()
+        
+        self.playing = subprocess.Popen(' '.join(popen_args),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,shell=True)
+
     def ad_filters(self):
-        headcount,gender_ratio,mean_age = self.summary
+        if self.audience:
+            ppl_log = self.audience
+            self.audience = []
+
+            genders,ages = zip(*ppl_log)
+
+            gender_ratio = sum([1.0 for g in genders if g=='male'])/len(genders)
+            mean_age = int(sum(ages)/len(ages))
+        else:
+            gender_ratio,mean_age = None,None
+
         filters = []
         if mean_age:
             if mean_age > 30:
@@ -104,124 +188,11 @@ class Demographics:
                 filters.append('female')
         return filters
 
-    def __init__(self,logger):
-        self.logger = logger
-
-    def __nonzero__(self):
-        return len(self.audience) > 0
-
-    def update(self,new_headcounts):
-        self._audience += new_headcounts
-
-    def target_ad(self,ad_library):
-        if self.audience:
-            self.logger.info("Serving ad by demographics: {}-count, male-ratio={:.2}, mean-age={}.".format(*self.summary))
-        ad = ad_library.newMedia(self.ad_filters)
-        self._audience = []
-        return ad
-
-    def summarize(self,ppl_log = None):
-        if not ppl_log:
-            if not self.audience:
-                return 0,None,None
-            ppl_log = self.audience
-
-        age_translate = {'(0, 2)': 1, '(4, 6)': 5 , '(8, 12)': 10, '(15, 20)':18, '(25, 32)':28 , '(38, 43)':40}
-        ages = [age_translate[x[1]] for x in ppl_log]
-
-        gender_ratio = sum([1.0 for g in ppl_log if g[0]=='male'])/len(ppl_log)
-        mean_age = int(sum(ages)/len(ages))
-
-        return len(ppl_log),gender_ratio,mean_age
-
-class NullPlayer:
     def demographics(self,demographics):
-        pass
+        if demographics:
+            self.audience += demographics
+
     def catalogue(self):
-        return []
-
-class ImagePlayer(rpyc.Service):
-    def __init__(self,cfg = sharedconfig.cfg):
-        super().__init__()
-
-        self._cfg_refresh(cfg)
-        self.logger = log.get_ad_logger(self.adfig)
-
-        if not self.adfig['enabled']:
-            self.logger.info("Ad service is disabled.")
-        else:
-            self.logger.info("Starting ad server.")
-
-        self.lib = Library(self.adfig['allow_repeats'],self.adfig['library'],self.logger)
-        self._last_played = 0
-        self._playing = False
-        self._demographics = Demographics(self.logger)
-
-        thread = threading.Thread(target=self._playLoop)
-        thread.start()
-
-    def _cfg_refresh(self,newfig = None):
-        if newfig:
-            self.cfg = newfig
-
-        self.cfg.load()
-        self.cfg.dump()
-        self.camfig = self.cfg['camera']
-        self.adfig = self.cfg['ads']
-
-    def on_connect(self, conn):
-        self.logger.info("Client connected to ad server.")
-
-    def on_disconnect(self, conn):
-        self.logger.info("Client disconnected from ad server.")
-
-    def cooling_down(self):
-        return self.adfig['cooldown_secs'] > (time.time()-self._last_played)
-
-    def _playLoop(self):
-        """ Run in background thread """
-        if not self.adfig['enabled']:
-            return
-        self.playing = None
-        self.play()
-        while True:
-            self.play()
-            time.sleep(1)
-
-    def play(self):
-        """ Respecting cooldown, interrupt and refresh current playback"""
-        self._cfg_refresh()
-        if self.cooling_down():
-            return
-
-        if self._demographics:
-            self._last_played = time.time()
-
-        media_path = self._demographics.target_ad(self.lib)
-
-        #geomy,geomx,height,width = [str(x) for x in self.adfig['display']['window']]
-        #rotation = self.adfig['display']['rotation']
-        
-        popen_args = ['xdg-open'] if platform()=='ubuntu' else ['open']
-        popen_args.append(media_path)
-
-        if self.playing:
-            self.playing.terminate()
-        self.playing = subprocess.Popen(' '.join(popen_args),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,shell=True)
-
-    def exposed_demographics(self,demographics):
-        if not demographics:
-            return
-            
-        cooldown = self.adfig['cooldown_secs'] - (time.time()-self._last_played)
-        if cooldown >=0:
-            self.logger.info("Received new demographics but still on cooldown - {:.4} secs".format(cooldown))
-
-        self._demographics.update(demographics)
-
-        self.play()
-
-    def exposed_catalogue(self):
         return self.lib.catalogue
 
 def platform():
@@ -246,7 +217,8 @@ def get_client(logger,cfg):
         logger.info("Ad service is enabled.")
         while not ad_player:
             try:
-                ad_player = rpyc.connect(*cfg['server']).root
+                #ad_player = rpyc.connect(*cfg['server']).root
+                ad_player = ImagePlayer()
                 logger.info("Connected to ad server.")
 
                 if not ad_player.catalogue():
@@ -259,9 +231,9 @@ def get_client(logger,cfg):
                 continue
     return ad_player
 
-def main():
-    t = rpyc.utils.server.ThreadedServer(ImagePlayer(), port=18861)
-    t.start()
+#def main():
+#    t = rpyc.utils.server.ThreadedServer(ImagePlayer(), port=18861)
+#    t.start()
 
 if __name__ == '__main__':
     main()

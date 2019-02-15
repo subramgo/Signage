@@ -12,7 +12,7 @@ class FaceDetector:
 
     def detect_faces(self,frame):
         """ Given a PIL image, return faces and windows. """
-
+        original = frame
         # for dlib detector
         frame = frame.convert('RGB')
         width, height = frame.size
@@ -26,15 +26,10 @@ class FaceDetector:
         for i, d in enumerate(dets):
             window = self._pad_box([d.left(), d.top(), d.right(), d.bottom()],width, height)
             windows.append(window)
-            cv2.rectangle(frame, (d.left(), d.top()), (d.right(), d.bottom()), (255, 0, 255), 2)
+            #cv2.rectangle(frame, (d.left(), d.top()), (d.right(), d.bottom()), (255, 0, 255), 2)
             faces.append(frame[d.top():d.bottom(), d.left():d.right()])
 
-        if faces:
-            self.logger.info("Count of faces detected: {}".format(len(faces)))
-        else:
-            self.logger.info("No faces detected.")
-
-        return (faces,windows)
+        return ([original.crop(window) for window in windows],windows)
     
     def _pad_box(self,box, width, height):
         """Pad a box size for context."""

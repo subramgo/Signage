@@ -20,6 +20,7 @@ cfg_defaults = {
     , 'logging'               : {
           'logfile_path'      : None
         , 'logfile_maxbytes'  : 3750000
+        , 'log_level'         : 'info'
     }
  
     , 'ads'                   : {
@@ -28,6 +29,7 @@ cfg_defaults = {
         , 'library'           : '/opt/signage/videos'
         , 'logfile_path'      : None
         , 'logfile_maxbytes'  : 3750000
+        , 'log_level'         : 'info'
         , 'cooldown_secs'     : 5
         , 'allow_repeats'     : False
         , 'display'           : {
@@ -46,6 +48,7 @@ cfg_defaults = {
 
     , 'demographics'          : {
           'enabled'           : False
+        , 'model_path'        : '/opt/signage/models/wide_resnet_age_gender.h5'
     }
     }
 
