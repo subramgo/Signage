@@ -1,7 +1,7 @@
 class DistanceMeasure:
 	def __init__(self):
-		self.resol_A = 160641.0
-		self.resol_B = 28800.0
+		self.resol_A = 79777.0
+		self.resol_B = 1898.0
 
 	def _distance(self, windows):
 
