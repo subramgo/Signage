@@ -1,7 +1,7 @@
 from flask import Flask 
 from flask_bootstrap import Bootstrap 
-from .data import api_v2
-from .models import signage_db
+from data import api_v2
+from data import signage_db
 
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask import render_template, flash, redirect
@@ -36,7 +36,7 @@ def index():
 @app.before_first_request
 def setup_user():
     import yaml
-    from .models import signage_db, User
+    from data import signage_db, User
 
 
     with open("./web.yml", 'r') as ymlfile:
