@@ -60,10 +60,9 @@ app.layout = html.Div(
                             selected_className='custom-tab--selected'),
                     
                     dcc.Tab(label="Snapshot", value="snapshot_tab",className='custom-tab',
-                            selected_className='custom-tab--selected'),
-                    
-                    dcc.Tab(label="About", value="About_tab",className='custom-tab',
                             selected_className='custom-tab--selected')
+                    
+
 
 
                 ]
