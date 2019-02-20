@@ -22,7 +22,7 @@ app.layout = html.Div(
     [
 
 
-        html.Link(href="static/all.css",rel="stylesheet"),
+        #html.Link(href="static/all.css",rel="stylesheet"),
         html.Link(href="static/all.min.css",rel="stylesheet"),
 
         #html.Link(href="https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css",rel="stylesheet"),

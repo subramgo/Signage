@@ -4,7 +4,7 @@
 
 """
 import dash_html_components as html
-from app import signage_manager, app
+from app import signage_manager, app,indicator,indicator_alt
 from dash.dependencies import Input, Output, State
 
 import numpy as np
@@ -56,10 +56,10 @@ def get_live_count(location):
 
     df = signage_manager.live_faces(location)
     if df.empty == True:
-        return "\n Total Faces NA"
+        return "NA"
     
     count = df['no_faces'].sum()
-    return "\nTotal Faces " + str(count)
+    return str(count)
 
 
 
@@ -75,11 +75,11 @@ def get_male_count(location):
     demographics = signage_manager.live_demograhics(location)
     
     if demographics.empty == True:
-        return "\nMales NA"
+        return "NA"
 
 
     count = demographics['male_count'].sum()
-    return "\nMales " + str(count)
+    return str(count)
 
 
 
@@ -96,10 +96,10 @@ def get_female_count(location):
     demographics = signage_manager.live_demograhics(location)
 
     if demographics.empty == True:
-        return "\nFemales NA"
+        return "NA"
 
     count = demographics['female_count'].sum()
-    return "\nFemales " + str(count)
+    return str(count)
 
 
 @app.callback(
@@ -113,9 +113,9 @@ def get_activity(location):
     df = signage_manager.live_activity(location)
 
     if df.empty == True:
-        return "Dwell time NA"
+        return "NA"
     else:
-        return "Dwell time " + str(np.round(df['time_alive'].mean()))
+        return str(np.round(df['time_alive'].mean()))
 
 
 @app.callback(
@@ -130,7 +130,7 @@ def get_engagement(location):
     faces = signage_manager.live_faces(location)
 
     if faces.empty == True:
-        return "Engagement Range NA"
+        return "NA"
 
     faces_ = np.array(faces['distances'].tolist())
     mean_values = []
@@ -140,7 +140,7 @@ def get_engagement(location):
     engagement = np.array(mean_values).mean()
 
 
-    return "Engagement Range " + str(np.round(engagement,2) )
+    return str(np.round(engagement,2) )
 
 
 
@@ -402,61 +402,38 @@ layout = [
     #indicators row
     html.Div(
         [
+            indicator(
+                "#00cc96",
+                "Total Faces",
+                "live_faces_count",
+            ),
+            indicator_alt(
+                "#119DFF",
+                "Male",
+                "live_male_count",
+            ),
+            indicator(
+                "#EF553B",
+                "Female",
+                "live_female_count",
+            ),
+            indicator_alt(
+                "#00cc96",
+                "Dwell time",
+                "live_activity",
+            ),
+            indicator(
+                "#119DFF",
+                "Engagement Range",
+                "live_engagement",
+            ),
+
+        ],
+        className="row",
+        style={"marginTop": "5px", "max height": "200px"},
+    ),
 
 
-            html.Div(
-                html.P(
-                    id="live_faces_count",
-                ),
-                className="fa fa-user fa-2x fa-border icon-blue badge badge-blue two columns",
-
-
-                ),
-
-             html.Div(
-                html.P(
-                    id="live_male_count",
-                ),
-                className="fa fa-male fa-2x fa-border icon-grey badge two columns",
-
-
-                ),
-
-            html.Div(
-                html.P(
-                    id="live_female_count",
-                ),
-                className="fa fa-female fa-2x fa-border icon-blue badge badge-blue two columns",
-
-
-                ),
-
-
-
-            html.Div(
-                html.P(
-                    id="live_activity",
-                ),
-                className="fa fa-cogs fa-2x fa-border icon-grey badge two columns",
-
-
-                ),
-
-
-            html.Div(
-                html.P(
-                 id="live_engagement",
-                ),
-                className="fa fa-eye fa-2x fa-border icon-blue badge badge-blue two columns",
-
-
-                ),
-
-
-            ],
-                        className="row",
-                        style={"marginTop": "15px", "max height": "200px"},
-                	),
 
     # Charts
     html.Div(
