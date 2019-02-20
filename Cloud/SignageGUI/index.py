@@ -23,6 +23,8 @@ app.layout = html.Div(
 
 
         html.Link(href="static/all.css",rel="stylesheet"),
+        html.Link(href="static/all.min.css",rel="stylesheet"),
+
         #html.Link(href="https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css",rel="stylesheet"),
         html.Link(href="static/stylesheet-oil-and-gas.css",rel="stylesheet"),
 
@@ -97,4 +99,4 @@ def render_content(tab):
 
 if __name__ == "__main__":
     app.title = "Smart Signage"
-    app.run_server(host="0.0.0.0",port= 8080,debug=False)
+    app.run_server(host="0.0.0.0",port= 8080,debug=True)

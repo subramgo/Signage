@@ -1,5 +1,5 @@
 import math
-
+import os
 import pandas as pd
 import flask
 import dash
@@ -15,6 +15,10 @@ app.config.suppress_callback_exceptions = True
 signage_manager = SignageManager()
 
 millnames = ["", " K", " M", " B", " T"] # used to convert numbers
+
+@server.route('/favicon.ico')
+def favicon():
+    return flask.send_from_directory(os.path.join(server.root_path, 'static'),'favicon.ico')
 
 
 # return html Table with dataframe values  
