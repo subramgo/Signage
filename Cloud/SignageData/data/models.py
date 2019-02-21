@@ -16,6 +16,49 @@ class User(signage_db.Model):
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
 
+
+# One table to rule all
+class Person(signage_db.Model):
+    id = signage_db.Column(signage_db.Integer, primary_key=True, autoincrement=True)
+    location   = signage_db.Column(signage_db.String)
+    camera_id = signage_db.Column(signage_db.String)
+    date_created = signage_db.Column(signage_db.DateTime, default=signage_db.func.current_timestamp())
+    image_id = signage_db.Column(signage_db.String)
+    face_id = signage_db.Column(signage_db.Integer)
+    gender = signage_db.Column(signage_db.String)
+    time_alive = signage_db.Column(signage_db.Integer)
+    age = signage_db.Column(signage_db.String)
+    engagement_range= signage_db.Column(signage_db.Float)
+
+
+
+    def get_json(self):
+        return_value = {}
+        return_value["id"] = self.id 
+        return_value['camera_id'] = self.camera_id
+        epoch = datetime.datetime(1970,1,1)
+        delta_time = (self.date_created - epoch).total_seconds()
+        return_value['date_created'] = delta_time
+        return_value['face_id'] = self.face_id
+        return_value['age'] = self.age
+        return_value['image_id'] = self.image_id
+        return_value['location'] = self.location
+        return_value['gender'] = self.gender
+        return_value['time_alive'] = self.time_alive
+        return_value['engagement_range'] = self.engagement_rangex
+
+
+        return return_value
+
+    def __repr__(self):
+        return '<id {} date_created {} camera_id {} face_id {} age {} image_id {}\
+         location {} gender {} time_alive {} engagement_range {}>'.format(self.id, 
+            self.date_created, self.camera_id, self.face_id, self.age, self.image_id)
+
+
+
+
+
 class FaceSignage(signage_db.Model):
     id = signage_db.Column(signage_db.Integer, primary_key=True, autoincrement=True)
     location   = signage_db.Column(signage_db.String)
