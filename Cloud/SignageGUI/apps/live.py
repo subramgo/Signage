@@ -458,9 +458,9 @@ layout = [
     html.Div([
 
                 html.Div([
-                    html.H2("Select your signage"),]
-                ),
-                
+                    html.P(
+                    html.H4("Select your signage")),],
+                className="two columns", style={"text-align":"center","vertical-align":"middle"}),                
                 html.Div([
                     dcc.Dropdown(
                             id='location-dropdown',
@@ -468,17 +468,27 @@ layout = [
                             value=get_locations()[1],
 
                         ),
-                    ]
+                    ],
+                className="four columns",
+                style={"marginTop": "5px", "max height": "100px", "text-align":"left","align":"bottom","vertical-align":"bottom"},
                 ),
+
+
+                html.Div([
+                    html.H4(
+                    id='output-container'
+                    )]
+                    , className="six columns",style={"text-align":"center"})
+
+
             ],
             className="row",
-            #style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+            style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
 
 
     ),
 
 
-    html.Div(id='output-container'),
 
     #indicators row
     html.Div(
