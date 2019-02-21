@@ -79,20 +79,19 @@ def total_impressions_callback(df_json):
 
 def get_age_bar():
 
-	df = signage_manager.demographics()
+	df = signage_manager.person()
 
 	if df.empty == True:
 		return {'data':[],'layout':[]}
 
-	df = df[['location','age_list']]
+	df = df[['location','age']]
 
 	locations = df['location'].unique()
 
 	data = []
 	for location in locations:
-		age_list = df[df['location'] == location]['age_list'].tolist()
-		age_bukts = [age_bucket for age_bucket in itertools.chain.from_iterable(age_list)]
-		counter = collections.Counter(age_bukts)
+		age_list = df[df['location'] == location]['age'].tolist()
+		counter = collections.Counter(age_list)
 
 		trace = go.Bar(
 			x = list(counter.keys()),
@@ -118,44 +117,45 @@ def get_age_bar():
 
 def get_demographics_chart():
 
-	df = signage_manager.demographics()
+    df = signage_manager.person()
 
 
-	if df.empty == True:
-		return {"data":[],"layout":[]}
+    if df.empty == True:
+    	return {"data":[],"layout":[]}
 
-	df = df[['location','male_count','female_count']]
+    df = df.groupby(['location','gender']).aggregate({'face_id':'nunique'}).reset_index()
 
-	locations = df['location'].unique()
 
-	male_count = []
-	female_count = []
+    locations = df['location'].unique()
 
-	for location in locations:
-		male_count.append(sum(df[df['location'] == location]['male_count'].tolist()))
-		female_count.append(sum(df[df['location'] == location]['female_count'].tolist()))
+    male_count = []
+    female_count = []
 
-	trace1 = go.Bar(
-	    x=locations,
-	    y=male_count,
-	    name ='Male',
-	)
-	trace2 = go.Bar(
-	    x=locations,
-	    y=female_count,
-	    name='Female',
-	)
+    for location in locations:
+    	male_count.append(df[ (df['location'] == location) & (df['gender'] == 'male')]['face_id'].values[0])
+    	female_count.append(df[ (df['location'] == location) & (df['gender'] == 'female')]['face_id'].values[0])
 
-	data = [trace1, trace2]
+    trace1 = go.Bar(
+        x=locations,
+        y=male_count,
+        name ='Male',
+    )
+    trace2 = go.Bar(
+        x=locations,
+        y=female_count,
+        name='Female',
+    )
 
-	layout = go.Layout(
-	    xaxis=dict(showgrid=False),
-	    #margin=dict(l=35, r=25, b=25, t=5, pad=2),
-	    paper_bgcolor="white",
-	    plot_bgcolor="white",
-	)
+    data = [trace1, trace2]
 
-	return {"data":data,"layout":layout}
+    layout = go.Layout(
+        xaxis=dict(showgrid=False),
+        #margin=dict(l=35, r=25, b=25, t=5, pad=2),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+    )
+
+    return {"data":data,"layout":layout}
 
 
 
@@ -163,7 +163,7 @@ def get_demographics_chart():
 
 def get_dwelltime_chart():
 
-	df = signage_manager.activity()
+	df = signage_manager.person()
 
 	if df.empty == True:
 		return {"data":[],"layout":[]}
@@ -205,18 +205,17 @@ def get_dwelltime_chart():
 def get_impressions_chart():
 
 
-	df = signage_manager.faces()
+	df = signage_manager.person()
 
 	if df.empty == True:
 		return {"data":[],"layout":[]}
 
-	df = df[['location','no_faces']]
-	df = df[df['no_faces'] != 0]
+	df = df[['location','face_id']]
 
 	locations = df['location'].unique()
 	bar_data = []
 	for location in locations:
-		bar_data.append( sum(df[df['location'] == location]['no_faces'].tolist()) )
+		bar_data.append( df[df['location'] == location]['face_id'].count() )
 
 	data = [go.Bar(
             x=locations,
@@ -343,9 +342,9 @@ layout = [
                 ),
             html.Div(
                 [
-                    html.P("Engagement"),
+                    html.P("Age Buckets"),
                     dcc.Graph(
-                        id = "engagement_chart",
+                        id = "age_chart",
                         style = {"height": "90%", "width": "98%","margin":5},
                         config = dict(displayModeBar=False),
                         figure = get_age_bar(),

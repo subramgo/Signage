@@ -24,7 +24,7 @@ def get_locations():
     """
     Returns list of location for drop down box
     """
-    faces = signage_manager.faces()
+    faces = signage_manager.person()
     if faces.empty == True:
         return ({'label': "NA", 'value': "NA"},"N/A")
 
@@ -54,11 +54,11 @@ def get_live_count(location):
     Total impressions count
     """
 
-    df = signage_manager.live_faces(location)
+    df = signage_manager.live_person(location)
     if df.empty == True:
         return "NA"
     
-    count = df['no_faces'].sum()
+    count = df['face_id'].count()
     return str(count)
 
 
@@ -72,13 +72,14 @@ def live_male_count_callback(location):
 
 def get_male_count(location):
 
-    demographics = signage_manager.live_demograhics(location)
-    
+    demographics = signage_manager.live_person(location)
+    demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
+
     if demographics.empty == True:
         return "NA"
 
 
-    count = demographics['male_count'].sum()
+    count = demographics[demographics['gender'] == 'male']['face_id'].values[0]
     return str(count)
 
 
@@ -93,12 +94,14 @@ def live_female_count_callback(location):
 
 def get_female_count(location):
 
-    demographics = signage_manager.live_demograhics(location)
+    demographics = signage_manager.live_person(location)
+    demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
 
     if demographics.empty == True:
         return "NA"
 
-    count = demographics['female_count'].sum()
+
+    count = demographics[demographics['gender'] == 'female']['face_id'].values[0]
     return str(count)
 
 
@@ -110,12 +113,12 @@ def live_activity_callback(location):
     return get_activity(location)
 
 def get_activity(location):
-    df = signage_manager.live_activity(location)
+    df = signage_manager.live_person(location)
 
     if df.empty == True:
         return "NA"
     else:
-        return str(np.round(df['time_alive'].mean()))
+        return str(np.round(df['time_alive'].mean())) + ' seconds'
 
 
 @app.callback(
@@ -127,22 +130,31 @@ def live_engagement_callback(location):
 
 def get_engagement(location):
    
-    faces = signage_manager.live_faces(location)
+    df = signage_manager.live_person(location)
 
-    if faces.empty == True:
+    if df.empty == True:
+        return "NA"
+    else:
+        return str(np.round(df['engagement_range'].mean())) + ' Feet'
+    
+
+@app.callback(
+    Output("live_age_group", "children"),
+    [Input("location-dropdown", "value")]
+)
+def live_agegroup_callback(location):
+    return get_agegroup(location)
+
+def get_agegroup(location):
+   
+    df = signage_manager.live_person(location)
+
+    if df.empty == True:
         return "NA"
 
-    faces_ = np.array(faces['distances'].tolist())
-    mean_values = []
-    for row in faces_:
-        mean_values.append(np.array(row).mean())
-    
-    engagement = np.array(mean_values).mean()
+    ages_ = df['age'].tolist()
 
-
-    return str(np.round(engagement,2) )
-
-
+    return max(set(ages_), key=ages_.count)
 
 
 
@@ -156,7 +168,7 @@ def live_dwell_callback(location):
     return get_live_dwell_chart(location)
 
 def get_live_dwell_chart(location):
-    df = signage_manager.live_activity(location)
+    df = signage_manager.live_person(location)
     if df.empty == True:
         return {'data':[],'layout':[]}
 
@@ -181,25 +193,17 @@ def live_age_callback(location):
 
 def get_live_age_chart(location):
 
-    df = signage_manager.live_demograhics(location)
+    df = signage_manager.live_person(location)
 
     if df.empty == True:
         return {"data":[],"layout":[]}
 
     unique_age_buckets = []
 
-    age_list = df['age_list'].tolist()
-    for age in age_list:
-        content = ast.literal_eval(age)
+    age_list = df['age'].tolist()
 
-        # Single or multiple tuples ?
-        if type(content[0]) == int:
-            unique_age_buckets.append(content)
-        elif type(content[0]) == tuple:
-            for c in content:
-                unique_age_buckets.append(c) 
 
-    counter_ = collections.Counter(unique_age_buckets)
+    counter_ = collections.Counter(age_list)
 
     x_labels = []
     for ab in list(counter_.keys()):
@@ -238,24 +242,29 @@ def live_gender_callback(location):
 
 
 def get_live_gender_chart(location):
-    df = signage_manager.live_demograhics(location)
+    df = signage_manager.live_person(location)
 
 
     if df.empty == True:
         return {"data":[],"layout":[]}
 
-    df = df[['location','male_count','female_count']]
+    df = df.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
 
 
-    male_count = []
-    female_count = []
 
-    male_count   = sum(df['male_count'].tolist())
-    female_count = sum(df['female_count'].tolist())
+
+
+    male_count =   df[df['gender'] == 'male']['face_id'].values[0]
+    female_count = df[df['gender'] == 'female']['face_id'].values[0]
+
+    labels = ["Male","Female"]
+    colors = {'Male': 'blue','Female':'orange'}
+
 
     trace1 = go.Bar(
         x=["Male","Female"],
         y=[male_count,female_count],
+        marker={'color':['#0091D5','#1C4E80']}
     )
 
 
@@ -282,7 +291,7 @@ def live_impressions_callback(location):
 
 def get_live_impressions_chart(location):
 
-    df = signage_manager.live_faces(location)
+    df = signage_manager.live_person(location)
 
     if df.empty == True:
         return {"data":[],"layout":[]}
@@ -290,11 +299,11 @@ def get_live_impressions_chart(location):
     df['date_created'] = pd.to_datetime(df['date_created'],unit='s')
 
     times = pd.DatetimeIndex(df.date_created)
-    df = df.groupby([times.hour]).no_faces.sum()
+    df = df.groupby([times.hour]).face_id.count()
 
     df = df.reset_index()
 
-    data = [go.Scatter( x=df['date_created'], y=df['no_faces'] )]
+    data = [go.Bar( x=df['date_created'], y=df['face_id'] )]
 
     layout = go.Layout(
         title="Total Impressions",
@@ -321,13 +330,13 @@ def live_engagement_callback(location):
 
 def get_live_engagement_chart(location):
 
-    df = signage_manager.live_faces(location)
+    df = signage_manager.live_person(location)
 
     if df.empty == True:
         return {'data':[],'layout':[]}
 
-    distances = np.around([distance for distance 
-        in itertools.chain.from_iterable(df['distances'].tolist())], decimals=2)
+    distances = df['engagement_range'].tolist()
+
 
     count, y_values = np.histogram(distances, bins = 5, range=(1.0, max(distances)))
 
@@ -427,7 +436,11 @@ layout = [
                 "Engagement Range",
                 "live_engagement",
             ),
-
+            indicator_alt(
+                "#00cc96",
+                "Frequent Age Group",
+                "live_age_group",
+            ),
         ],
         className="row",
         style={"marginTop": "5px", "max height": "200px"},
@@ -444,7 +457,7 @@ layout = [
                     html.P("     "),
                     dcc.Graph(
                         id = "live_engagement_chart",
-                        style = {"height": "505", "width": "98%","margin":5},
+                        style = {"height": "510", "width": "98%","margin":5},
                         config = dict(displayModeBar=False),
                     ),
                 ],
@@ -458,13 +471,20 @@ layout = [
 
             html.Div(
                 [
+
+                    html.Div([
                     html.P(" "),
                     dcc.Graph(
                         id = "live_impressions_chart",
                         style={"height": "250", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
+                    ],
+                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
 
+                    ),
+
+                    html.Div([
                     html.P("        "),
                     dcc.Graph(
                         id = "live_gender_chart",
@@ -472,9 +492,13 @@ layout = [
                         config=dict(displayModeBar=False),
                     ),
 
+                    ],
+                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                    ),
+
 
                 ],
-                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
 
                 className = "four columns",
 
@@ -484,12 +508,20 @@ layout = [
 
                 html.Div(
                 [
+
+                    html.Div([
                     html.P(" "),
                     dcc.Graph(
                         id = "live_dwell_chart",
                         style={"height": "250", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
+                    ],
+                                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                    ),
+
+                    html.Div([
 
                     html.P("        "),
                     dcc.Graph(
@@ -497,10 +529,13 @@ layout = [
                         style={"height": "250", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
+                    ],
+                                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                    ),
 
 
                 ],
-                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
 
                 className = "four columns",
 
