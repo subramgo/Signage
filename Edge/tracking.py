@@ -13,20 +13,23 @@ class ObjectTracker:
         Gives random IDs but forgets objects when they aren't seen again. """
     
     def __init__(self,cfg):        
-        self.known = set()
+        self.known = []
 
         self.iou_threshold = cfg['iou_threshold']
         self.min_secs_live = cfg['min_secs_live']
 
     def track(self,faces):
         """ Assume all windows are from the same frame dimensions """
-        seen_time = time.time()
-        uknwn_faces = [TrackingObject(gen_iduid(),face.window,seen_time) for face in faces]
-        return self._track(uknwn_faces)
+        if not faces:
+            self.known = []
+        else:
+            seen_time = time.time()
+            uknwn_faces = [TrackingObject(gen_iduid(),face.window,seen_time) for face in faces]
+            return self._track(uknwn_faces)
 
     def _track(self,objects):
         """ General-purpose tracking based on TrackingObject class """
-        known = set()
+        known = []
         ids = []
         live_times = []
 
@@ -37,7 +40,7 @@ class ObjectTracker:
                 idd.last_coords = obj.last_coords
                 obj = idd
             
-            known.add(obj)
+            known.append(obj)
             ids.append(obj.iduid)
             live_times.append(obj.time_alive)
 
@@ -45,13 +48,13 @@ class ObjectTracker:
         return ids,live_times
 
     def recognize(self,obj):
-        for kno in self.known:
-            if self.object_match(obj,kno):
-                return kno
-        else:
-            return None
+        scores = [self.match_score(obj,kno) for kno in self.known]
+        
+        if any(scores):
+            return self.known[scores.index(max(scores))]  
+        return None
 
-    def object_match(self,objA,objB):
+    def match_score(self,objA,objB):
         """ Given two TrackingObjects, return Boolean match.
             Assume all coords are from the same frame dimensions. """
         # TODO add momentum estimates etc. for more sophisticated tracking
@@ -67,11 +70,10 @@ class ObjectTracker:
             boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
             boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
             iou = interArea / float(boxAArea + boxBArea - interArea)
-            if iou>self.iou_threshold:
-                return True
+            return iou
         except:
             pass
-        return False
+        return 0
 
 class TrackingObject:
     @property

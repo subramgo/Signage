@@ -75,6 +75,7 @@ def main():
                 adserver = ads.get_client(logger,cfg['ads'])
 
         else:
+            tracker.track(faces)
             logger.info("No faces detected.")
 
         refresh()
