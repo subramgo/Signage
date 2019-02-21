@@ -70,22 +70,22 @@ def post_faces():
     Post face data
     """
     payload = request.json
-    signage_obj = Person( age = payload['age'], 
-        camera_id = payload['camera_id'], location=payload['location'],
-        time_alive = payload['time_alive'], gender=payload['gender'], 
-        engagement_range=payload['engagement_range'],face_id=payload['face_id'])
-    signage_db.session.add(signage_obj)
+    ## Check if the face_id exist already
+    ### if exist, update time alive
+    person = Person.query.filter_by(face_id = payload['face_id']).first()
+    if person is not None:
+        person.time_alive = payload['time_alive']
+    else:
+
+        signage_obj = Person( age = payload['age'], 
+            camera_id = payload['camera_id'], location=payload['location'],
+            time_alive = payload['time_alive'], gender=payload['gender'], 
+            engagement_range=payload['engagement_range'],face_id=payload['face_id'])
+        
+        signage_db.session.add(signage_obj)
+    
     signage_db.session.commit()
     return  Response(response={'status': 'SUCCESS'}, status=200, mimetype="application/json")
-
-
-
-
-
-
-
-
-
 
 
 
