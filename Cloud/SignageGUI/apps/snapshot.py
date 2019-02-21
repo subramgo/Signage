@@ -107,6 +107,7 @@ def get_age_bar():
 	    #margin=dict(l=35, r=25, b=25, t=5, pad=2),
 	    paper_bgcolor="white",
 	    plot_bgcolor="white",
+        title="Age by Location"
 	)
 
 	return {"data":data,"layout":layout}
@@ -153,6 +154,7 @@ def get_demographics_chart():
         #margin=dict(l=35, r=25, b=25, t=5, pad=2),
         paper_bgcolor="white",
         plot_bgcolor="white",
+        title="Gender by Location"
     )
 
     return {"data":data,"layout":layout}
@@ -196,6 +198,7 @@ def get_dwelltime_chart():
 	    #margin=dict(l=35, r=25, b=25, t=5, pad=2),
 	    paper_bgcolor="white",
 	    plot_bgcolor="white",
+        title="Average Dwell Time by Location"
 	)
 
 	return {"data":data,"layout":layout}
@@ -215,7 +218,7 @@ def get_impressions_chart():
 	locations = df['location'].unique()
 	bar_data = []
 	for location in locations:
-		bar_data.append( df[df['location'] == location]['face_id'].count() )
+		bar_data.append( df[df['location'] == location]['face_id'].nunique() )
 
 	data = [go.Bar(
             x=locations,
@@ -235,9 +238,89 @@ def get_impressions_chart():
 	    #margin=dict(l=35, r=25, b=25, t=5, pad=2),
 	    paper_bgcolor="white",
 	    plot_bgcolor="white",
+        title="Impressions by Location"
 	)
 
 	return {"data":data,"layout":layout}
+
+
+
+############################## Engatement Chart #############################
+
+def get_engagement_chart():
+    df = signage_manager.person()
+
+    if df.empty == True:
+        return {'data':[],'layout':[]}
+
+
+    locations = df['location'].unique()
+    data = []
+
+    for location in locations:
+
+        distances = df[df['location'] == location]['engagement_range'].tolist()
+        x_values = np.random.randint(low=1,high=25,size=len(distances))
+
+        trace = go.Scatter(
+            x = x_values,
+            y = distances,
+            name = location,
+            mode = 'markers',
+            marker = dict(
+                size = 5,
+                line = dict(
+                    width = 1,
+                )
+            )
+        )
+        data.append(trace)
+
+
+
+
+    layout = dict(
+                  title ="Engagement Range Distribution",
+                  yaxis = dict(zeroline = False, title="Feet",xticks=None, range=(0,6)),
+                  xaxis = dict(zeroline = False, showgrid=False, title="Screen", tickvals=[])
+                 )
+
+    return dict(data=data, layout=layout)
+
+
+
+############################## Engagement Box Chart #########################
+
+def get_engagement_box_chart():
+    df = signage_manager.person()
+
+    if df.empty == True:
+        return {'data':[],'layout':[]}
+
+
+    locations = df['location'].unique()
+    data = []
+
+    for location in locations:
+
+        distances = df[df['location'] == location]['engagement_range'].tolist()
+        trace = go.Box(
+            y=distances,
+            name=location,
+            )
+        data.append(trace)
+
+    layout = go.Layout(
+        title="Engagement Range in Foot",
+    xaxis=dict(
+        zeroline=True
+    ),
+    boxmode='group'
+    )
+    
+    return dict(data=data, layout=layout)
+
+
 
 
 ############################## HTML Layout ##################################
@@ -286,90 +369,119 @@ layout = [
         className="row",
         style={"marginTop": "5px", "max height": "200px"},
 	),
+
+    html.Div([
 	#charts row div 
-    html.Div(
-        [
-            html.Div(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        dcc.Graph(
+                            id = "impressions_chart",
+                            style={"height": "100%", "width": "98%","margin":5},
+                            config=dict(displayModeBar=False),
+                            figure =get_impressions_chart()
+                        ),
+                    ],
+                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                    ),
+                
+                html.Div([html.P("")]),
+                
+                html.Div(
+                    [
+                        dcc.Graph(
+                            id = "dwelltime_chart",
+                            style = {"height": "100%", "width": "98%","margin":5},
+                            config = dict(displayModeBar=False),
+                            figure = get_dwelltime_chart()
+                        ),
+                    ],
+                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                    ),
+                
+
+            ],
+            className="four columns",
+    	),
+
+        html.Div(
                 [
-                    html.P("Total Impressions"),
-                    dcc.Graph(
-                        id = "impressions_chart",
-                        style={"height": "90%", "width": "98%","margin":5},
-                        config=dict(displayModeBar=False),
-                        figure =get_impressions_chart()
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id = "demograpics_chart",
+                                style={"height": "100%", "width": "98%","margin":5},
+                                config=dict(displayModeBar=False),
+                                figure =get_demographics_chart(),
+                            ),
+                        ],
+                        style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                    ),
+
+                    html.Div([html.P("")]),
+                    
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id = "age_chart",
+                                style = {"height": "100%", "width": "98%","margin":5},
+                                config = dict(displayModeBar=False),
+                                figure = get_age_bar(),
+                            ),
+                        ],
+                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
                     ),
                 ],
-                                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                className="four columns",
+        	),
 
-                className="six columns chart_div",
-                ),
             html.Div(
                 [
-                    html.P("Average Dwell time"),
-                    dcc.Graph(
-                        id = "dwelltime_chart",
-                        style = {"height": "90%", "width": "98%","margin":5},
-                        config = dict(displayModeBar=False),
-                        figure = get_dwelltime_chart()
-                    ),
+
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id = "engagement_box_chart",
+                                style={"height": "100%", "width": "98%","margin":5},
+                                config=dict(displayModeBar=False),
+                                figure =get_engagement_box_chart()
+                            ),
+                        ],
+                        style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                        ),
+
+
+                    html.Div([html.P("")]),
+
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id = "engagement_chart",
+                                style={"height": "100%", "width": "98%","margin":5},
+                                config=dict(displayModeBar=False),
+                                figure =get_engagement_chart()
+                            ),
+                        ],
+                        style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                        ),
+
                 ],
-                                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
-
-                className="six columns chart_div",
+                className="four columns",
                 ),
-            
 
-        ],
+ 
+    ],
         className="row",
-        style={"marginTop": "5px"}
-	),
-	#charts row div 
-    html.Div(
-        [
-            html.Div(
-                [
-                    html.P("Demographics"),
-                    dcc.Graph(
-                        id = "demograpics_chart",
-                        style={"height": "90%", "width": "98%","margin":5},
-                        config=dict(displayModeBar=False),
-                        figure =get_demographics_chart()
-                    ),
-                ],
-                                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
-
-                className="six columns chart_div",
-                ),
-            html.Div(
-                [
-                    html.P("Age Buckets"),
-                    dcc.Graph(
-                        id = "age_chart",
-                        style = {"height": "90%", "width": "98%","margin":5},
-                        config = dict(displayModeBar=False),
-                        figure = get_age_bar(),
-                    ),
-                ],
-                                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
-
-                className="six columns chart_div",
-                ),
-            
-
-        ],
-        className="row",
-        style={"marginTop": "5px"}
-	),
-
-
- ]
-
-
-
-
-
-
-
+        style={"marginTop": "5px", "max height": "600px"},
+    ),
+]
 
 
 

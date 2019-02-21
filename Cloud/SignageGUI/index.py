@@ -18,6 +18,26 @@ Color Scheme
  HEX color codes used: #F1F1F1, #202020, #7E909A, #1C4E80, #A5D8DD, #EA6A47, #0091D5
 
 """
+
+
+
+tabs_styles = {
+    'height': '44px'
+}
+tab_style = {
+    'borderBottom': '1px solid #d6d6d6',
+    'padding': '6px',
+    'fontWeight': 'bold'
+
+}
+
+tab_selected_style = {
+    'borderTop': '1px solid #d6d6d6',
+    'borderBottom': '1px solid #d6d6d6',
+    'backgroundColor': '#119DFF',
+    'color': 'white',
+    'padding': '6px'
+}
 app.layout = html.Div(
     [
 
@@ -41,8 +61,8 @@ app.layout = html.Div(
             html.Span("Smart Signage", className='app-title'),
             
             html.Div(
-                html.Img(src='./static/logo.png',height="70%")
-                ,style={"float":"right","height":"90%"})
+                html.Img(src='./static/logo.png',height="80%")
+                ,style={"float":"right","height":"80%","margin":"1% 1%"})
             ],
             className="row header"
             ),
@@ -53,23 +73,17 @@ app.layout = html.Div(
             dcc.Tabs(
                 id="tabs",
                 value="live_tab",
-        parent_className='custom-tabs',
-        className='custom-tabs-container',
+        #parent_className='custom-tabs',
+        #className='custom-tabs-container',
                 children=[
-                    dcc.Tab(label="Live", value="live_tab",className='custom-tab',
-                            selected_className='custom-tab--selected'),
+                    dcc.Tab(label="Single Signage View", value="live_tab",style=tab_style, selected_style=tab_selected_style),
                     
-                    dcc.Tab(label="Snapshot", value="snapshot_tab",className='custom-tab',
-                            selected_className='custom-tab--selected')
-                    
-
-
-
+                    dcc.Tab(label="Compare Signages", value="snapshot_tab",style=tab_style, selected_style=tab_selected_style)
                 ]
-            )
+            ,style=tabs_styles)
 
             ],
-            className="row"
+            className="row",style={"margin": "2% 3%"}
         ),
   
 

@@ -58,7 +58,7 @@ def get_live_count(location):
     if df.empty == True:
         return "NA"
     
-    count = df['face_id'].count()
+    count = df['face_id'].nunique()
     return str(count)
 
 
@@ -173,9 +173,9 @@ def get_live_dwell_chart(location):
         return {'data':[],'layout':[]}
 
     hist_data = df['time_alive'].tolist()
-    fig = ff.create_distplot([hist_data], ["Dwell time"],bin_size=[1, 10, 20, 30])
+    fig = ff.create_distplot([hist_data], ["Dwell time"],bin_size=[0.3],show_rug=False,colors=['#0091D5'])
 
-    fig['layout'].update(title='Dwell time distribution')
+    fig['layout'].update(title='Dwell Time Pockets',  yaxis={'tickformat': ',.0%','range': [0,0.6]})
     return fig
 
 
@@ -206,12 +206,16 @@ def get_live_age_chart(location):
     counter_ = collections.Counter(age_list)
 
     x_labels = []
+    width = []
     for ab in list(counter_.keys()):
         x_labels.append(str(ab))
+        width.append(.8)
 
     trace1 = go.Bar(
-        x=x_labels,
-        y=list(counter_.values()),
+        x=list(counter_.values()),
+        y=x_labels,
+        orientation = 'h',
+        width = width,
     )
 
 
@@ -222,11 +226,66 @@ def get_live_age_chart(location):
         xaxis=dict(showgrid=True),
         paper_bgcolor="white",
         plot_bgcolor="white",
-        title="Age distribution",
+        title="Age Mix",    
     )
 
     return {"data":data,"layout":layout}
 
+
+############################# Live age by gender chart #############
+
+@app.callback(
+    Output("live_agebygender_chart", "figure"),
+    [Input("location-dropdown", "value")]
+)
+def live_agebygender_callback(location):
+    return get_live_agebygender_chart(location)
+
+
+def get_live_agebygender_chart(location):
+
+    df = signage_manager.live_person(location)
+
+
+    if df.empty == True:
+        return {"data":[],"layout":[]}
+
+    ages = df['age'].unique()
+
+    labels = ["Male","Female"]
+    male_count_list = []
+    female_count_list =[]
+
+    for age in ages:
+        male_count =   df[(df['gender'] == 'male') & (df['age'] == age)]['face_id'].nunique()
+        female_count = df[(df['gender'] == 'female') & (df['age'] == age) ]['face_id'].nunique()
+        male_count_list.append(male_count)
+        female_count_list.append(female_count)
+
+
+    trace1 = go.Bar(
+        x=ages,
+        y=male_count_list,
+        name ='Male',
+    )
+    trace2 = go.Bar(
+        x=ages,
+        y=female_count_list,
+        name='Female',
+    )
+
+    data = [trace1, trace2]
+
+    layout = go.Layout(
+        xaxis=dict(showgrid=False),
+        #margin=dict(l=35, r=25, b=25, t=5, pad=2),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        title="Gender Count by Age",
+
+    )
+
+    return {"data":data,"layout":layout}
 
 
 
@@ -261,26 +320,38 @@ def get_live_gender_chart(location):
     colors = {'Male': 'blue','Female':'orange'}
 
 
-    trace1 = go.Bar(
-        x=["Male","Female"],
-        y=[male_count,female_count],
-        marker={'color':['#0091D5','#1C4E80']}
-    )
-
+    trace1 = {
+        "values": [male_count,female_count],
+        "labels": ["Male","Female"],
+        "domain": {"x": [0, 1]},
+      "name": "Gender Percentage",
+      "hoverinfo":"label+percent+name",
+      "hole": .4,
+      "type": "pie"
+    }
 
     data = [trace1]
 
     layout = go.Layout(
-        xaxis=dict(showgrid=False),
-        #margin=dict(l=35, r=25, b=25, t=5, pad=2),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        title="Gender distribution",
-    )
+        title="Gender Mix",
+        autosize=True,
+        annotations =[
+            {
+                "font": {
+                    "size": 20
+                },
+                "showarrow": False,
+                "text": str(male_count + female_count),
+
+                #"x": 0.20,
+                #"y": 0.5
+            }]
+
+        )
 
     return {"data":data,"layout":layout}
 
-############################### Live Impressions chart ###################
+############################### Live Hourly Impressions chart ###################
 
 @app.callback(
     Output("live_impressions_chart", "figure"),
@@ -299,16 +370,17 @@ def get_live_impressions_chart(location):
     df['date_created'] = pd.to_datetime(df['date_created'],unit='s')
 
     times = pd.DatetimeIndex(df.date_created)
-    df = df.groupby([times.hour]).face_id.count()
+    df = df.groupby([times.hour]).face_id.nunique()
 
     df = df.reset_index()
 
     data = [go.Bar( x=df['date_created'], y=df['face_id'] )]
 
     layout = go.Layout(
-        title="Total Impressions",
-        xaxis=dict(showgrid=False,title="Hours"),
-        yaxis=dict(title="Impressions"),
+        title="Hourly Impressions",
+        xaxis=dict(showgrid=False,title="Hour of the day"),
+        yaxis=dict(title="Face Count"),
+        barmode='relative',
         #margin=dict(l=35, r=25, b=25, t=5, pad=2),
         paper_bgcolor="white",
         plot_bgcolor="white",
@@ -336,29 +408,11 @@ def get_live_engagement_chart(location):
         return {'data':[],'layout':[]}
 
     distances = df['engagement_range'].tolist()
-
-
-    count, y_values = np.histogram(distances, bins = 5, range=(1.0, max(distances)))
-
-
-    data_frame = pd.DataFrame()
-    x_values = []
-    y_vals   = []
-
-
-    for i in range(len(count)):
-        if count[i] > 0:
-            x_values.extend(np.random.randint(low=1, high=25, size=count[i]))
-            y_vals.extend(np.repeat( ( (y_values[i] + y_values[i+1] )/2*1.0) 
-                + (np.random.random()), count[i]))
-
-    data_frame['x_vals'] = x_values
-    data_frame['y_vals'] = y_vals
-
+    x_values = np.random.randint(low=1,high=25,size=len(distances))
 
     trace0 = go.Scatter(
-        x = data_frame['x_vals'],
-        y = data_frame['y_vals'],
+        x = x_values,
+        y = distances,
         name = 'Above',
         mode = 'markers',
         marker = dict(
@@ -385,28 +439,46 @@ def get_live_engagement_chart(location):
 
 ###############################################################################################
 
+@app.callback(
+    Output('output-container', 'children'),
+    [Input('location-dropdown', 'value')])
+def update_output(value):
+    return 'You have selected "{}"'.format(value)
+
+
 layout = [
 
-       html.P(
-        '',
-        className="twelve columns indicator_text",
 
-    ),
+
 
     # drop down
 
+
+
     html.Div([
-                dcc.Dropdown(
-                        id='location-dropdown',
-                        options=get_locations()[0],
-                        value=get_locations()[1],
 
-                    ),
-                ],
-                className="row",
-                style={"marginTop": "15px", "max height": "200px"},
-
+                html.Div([
+                    html.H2("Select your signage"),]
                 ),
+                
+                html.Div([
+                    dcc.Dropdown(
+                            id='location-dropdown',
+                            options=get_locations()[0],
+                            value=get_locations()[1],
+
+                        ),
+                    ]
+                ),
+            ],
+            className="row",
+            #style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+
+    ),
+
+
+    html.Div(id='output-container'),
 
     #indicators row
     html.Div(
@@ -452,31 +524,28 @@ layout = [
     html.Div(
         [
             
+            html.Div([
+
             html.Div(
                 [
-                    html.P("     "),
                     dcc.Graph(
                         id = "live_engagement_chart",
-                        style = {"height": "510", "width": "98%","margin":5},
+                        style = {"height": "100%", "width": "98%","margin":5},
                         config = dict(displayModeBar=False),
                     ),
                 ],
                 style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
 
-                className="four columns",
 
 
                 ),
 
+                 html.Div([html.P("")]),
+                  html.Div([
 
-            html.Div(
-                [
-
-                    html.Div([
-                    html.P(" "),
                     dcc.Graph(
-                        id = "live_impressions_chart",
-                        style={"height": "250", "width": "98%","margin":5},
+                        id = "live_age_chart",
+                        style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
                     ],
@@ -484,11 +553,35 @@ layout = [
 
                     ),
 
+                ],
+                className="four columns",
+
+                ),
+
+
+
+            html.Div(
+                [
+
                     html.Div([
-                    html.P("        "),
+                    dcc.Graph(
+                        id = "live_impressions_chart",
+                        style={"height": "100%", "width": "98%","margin":5},
+                        config=dict(displayModeBar=False),
+                    ),
+                    ],
+                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+
+                    ),
+                    
+                    
+                    html.Div([html.P("")]),
+
+                    html.Div([
+                    #html.P("        "),
                     dcc.Graph(
                         id = "live_gender_chart",
-                        style={"height": "250", "width": "98%","margin":5},
+                        style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
 
@@ -510,10 +603,9 @@ layout = [
                 [
 
                     html.Div([
-                    html.P(" "),
                     dcc.Graph(
                         id = "live_dwell_chart",
-                        style={"height": "250", "width": "98%","margin":5},
+                        style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
                     ],
@@ -521,12 +613,13 @@ layout = [
 
                     ),
 
+                    html.Div([html.P("")]),
+
                     html.Div([
 
-                    html.P("        "),
                     dcc.Graph(
-                        id = "live_age_chart",
-                        style={"height": "250", "width": "98%","margin":5},
+                        id = "live_agebygender_chart",
+                        style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
                     ],
