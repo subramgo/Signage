@@ -74,17 +74,10 @@ class DemographicsClassifier():
                 except Exception as e:
                     self.logger.error("face processing error "+str(e))
 
-            self.log_summary(measures)
-            return measures
+            genders,ages = zip(*measures)
+            return genders,ages
         else:
             return None
-
-    def log_summary(self,processed_output):
-        # print for human readers
-        rpt = "Face summary: "
-        rpt += ", ".join(["{} aged {}".format(gender,age) for gender,age in processed_output])
-        rpt += "."
-        self.logger.info(rpt)
 
 
 

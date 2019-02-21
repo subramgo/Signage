@@ -29,7 +29,11 @@ class FaceDetector:
             #cv2.rectangle(frame, (d.left(), d.top()), (d.right(), d.bottom()), (255, 0, 255), 2)
             faces.append(frame[d.top():d.bottom(), d.left():d.right()])
 
-        return ([original.crop(window) for window in windows],windows)
+        faces = [original.crop(window) for window in windows]
+        for face,window in zip(faces,windows):
+            face.window = window
+
+        return faces
     
     def _pad_box(self,box, width, height):
         """Pad a box size for context."""

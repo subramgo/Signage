@@ -7,7 +7,13 @@ import config
 ###########################################################
 
 cfg_defaults = { 
-      'camera'                : {
+      'logging'               : {
+          'logfile_path'      : None
+        , 'logfile_maxbytes'  : 3750000
+        , 'log_level'         : 'info'
+    }
+ 
+    , 'camera'                : {
           'enabled'           : False
         , 'stream_address'    : '192.168.1.168/usecondstream'
         , 'protocol'          : 'rtsp://'
@@ -16,13 +22,24 @@ cfg_defaults = {
         , 'credentials'       : '*user*:*pass*'
         , 'rotation'          : 0
     }
-    
-    , 'logging'               : {
-          'logfile_path'      : None
-        , 'logfile_maxbytes'  : 3750000
-        , 'log_level'         : 'info'
+
+    , 'demographics'          : {
+          'enabled'           : False
+        , 'model_path'        : '/opt/signage/models/wide_resnet_age_gender.h5'
     }
- 
+
+    , 'tracking'              : {
+          'iou_threshold'     : 0.8
+        , 'min_secs_live'     : 2 
+    }
+
+    , 'data'                  : {
+          'enabled'           : False
+        , 'credentials'       : '*user*:*pass*'
+        , 'data_server'       : '127.0.0.1:5000'
+        , 'data_protocol'     : 'http://'
+    }
+    
     , 'ads'                   : {
           'enabled'           : False
         , 'server'            : ['localhost',18861]
@@ -37,18 +54,6 @@ cfg_defaults = {
             , 'window'            : [0,0,480,640]
             , 'debug_view'        : False
             }
-    }
-
-    , 'data'                  : {
-          'enabled'           : False
-        , 'credentials'       : '*user*:*pass*'
-        , 'data_server'       : '127.0.0.1:5000'
-        , 'data_protocol'     : 'http://'
-    }
-
-    , 'demographics'          : {
-          'enabled'           : False
-        , 'model_path'        : '/opt/signage/models/wide_resnet_age_gender.h5'
     }
     }
 

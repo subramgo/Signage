@@ -167,7 +167,8 @@ class ImagePlayer:
             ppl_log = self.audience
             self.audience = []
 
-            genders,ages = zip(*ppl_log)
+            # currently not using any of the other audience measures
+            genders,ages = zip(*[(x.gender,x.age) for x in ppl_log])
 
             gender_ratio = sum([1.0 for g in genders if g=='male'])/len(genders)
             mean_age = int(sum(ages)/len(ages))
