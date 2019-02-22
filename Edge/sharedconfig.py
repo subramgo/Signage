@@ -21,6 +21,8 @@ cfg_defaults = {
         , 'name'              : 'signage-camera-1'
         , 'credentials'       : '*user*:*pass*'
         , 'rotation'          : 0
+        , 'p_fov'             : 78.0
+        , 'p_fcl'             : 336.6
     }
 
     , 'demographics'          : {

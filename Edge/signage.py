@@ -39,7 +39,7 @@ def main():
     logger = log.get_logger(cfg['logging'])
     cam = camera.CamClient(logger,cfg['camera'])
     face_detector = detection.FaceDetector(logger)
-    radar = distance.DistanceMeasurer()
+    radar = distance.DistanceMeasurer(cfg['camera'])
     demog = demographics.DemographicsClassifier(logger,cfg['demographics'])
     tracker = tracking.ObjectTracker(cfg['tracking'])
     dataClient = data.DataClient(logger,cfg)
@@ -57,7 +57,7 @@ def main():
 
         ### Audience measurement when faces detected
         if faces:
-            distances = radar.measure(faces)
+            distances = radar.measure(faces,frame)
 
             ids,live_times = tracker.track(faces)
 
