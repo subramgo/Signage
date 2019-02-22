@@ -374,7 +374,7 @@ def get_live_impressions_chart(location):
 
     df = df.reset_index()
 
-    data = [go.Bar( x=df['date_created'], y=df['face_id'] )]
+    data = [go.Bar( x=df['date_created'], y=df['face_id'], text=df['face_id'], textposition='auto',marker=dict(color='#ff8333') )]
 
     layout = go.Layout(
         title="Hourly Impressions",
@@ -443,8 +443,17 @@ def get_live_engagement_chart(location):
     Output('output-container', 'children'),
     [Input('location-dropdown', 'value')])
 def update_output(value):
-    return 'You have selected "{}"'.format(value)
+    return 'Audience Measurement for "{}"'.format(value)
 
+
+
+vertical_center = {
+  "margin": 0,
+  "position": "absolute",
+  "top": "50%",
+  "-ms-transform": "translateY(-50%)",
+  "transform": "translateY(-50%)"
+}
 
 layout = [
 
@@ -458,32 +467,39 @@ layout = [
     html.Div([
 
                 html.Div([
-                    html.P(
-                    html.H4("Select your signage")),],
-                className="two columns", style={"text-align":"center","vertical-align":"middle"}),                
+                        
+                        html.P("Select a signage from drop down")
+
+                    ],
+                    className='three columns',
+                                            style={'padding-top':'15px','padding-left':'20px'}
+
+                    ),
+
                 html.Div([
-                    dcc.Dropdown(
-                            id='location-dropdown',
-                            options=get_locations()[0],
-                            value=get_locations()[1],
+                        dcc.Dropdown(
+                                id='location-dropdown',
+                                options=get_locations()[0],
+                                value=get_locations()[1],
+
+                            ),
+                        ],
+                        className='three columns',
+                        style={'padding-top':'12px','padding-left':'20px'}
 
                         ),
-                    ],
-                className="four columns",
-                style={"marginTop": "5px", "max height": "100px", "text-align":"left","align":"bottom","vertical-align":"bottom"},
-                ),
 
 
                 html.Div([
                     html.H4(
                     id='output-container'
                     )]
-                    , className="six columns",style={"text-align":"center"})
+                    , className="six columns",style={"text-align":"right"})
 
 
             ],
             className="row",
-            style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+            style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
 
     ),
@@ -525,7 +541,7 @@ layout = [
             ),
         ],
         className="row",
-        style={"marginTop": "5px", "max height": "200px"},
+        style={"marginTop": "5px", "max height": "200px",'border-radius': 10, 'border-color': '#ff8333'},
     ),
 
 
@@ -544,7 +560,7 @@ layout = [
                         config = dict(displayModeBar=False),
                     ),
                 ],
-                style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                style={'border':'1px solid', 'border-radius': 10,'border-color': '#1C4E80' ,'backgroundColor':'#FFFFFF'},
 
 
 
@@ -559,7 +575,7 @@ layout = [
                         config=dict(displayModeBar=False),
                     ),
                     ],
-                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                    style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
 
@@ -580,7 +596,7 @@ layout = [
                         config=dict(displayModeBar=False),
                     ),
                     ],
-                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                    style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
                     
@@ -596,7 +612,7 @@ layout = [
                     ),
 
                     ],
-                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                    style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
 
@@ -619,7 +635,7 @@ layout = [
                         config=dict(displayModeBar=False),
                     ),
                     ],
-                                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                                    style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
 
@@ -633,7 +649,7 @@ layout = [
                         config=dict(displayModeBar=False),
                     ),
                     ],
-                                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                                    style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
 

@@ -68,6 +68,8 @@ def indicator(color, text, id_value):
             ),
         ],
         className="two columns indicator",
+        style={"marginTop": "5px", "max height": "100px",'border-radius': 10, 'border-color': '#1C4E80'},
+
         
 )
 
@@ -85,6 +87,8 @@ def indicator_alt(color, text, id_value):
             ),
         ],
         className="two columns indicator_alt",
+                style={"marginTop": "5px", "max height": "100px",'border-radius': 10, 'border-color': '#1C4E80'},
+
         
 )
 

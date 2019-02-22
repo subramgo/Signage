@@ -34,7 +34,7 @@ tab_style = {
 tab_selected_style = {
     'borderTop': '1px solid #d6d6d6',
     'borderBottom': '1px solid #d6d6d6',
-    'backgroundColor': '#119DFF',
+    'backgroundColor': '#1C4E80',
     'color': 'white',
     'padding': '6px'
 }

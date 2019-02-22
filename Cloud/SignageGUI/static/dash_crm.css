@@ -53,7 +53,7 @@ body{
     border:1px solid #C8D4E3;
     border-radius: 3px;
     background-color: #1C4E80;
-    height:100px;
+    height:70px;
     vertical-align:middle;
 }
 
@@ -61,7 +61,7 @@ body{
     border:1px solid #C8D4E3;
     border-radius: 3px;
     background-color: #0091D5;
-    height:100px;
+    height:70px;
     vertical-align:middle;
 }
 
@@ -70,12 +70,16 @@ body{
     float: left;
     color: white;
     font-size: 15px;
+    vertical-align:middle;
+
     }
 
 .indicator_value{
     text-align:center;
     color: white;
-    font-size: 35px;
+    font-size: 15px;
+    vertical-align:middle;
+
 }
 
 .add{

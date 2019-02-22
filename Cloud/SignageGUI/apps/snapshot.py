@@ -383,7 +383,7 @@ layout = [
                             figure =get_impressions_chart()
                         ),
                     ],
-                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                    style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
                 
@@ -398,7 +398,7 @@ layout = [
                             figure = get_dwelltime_chart()
                         ),
                     ],
-                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                    style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
                 
@@ -418,7 +418,7 @@ layout = [
                                 figure =get_demographics_chart(),
                             ),
                         ],
-                        style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                        style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
 
@@ -433,7 +433,7 @@ layout = [
                                 figure = get_age_bar(),
                             ),
                         ],
-                    style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                    style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                     ),
                 ],
@@ -452,7 +452,7 @@ layout = [
                                 figure =get_engagement_box_chart()
                             ),
                         ],
-                        style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                        style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                         ),
 
@@ -468,7 +468,7 @@ layout = [
                                 figure =get_engagement_chart()
                             ),
                         ],
-                        style={'border':'1px solid', 'border-radius': 10, 'backgroundColor':'#FFFFFF'},
+                        style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
                         ),
 
