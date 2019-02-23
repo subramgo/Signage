@@ -24,6 +24,18 @@
 	Linear model: D = 78.0 - A_f * 336.6
 """
 
+""" 
+	Window to box mapping:
+	
+		x_min = windows[0]
+		y_min = windows[1]
+		x_max = windows[2]
+		y_max = windows[3]
+
+		area  = (x_max - x_min) * (y_max - y_min)
+
+"""
+
 class DistanceMeasurer:
 	def __init__(self,camfig):
 		self.pseudo_fov = camfig.get('p_fov',78.0)
@@ -31,7 +43,10 @@ class DistanceMeasurer:
 
 	def _distance(self,face_area):
 		distance = self.pseudo_fov - (self.pseudo_fcl * face_area)
-		return distance
+		return distance/12.0
+
+	def _angle(self,face,frame):
+		face_mid = face.
 
 	def measure(self,faces,frame):
 		A_frame = frame.size[0]*frame.size[1]

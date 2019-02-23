@@ -153,8 +153,12 @@ def get_agegroup(location):
         return "NA"
 
     ages_ = df['age'].tolist()
+    age_mode = max(set(ages_), key=ages_.count)
 
-    return max(set(ages_), key=ages_.count)
+    age_labels = {0 : "teen",1 : "adult",2 : "adult",3 : "senior"}
+    age_mode_label = age_labels[min(int(age_mode) // 20,3)]
+
+    return age_mode_label
 
 
 
@@ -303,22 +307,22 @@ def live_gender_callback(location):
 def get_live_gender_chart(location):
     df = signage_manager.live_person(location)
 
-
     if df.empty == True:
         return {"data":[],"layout":[]}
 
     df = df.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
 
-
-
-
-
-    male_count =   df[df['gender'] == 'male']['face_id'].values[0]
-    female_count = df[df['gender'] == 'female']['face_id'].values[0]
+    try:
+        male_count =   df[df['gender'] == 'male']['face_id'].values[0]
+    except:
+        male_count = 0
+    try:
+        female_count = df[df['gender'] == 'female']['face_id'].values[0]
+    except:
+        female_count = 0
 
     labels = ["Male","Female"]
     colors = {'Male': 'blue','Female':'orange'}
-
 
     trace1 = {
         "values": [male_count,female_count],
