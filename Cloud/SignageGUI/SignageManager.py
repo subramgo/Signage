@@ -45,10 +45,17 @@ class SignageManager():
 		return response_native
 
 	def live_person(self, location):
-		return pd.DataFrame.from_dict(self._fetch(self.person_live_url + location))
+		person_df = pd.DataFrame.from_dict(self._fetch(self.person_live_url + location))
+		person_df['date_created'] = pd.to_datetime(person_df["date_created"], unit='s')
+		person_df['date_created'] = person_df['date_created'].dt.tz_localize('US/Eastern')
+		return person_df
 
 	def person(self):
-		return pd.DataFrame.from_dict(self._fetch(self.person_url))
+		person_df = pd.DataFrame.from_dict(self._fetch(self.person_url))
+		person_df['date_created'] = pd.to_datetime(person_df["date_created"], unit='s')
+		person_df['date_created'] = person_df['date_created'].dt.tz_localize('US/Eastern')
+
+		return person_df
 
 
 
@@ -57,15 +64,15 @@ class SignageManager():
 	def get_first_row_header(self):
 
 		person = self.person()
-		total_impressions = person['face_id'].count()
+		total_impressions = person['face_id'].nunique()
 		avg_dwell_time = person['time_alive'].mean()
 		engagement_range = person['engagement_range'].mean()
-		male_count = person[person['gender'] == 'male']['face_id'].count()
-		female_count = person[person['gender'] == 'female']['face_id'].count()
+		male_count = person[person['gender'] == 'male']['face_id'].nunique()
+		female_count = person[person['gender'] == 'female']['face_id'].nunique()
 
-		teen_count = person[person['age'] == 'teen']['face_id'].count()
-		adult_count = person[person['age'] == 'adult']['face_id'].count()
-		senior_count = person[person['age'] == 'senior']['face_id'].count()
+		teen_count = person[person['age'] == 'teen']['face_id'].nunique()
+		adult_count = person[person['age'] == 'adult']['face_id'].nunique()
+		senior_count = person[person['age'] == 'senior']['face_id'].nunique()
 
 		age_ = {'teen': teen_count, 'adult':adult_count, 'senior':senior_count}
 		age_ = sorted(age_.items(), key=lambda x: (x[1],x[1]), reverse=True)
@@ -92,7 +99,8 @@ def main():
 	smgr = SignageManager()
 	#print(smgr.get_first_row_header())
 	#print(smgr.person())
-	gender_count(smgr.person())
+	#gender_count(smgr.person())
+	print(smgr.person().head())
 
 
 def gender_count(in_pd):
