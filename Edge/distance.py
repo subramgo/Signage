@@ -45,8 +45,8 @@ class DistanceMeasurer:
 		distance = self.pseudo_fov - (self.pseudo_fcl * face_area)
 		return distance/12.0
 
-	def _angle(self,face,frame):
-		face_mid = face.
+	#def _angle(self,face,frame):
+	#	face_mid = face.
 
 	def measure(self,faces,frame):
 		A_frame = frame.size[0]*frame.size[1]

@@ -78,11 +78,11 @@ def get_male_count(location):
     if demographics.empty == True:
         return "NA"
 
-
-    count = demographics[demographics['gender'] == 'male']['face_id'].values[0]
-    return str(count)
-
-
+    try:
+        count = demographics[demographics['gender'] == 'male']['face_id'].values[0]
+    except:
+        count = 0
+    return count
 
 
 @app.callback(
@@ -100,9 +100,12 @@ def get_female_count(location):
     if demographics.empty == True:
         return "NA"
 
-
-    count = demographics[demographics['gender'] == 'female']['face_id'].values[0]
-    return str(count)
+    try:
+        count = demographics[demographics['gender'] == 'female']['face_id'].values[0]
+    except:
+        count = 0
+    
+    return count
 
 
 @app.callback(
@@ -153,13 +156,7 @@ def get_agegroup(location):
         return "NA"
 
     ages_ = df['age'].tolist()
-    age_mode = max(set(ages_), key=ages_.count)
-
-    age_labels = {0 : "teen",1 : "adult",2 : "adult",3 : "senior"}
-    age_mode_label = age_labels[min(int(age_mode) // 20,3)]
-
-    return age_mode_label
-
+    return max(set(ages_), key=ages_.count)
 
 
 ############################# Dwell Chart ######################
@@ -312,14 +309,8 @@ def get_live_gender_chart(location):
 
     df = df.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
 
-    try:
-        male_count =   df[df['gender'] == 'male']['face_id'].values[0]
-    except:
-        male_count = 0
-    try:
-        female_count = df[df['gender'] == 'female']['face_id'].values[0]
-    except:
-        female_count = 0
+    male_count = get_male_count(location)
+    female_count = get_female_count(location)
 
     labels = ["Male","Female"]
     colors = {'Male': 'blue','Female':'orange'}

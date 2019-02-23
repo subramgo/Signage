@@ -31,6 +31,9 @@ uri=cfg_defaults['data']['data_server']
 cred=cfg_defaults['data']['credentials']
 headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
+def age_label(age_years):
+	age_labels = {0 : "teen",1 : "adult",2 : "adult",3 : "senior"}
+	return age_labels[min(int(float(age_years)) // 20,3)]
 
 class SignageManager():
 	def __init__(self):
@@ -48,13 +51,14 @@ class SignageManager():
 		person_df = pd.DataFrame.from_dict(self._fetch(self.person_live_url + location))
 		person_df['date_created'] = pd.to_datetime(person_df["date_created"], unit='s')
 		person_df['date_created'] = person_df['date_created'].dt.tz_localize('US/Eastern')
+		person_df['age'] = person_df['age'].apply(age_label)
 		return person_df
 
 	def person(self):
 		person_df = pd.DataFrame.from_dict(self._fetch(self.person_url))
 		person_df['date_created'] = pd.to_datetime(person_df["date_created"], unit='s')
 		person_df['date_created'] = person_df['date_created'].dt.tz_localize('US/Eastern')
-
+		person_df['age'] = person_df['age'].apply(age_label)
 		return person_df
 
 
