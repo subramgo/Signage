@@ -6,7 +6,8 @@
 
 import dash_html_components as html
 import dash_core_components as dcc
-from app import indicator,indicator_alt,app,signage_manager
+from app import app,signage_manager
+from app import indicator,indicator_alt
 from dash.dependencies import Input, Output, State
 import pandas as pd 
 import numpy as np

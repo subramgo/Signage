@@ -110,6 +110,4 @@ def render_content(tab):
     elif tab == "live_tab":
         return live.layout
 
-if __name__ == "__main__":
-    app.title = "Smart Signage"
-    app.run_server(host="0.0.0.0",port= 8080,debug=True)
+

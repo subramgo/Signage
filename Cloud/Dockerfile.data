@@ -1,0 +1,20 @@
+FROM python:3.6.1
+ENV APP /SignageData
+
+RUN mkdir $APP
+WORKDIR $APP
+
+
+EXPOSE 5000
+
+COPY ./SignageData/requirements.txt
+RUN pip3 install -r requirements.txt
+
+COPY ./SignageData/requirements.txt .
+RUN pip3 install -r requirements.txt
+
+COPY ./SignageData/* .
+
+
+CMD ['uwsgi','--ini','app.ini']
+

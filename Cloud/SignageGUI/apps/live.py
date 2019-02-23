@@ -4,7 +4,8 @@
 
 """
 import dash_html_components as html
-from app import signage_manager, app,indicator,indicator_alt
+from app import signage_manager, app
+from app import indicator,indicator_alt
 from dash.dependencies import Input, Output, State
 
 import numpy as np
