@@ -22,19 +22,13 @@ import tracking
 import data
 import ads
 
-cfg = sharedconfig.cfg
 
 ###########################################################
 ##############          Orchestration         #############
 ###########################################################
-def refresh():
-    """ Check configuration files for new settings """
-    global cfg
-    cfg.load()
-    cfg.dump()
 
 def main():
-    refresh()
+    cfg = sharedconfig.cfg
 
     logger = log.get_logger(cfg['logging'])
     cam = camera.CamClient(logger,cfg['camera'])
@@ -78,7 +72,7 @@ def main():
             tracker.track(faces)
             logger.info("No faces detected.")
 
-        refresh()
+        cfg.load()
 
 class Measure:
     """ An Audience Measure """
