@@ -19,7 +19,7 @@ cfg_defaults = {
     , 'data'                  : {
           'enabled'           : False
         , 'credentials'       : 'united:irkbin'
-        , 'data_server'       : '127.0.0.1:5000'
+        , 'data_server'       : 'data-service:5000'
         , 'data_protocol'     : 'http://'
     }
 
