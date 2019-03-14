@@ -56,6 +56,8 @@ class DemographicsClassifier():
         ages = np.arange(0, 101).reshape(101, 1)
         predicted_ages = results[1].dot(ages).flatten()
         age = np.floor(predicted_ages[0])
+        # age = "Child" if np.floor(predicted_ages[0]) < 15 else "Adult"
+
 
         return_gender = None
         if male_prob > female_prob:

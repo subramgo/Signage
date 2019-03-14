@@ -44,5 +44,6 @@ class DataClient:
                     }
             headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
             r = _requests.post(protocol+cred+"@"+uri+path,json=data,headers=headers)
-            self.logger.info("    ... {}".format(r))
+            
+            self.logger.info("    ... {}".format(r if r.ok else r.reason + " " + str(r)))
 

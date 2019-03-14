@@ -92,5 +92,7 @@ class TrackingObject:
         return report
 
 def gen_iduid():
-    """ Inter-dimensionally Unique IDentifier! """
+    """ Relatively-Short-Session Unique IDentifier (RSSUID) """
+    return int(random.random()*10**5)
+    # TODO return to Inter-dimensionally Unique IDentifier!
     return int(random.random()*10**15)
