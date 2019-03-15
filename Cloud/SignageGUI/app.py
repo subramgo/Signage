@@ -13,12 +13,15 @@ from plotly import graph_objs as go
 import logging
 
 server = flask.Flask(__name__)
-app = dash.Dash(__name__, server=server)
+app = dash.Dash(__name__, server=server,static_folder='static')
+
 app.config.suppress_callback_exceptions = True
+app.css.config.serve_locally = True
+app.scripts.config.serve_locally = True
+
 
 signage_manager = SignageManager()
 
-millnames = ["", " K", " M", " B", " T"] # used to convert numbers
 
 @server.route('/favicon.ico')
 def favicon():
@@ -64,6 +67,7 @@ def indicator_alt(color, text, id_value):
 
         
 )
+
 
 
 

@@ -10,22 +10,23 @@ cfg_defaults = {
           'enabled'           : False
         , 'stream_address'    : '192.168.1.168/usecondstream'
         , 'protocol'          : 'rtsp://'
-        , 'location_name'     : 'datagenerator-2'
-        , 'name'              : 'datagenerator-2'
+        , 'location_name'     : 'boca-mac-1'
+        , 'name'              : 'boca-mac-1'
         , 'credentials'       : '*user*:*pass*'
     }
     
     , 'data'                  : {
           'enabled'           : False
         , 'credentials'       : 'united:irkbin'
-        , 'data_server'       : '0.0.0.0:5000'
-        , 'data_protocol'     : 'http://'
+        , 'data_server'       : 'signagedata.azurewebsites.net'
+        , 'data_protocol'     : 'https://'
     }
 
 
     }
 
 protocol=cfg_defaults['data']['data_protocol']
+
 uri=cfg_defaults['data']['data_server']
 cred=cfg_defaults['data']['credentials']
 headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}

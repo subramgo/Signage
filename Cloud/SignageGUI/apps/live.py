@@ -7,6 +7,7 @@ import dash_html_components as html
 from app import signage_manager, app
 from app import indicator,indicator_alt
 from dash.dependencies import Input, Output, State
+from datetime import datetime as dt
 
 import numpy as np
 import dash_core_components as dcc
@@ -447,6 +448,23 @@ def update_output(value):
     return 'Audience Measurement for "{}"'.format(value)
 
 
+@app.callback(
+    Output('signage-date-picker-single', 'date'),
+    [Input('location-dropdown', 'value')])
+def update_date(value):
+    return live_date(value)
+
+def live_date(location):
+    df = signage_manager.live_person(location)
+
+    if df.empty == True:
+        return dt.now()
+    df['date_created'] = pd.to_datetime(df['date_created'],unit='s')
+
+    return min(df['date_created'])
+
+
+
 
 vertical_center = {
   "margin": 0,
@@ -467,35 +485,60 @@ layout = [
 
     html.Div([
 
-                html.Div([
+
+        html.Table(
+                [
+
+
+                 html.Tr([
+
+                    html.Td([
                         
-                        html.P("Select a signage from drop down")
+                        html.P(["Select a signage from drop down"]
+                            , style={"text-align":"center"}),
+                        ], className="three columns",style={"height":"98%"}
 
-                    ],
-                    className='three columns',
-                                            style={'padding-top':'15px','padding-left':'20px'}
+                        ),
 
-                    ),
-
-                html.Div([
-                        dcc.Dropdown(
+                    html.Td([
+                                dcc.Dropdown(
                                 id='location-dropdown',
                                 options=get_locations()[0],
                                 value=get_locations()[1],
 
-                            ),
-                        ],
-                        className='three columns',
-                        style={'padding-top':'12px','padding-left':'20px'}
+
+                            ), 
+                            ],
+                            className="three columns",
+                            style={"text-align":"center"},
 
                         ),
+                    html.Td([
+                            dcc.DatePickerSingle(
+                                id="signage-date-picker-single",
+                                display_format='MMMM Y, DD'
+                            ) ],                       
+                            className="three columns",
+                            style={"text-align":"center","height":"100%"},
 
+                            ),
+                    
 
-                html.Div([
-                    html.H4(
+                    html.Td([
+
+                    html.H5(
                     id='output-container'
-                    )]
-                    , className="six columns",style={"text-align":"right"})
+                    )], 
+
+                    className="three columns",style={"text-align":"center","height":"90%"},
+                    )  , 
+
+                ],
+
+            ),
+            ] , className="twelve columns"
+
+            ),
 
 
             ],

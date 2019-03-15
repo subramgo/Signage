@@ -1,6 +1,6 @@
 numpy==1.15.4
 requests==2.21.0
-dash==0.36.0
+dash==0.39.0
 dash_core_components==0.43.0
 dash_html_components==0.13.5
 python_dateutil==2.8.0

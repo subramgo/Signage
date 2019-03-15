@@ -1,21 +1,29 @@
-from flask import Flask 
-from flask_bootstrap import Bootstrap 
+from flask import Flask, Response
 from data import api_v2
 from data import signage_db
 
-from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask import render_template, flash, redirect
+import os
+import uwsgi
+import psycopg2
 
 
 
-app = Flask(__name__)
-app.config.from_object('config') 
+config_name = os.getenv('FLASK_ENV', 'development')
 
 
+app = Flask(__name__, instance_relative_config=True)
 
 
-photos = UploadSet('photos', IMAGES)
-configure_uploads(app, photos)
+app.config.from_object('config')
+
+if config_name == 'docker':
+    app.config.from_pyfile('docker_config.py')
+
+
+if config_name == 'production':
+    app.config.from_pyfile('config.py')
+
 
 
 signage_db.init_app(app)
@@ -25,13 +33,12 @@ signage_db.create_all(app=app)
 app.register_blueprint(api_v2)
 
 
-Bootstrap(app)
 
 
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html', title='Akshi')
+    return Response(response={'status': 'Running app'}, status=200, mimetype="application/json")
 
 @app.before_first_request
 def setup_user():

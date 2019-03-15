@@ -3,6 +3,7 @@ import datetime
 import passlib
 from passlib.apps import custom_app_context as pwd_context
 
+
 signage_db = SQLAlchemy()
 
 class User(signage_db.Model):
@@ -26,7 +27,7 @@ class Person(signage_db.Model):
     date_created = signage_db.Column(signage_db.DateTime, default=signage_db.func.current_timestamp())
     face_id = signage_db.Column(signage_db.Integer)
     gender = signage_db.Column(signage_db.String)
-    time_alive = signage_db.Column(signage_db.Integer)
+    time_alive = signage_db.Column(signage_db.Float)
     age = signage_db.Column(signage_db.String)
     engagement_range= signage_db.Column(signage_db.Float)
 

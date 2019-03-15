@@ -19,8 +19,8 @@ cfg_defaults = {
     , 'data'                  : {
           'enabled'           : False
         , 'credentials'       : 'united:irkbin'
-        , 'data_server'       : 'data-service:5000'
-        , 'data_protocol'     : 'http://'
+        , 'data_server'       : 'signagedata.azurewebsites.net'
+        , 'data_protocol'     : 'https://'
     }
 
 
@@ -45,10 +45,24 @@ class SignageManager():
 		return response_native
 
 	def live_person(self, location):
-		return pd.DataFrame.from_dict(self._fetch(self.person_live_url + location))
+		return_df = pd.DataFrame()
+		try:
+			return_df = pd.DataFrame.from_dict(self._fetch(self.person_live_url + location))
+		except Exception as e:
+			return None
+		
+		return  return_df
 
 	def person(self):
-		return pd.DataFrame.from_dict(self._fetch(self.person_url))
+		return_df = pd.DataFrame()
+		try:
+			return_df = pd.DataFrame.from_dict(self._fetch(self.person_url))
+		except Exception as e:
+			return None
+		
+		return  return_df
+
+
 
 
 
@@ -92,7 +106,12 @@ def main():
 	smgr = SignageManager()
 	#print(smgr.get_first_row_header())
 	#print(smgr.person())
-	gender_count(smgr.person())
+	#gender_count(smgr.person())
+	print(smgr.live_person('boca-mac-1').head())
+	print(smgr.live_person('boca-mac-1').head())
+	print(smgr.live_person('boca-mac-1').head())
+	print(smgr.live_person('boca-mac-1').head())
+	print(smgr.live_person('boca-mac-1').head())
 
 
 def gender_count(in_pd):

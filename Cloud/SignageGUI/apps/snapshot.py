@@ -18,62 +18,6 @@ import collections
 import itertools
 
 
-###################### First row header call backs #######################
-
-@app.callback(
-    Output("avg_dwell_time", "children"),
-    [Input("snapshot_df", "children")]
-)
-def dwell_time_callback(df_json):
-	df = pd.read_json(df_json, orient="split")
-	avg_dwell_time = df['Avg Dwell time']
-	return str(int(avg_dwell_time)) + " seconds"
-
-@app.callback(
-    Output("engagement_range", "children"),
-    [Input("snapshot_df", "children")]
-)
-def engagement_callback(df_json):
-	df = pd.read_json(df_json, orient="split")
-	engagement_range = df['Engagement Range']
-	return str(float(np.round(engagement_range,decimals=1))) + " Feet"
-
-@app.callback(
-    Output("male_count", "children"),
-    [Input("snapshot_df", "children")]
-)
-def male_count_callback(df_json):
-	df = pd.read_json(df_json, orient="split")
-	male_count = df['Male Count']
-	return str(float(np.round(male_count,decimals=1)))
-
-@app.callback(
-    Output("female_count", "children"),
-    [Input("snapshot_df", "children")]
-)
-def female_count_callback(df_json):
-	df = pd.read_json(df_json, orient="split")
-	female_count = df['Female Count']
-	return str(float(np.round(female_count,decimals=1)))
-
-
-@app.callback(
-    Output("age_group", "children"),
-    [Input("snapshot_df", "children")]
-)
-def female_count_callback(df_json):
-	df = pd.read_json(df_json, orient="split")
-	age_group = df['Age Group']
-	return age_group
-
-@app.callback(
-    Output("total_impressions", "children"),
-    [Input("snapshot_df", "children")]
-)
-def total_impressions_callback(df_json):
-	df = pd.read_json(df_json, orient="split")
-	total_impressions = df['Total Impressions']
-	return total_impressions
 
 
 ####################### Age Chart ########################
@@ -82,7 +26,7 @@ def get_age_bar():
 
 	df = signage_manager.person()
 
-	if df.empty == True:
+	if df.empty == True or df is None:
 		return {'data':[],'layout':[]}
 
 	df = df[['location','age']]
@@ -122,7 +66,7 @@ def get_demographics_chart():
     df = signage_manager.person()
 
 
-    if df.empty == True:
+    if df.empty == True or df is None:
     	return {"data":[],"layout":[]}
 
     df = df.groupby(['location','gender']).aggregate({'face_id':'nunique'}).reset_index()
@@ -168,7 +112,7 @@ def get_dwelltime_chart():
 
 	df = signage_manager.person()
 
-	if df.empty == True:
+	if df.empty == True or df is None:
 		return {"data":[],"layout":[]}
 
 	df = df[['location','time_alive']]
@@ -211,7 +155,7 @@ def get_impressions_chart():
 
 	df = signage_manager.person()
 
-	if df.empty == True:
+	if df.empty == True or df is None:
 		return {"data":[],"layout":[]}
 
 	df = df[['location','face_id']]
@@ -251,7 +195,7 @@ def get_impressions_chart():
 def get_engagement_chart():
     df = signage_manager.person()
 
-    if df.empty == True:
+    if df.empty == True or df is None:
         return {'data':[],'layout':[]}
 
 
@@ -295,7 +239,7 @@ def get_engagement_chart():
 def get_engagement_box_chart():
     df = signage_manager.person()
 
-    if df.empty == True:
+    if df.empty == True or df is None:
         return {'data':[],'layout':[]}
 
 
@@ -485,4 +429,60 @@ layout = [
 ]
 
 
+###################### First row header call backs #######################
+
+@app.callback(
+    Output("avg_dwell_time", "children"),
+    [Input("snapshot_df", "children")]
+)
+def dwell_time_callback(df_json):
+    df = pd.read_json(df_json, orient="split")
+    avg_dwell_time = df['Avg Dwell time']
+    return str(int(avg_dwell_time)) + " seconds"
+
+@app.callback(
+    Output("engagement_range", "children"),
+    [Input("snapshot_df", "children")]
+)
+def engagement_callback(df_json):
+    df = pd.read_json(df_json, orient="split")
+    engagement_range = df['Engagement Range']
+    return str(float(np.round(engagement_range,decimals=1))) + " Feet"
+
+@app.callback(
+    Output("male_count", "children"),
+    [Input("snapshot_df", "children")]
+)
+def male_count_callback(df_json):
+    df = pd.read_json(df_json, orient="split")
+    male_count = df['Male Count']
+    return str(float(np.round(male_count,decimals=1)))
+
+@app.callback(
+    Output("female_count", "children"),
+    [Input("snapshot_df", "children")]
+)
+def female_count_callback(df_json):
+    df = pd.read_json(df_json, orient="split")
+    female_count = df['Female Count']
+    return str(float(np.round(female_count,decimals=1)))
+
+
+@app.callback(
+    Output("age_group", "children"),
+    [Input("snapshot_df", "children")]
+)
+def female_count_callback(df_json):
+    df = pd.read_json(df_json, orient="split")
+    age_group = df['Age Group']
+    return age_group
+
+@app.callback(
+    Output("total_impressions", "children"),
+    [Input("snapshot_df", "children")]
+)
+def total_impressions_callback(df_json):
+    df = pd.read_json(df_json, orient="split")
+    total_impressions = df['Total Impressions']
+    return total_impressions
 
