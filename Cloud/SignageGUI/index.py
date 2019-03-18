@@ -8,7 +8,7 @@ import plotly.plotly as py
 from plotly import graph_objs as go
 import math
 from app import app, server, signage_manager
-from apps import snapshot, live
+from apps import snapshot, live, audience
 import logging
 
 """
@@ -77,7 +77,10 @@ app.layout = html.Div(
                 children=[
                     dcc.Tab(label="Live Signage View", value="live_tab",style=tab_style, selected_style=tab_selected_style),
                     
-                    dcc.Tab(label="Compare Signages", value="snapshot_tab",style=tab_style, selected_style=tab_selected_style)
+                    dcc.Tab(label="Compare Signages", value="snapshot_tab",style=tab_style, selected_style=tab_selected_style),
+                    dcc.Tab(label="Audience Insights", value="audience_tab",style=tab_style, selected_style=tab_selected_style)
+
+
                 ]
             ,style=tabs_styles)
 
@@ -110,7 +113,11 @@ def render_content(tab):
         return snapshot.layout
     elif tab == "live_tab":
         return live.layout
+    elif tab == "audience_tab":
+        return audience.layout
 
 
   
+if __name__ == '__main__':
+    app.run_server(host="0.0.0.0", debug=True)
 

@@ -81,8 +81,11 @@ def get_male_count(location):
         return "NA"
 
 
-    count = demographics[demographics['gender'] == 'male']['face_id'].values[0]
-    return str(count)
+    count = demographics[demographics['gender'] == 'male']['face_id'].values
+    if len(count) == 1:
+        return str(count[0])
+    else:
+        return "NA"
 
 
 
@@ -103,8 +106,11 @@ def get_female_count(location):
         return "NA"
 
 
-    count = demographics[demographics['gender'] == 'female']['face_id'].values[0]
-    return str(count)
+    count = demographics[demographics['gender'] == 'female']['face_id'].values
+    if len(count) == 1:
+        return str(count[0])
+    else:
+        return "NA"
 
 
 @app.callback(
@@ -315,8 +321,17 @@ def get_live_gender_chart(location):
 
 
 
-    male_count =   df[df['gender'] == 'male']['face_id'].values[0]
-    female_count = df[df['gender'] == 'female']['face_id'].values[0]
+    male_count_ =   df[df['gender'] == 'male']['face_id'].values
+    female_count_ = df[df['gender'] == 'female']['face_id'].values
+
+    male_count = 0
+    female_count = 0
+
+    if len(male_count_) == 1:
+        male_count = male_count_[0]
+
+    if len(female_count_) == 1:
+        female_count = female_count_[0]
 
     labels = ["Male","Female"]
     colors = {'Male': 'blue','Female':'orange'}

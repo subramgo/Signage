@@ -26,7 +26,7 @@ def get_age_bar():
 
 	df = signage_manager.person()
 
-	if df.empty == True or df is None:
+	if df.empty == True:
 		return {'data':[],'layout':[]}
 
 	df = df[['location','age']]
@@ -66,7 +66,7 @@ def get_demographics_chart():
     df = signage_manager.person()
 
 
-    if df.empty == True or df is None:
+    if df.empty == True :
     	return {"data":[],"layout":[]}
 
     df = df.groupby(['location','gender']).aggregate({'face_id':'nunique'}).reset_index()
@@ -78,8 +78,13 @@ def get_demographics_chart():
     female_count = []
 
     for location in locations:
-    	male_count.append(df[ (df['location'] == location) & (df['gender'] == 'male')]['face_id'].values[0])
-    	female_count.append(df[ (df['location'] == location) & (df['gender'] == 'female')]['face_id'].values[0])
+        male_count_no = df[ (df['location'] == location) & (df['gender'] == 'male')]['face_id'].values
+        female_count_no = df[ (df['location'] == location) & (df['gender'] == 'female')]['face_id'].values
+
+        if len(male_count_no) == 1:
+            male_count.append(male_count_no[0])
+        if len(female_count_no) == 1:
+            female_count.append(female_count_no[0])
 
     trace1 = go.Bar(
         x=locations,
@@ -112,7 +117,7 @@ def get_dwelltime_chart():
 
 	df = signage_manager.person()
 
-	if df.empty == True or df is None:
+	if df.empty == True :
 		return {"data":[],"layout":[]}
 
 	df = df[['location','time_alive']]
@@ -155,7 +160,7 @@ def get_impressions_chart():
 
 	df = signage_manager.person()
 
-	if df.empty == True or df is None:
+	if df.empty == True:
 		return {"data":[],"layout":[]}
 
 	df = df[['location','face_id']]
@@ -195,7 +200,7 @@ def get_impressions_chart():
 def get_engagement_chart():
     df = signage_manager.person()
 
-    if df.empty == True or df is None:
+    if df.empty == True:
         return {'data':[],'layout':[]}
 
 
@@ -239,7 +244,7 @@ def get_engagement_chart():
 def get_engagement_box_chart():
     df = signage_manager.person()
 
-    if df.empty == True or df is None:
+    if df.empty == True :
         return {'data':[],'layout':[]}
 
 

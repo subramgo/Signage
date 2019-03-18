@@ -49,7 +49,7 @@ class SignageManager():
 		try:
 			return_df = pd.DataFrame.from_dict(self._fetch(self.person_live_url + location))
 		except Exception as e:
-			return None
+			return return_df
 		
 		return  return_df
 
@@ -58,7 +58,7 @@ class SignageManager():
 		try:
 			return_df = pd.DataFrame.from_dict(self._fetch(self.person_url))
 		except Exception as e:
-			return None
+			return return_df
 		
 		return  return_df
 
@@ -104,14 +104,19 @@ class SignageManager():
 def main():
 
 	smgr = SignageManager()
-	#print(smgr.get_first_row_header())
-	#print(smgr.person())
-	#gender_count(smgr.person())
-	print(smgr.live_person('boca-mac-1').head())
-	print(smgr.live_person('boca-mac-1').head())
-	print(smgr.live_person('boca-mac-1').head())
-	print(smgr.live_person('boca-mac-1').head())
-	print(smgr.live_person('boca-mac-1').head())
+	df = smgr.person()
+	df = df.groupby(['location','gender']).aggregate({'face_id':'nunique'}).reset_index()
+	print(df)
+	locations = df['location'].unique()
+
+	male_count = []
+	female_count = []
+
+	for location in locations:
+		print(df[ (df['location'] == location) & (df['gender'] == 'male')]['face_id'].values)
+		print(df[ (df['location'] == location) & (df['gender'] == 'female')]['face_id'].values)
+
+
 
 
 def gender_count(in_pd):
