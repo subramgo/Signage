@@ -4,7 +4,7 @@ from data import signage_db
 
 from flask import render_template, flash, redirect
 import os
-import uwsgi
+#import uwsgi
 import psycopg2
 
 

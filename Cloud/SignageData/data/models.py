@@ -2,9 +2,77 @@ from flask_sqlalchemy import SQLAlchemy
 import datetime
 import passlib
 from passlib.apps import custom_app_context as pwd_context
+import json
 
 
 signage_db = SQLAlchemy()
+
+############### Helper function to jsonify results ########################
+def to_json(inst, cls):
+    """
+    Jsonify the sql alchemy query result.
+    """
+    d = dict()
+    for c in cls.__table__.columns:
+        v = getattr(inst, c.name)
+        if v is None:
+            d[c.name] = str()
+        elif c.type == signage_db.Column(signage_db.DateTime).type:
+            d[c.name] = v.isoformat()
+        else:
+            d[c.name] = str(v)
+    return json.dumps(d,)
+
+
+class Enterprise(signage_db.Model):
+    id = signage_db.Column(signage_db.Integer, primary_key = True)
+    enterprise_name = signage_db.Column(signage_db.String(32), index = True)
+    stores = signage_db.relationship('Store', backref='store', lazy='dynamic')
+
+
+    @property
+    def json(self):
+        return to_json(self, self.__class__)
+
+class Store(signage_db.Model):
+    id = signage_db.Column(signage_db.Integer, primary_key = True)
+    store_name = signage_db.Column(signage_db.String(32), index = True)
+    address = signage_db.Column(signage_db.String(32), index = True)
+    city = signage_db.Column(signage_db.String(32), index = True)
+    state = signage_db.Column(signage_db.String(32), index = True)
+    zipcode = signage_db.Column(signage_db.String(32), index = True)
+    enterprise_id = signage_db.Column(signage_db.Integer, signage_db.ForeignKey('enterprise.id'))
+    signages = signage_db.relationship('Signage', backref='signage', lazy='dynamic')
+
+
+    @property
+    def json(self):
+        return to_json(self, self.__class__)
+
+class Signage(signage_db.Model):
+    id = signage_db.Column(signage_db.Integer, primary_key = True)
+    zone = signage_db.Column(signage_db.String(32), index = True)
+    store_id = signage_db.Column(signage_db.Integer, signage_db.ForeignKey('store.id'))
+    contents = signage_db.relationship('Content', backref='content', lazy='dynamic')
+    persons = signage_db.relationship('Person', backref='person', lazy='dynamic')
+
+
+    @property
+    def json(self):
+        return to_json(self, self.__class__)
+
+
+class Content(signage_db.Model):
+    id = signage_db.Column(signage_db.Integer, primary_key = True)
+    from_date = signage_db.Column(signage_db.DateTime, default=signage_db.func.current_timestamp())
+    to_date = signage_db.Column(signage_db.DateTime, default=signage_db.func.current_timestamp())
+    signage_id = signage_db.Column(signage_db.Integer, signage_db.ForeignKey('signage.id'))
+    description = signage_db.Column(signage_db.String)
+
+
+    @property
+    def json(self):
+        return to_json(self, self.__class__)
 
 class User(signage_db.Model):
     id = signage_db.Column(signage_db.Integer, primary_key = True)
@@ -30,32 +98,13 @@ class Person(signage_db.Model):
     time_alive = signage_db.Column(signage_db.Float)
     age = signage_db.Column(signage_db.String)
     engagement_range= signage_db.Column(signage_db.Float)
+    signage_id = signage_db.Column(signage_db.Integer, signage_db.ForeignKey('signage.id'))
+
+    @property
+    def json(self):
+        return to_json(self, self.__class__)
 
 
-
-    def get_json(self):
-
-        return_value = {}
-        return_value["id"] = self.id 
-        return_value['camera_id'] = self.camera_id
-        epoch = datetime.datetime(1970,1,1)
-        delta_time = (self.date_created - epoch).total_seconds()
-        return_value['date_created'] = delta_time
-        return_value['face_id'] = self.face_id
-        return_value['age'] = self.age
-        return_value['location'] = self.location
-        return_value['gender'] = self.gender
-        return_value['time_alive'] = self.time_alive
-        return_value['engagement_range'] = self.engagement_range
-
-
-        return return_value
-
-    def __repr__(self):
-        return '<id {} date_created {} camera_id {} face_id {} age {}\
-         location {} gender {} time_alive {} engagement_range {}>'.format(self.id, 
-            self.date_created, self.camera_id, self.face_id, self.age,
-            self.location, self.gender, self.time_alive,self.engagement_range)
 
 
 
