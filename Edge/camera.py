@@ -4,14 +4,13 @@ import time
 
 class CamClient():
     def __init__(self,logger,cfg):
-        try:
-            if cfg['cam_protocol'] in 'picamera':
-                self.cam_address = 'picam'
-            else:
-                self.cam_address = cfg['cam_protocol']+cfg['cam_credentials']+"@"+cfg['cam_stream_address']
-        except:
+        if cfg['protocol'] in 'picamera':
+            self.cam_address = 'picam'
+        elif cfg['protocol'] in 'webcam':
             self.cam_address = 0
-
+        else:
+            self.cam_address = cfg['protocol']+cfg['credentials']+"@"+cfg['stream_address']
+    
         self.logger = logger
         self.cfg = cfg
 

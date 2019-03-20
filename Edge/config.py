@@ -89,7 +89,7 @@ class Config(dict):
         """ Load from filepath and overwrite local items. """
         try:
             with open(self.filepath,'r') as ymlfile:
-                newstuff = yaml.load(ymlfile)
+                newstuff = yaml.load(ymlfile,Loader=yaml.SafeLoader)
                 self._recursive_strict_update(self,newstuff)
             self._unmask()
         except Exception as e:
