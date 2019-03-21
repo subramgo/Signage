@@ -1,5 +1,4 @@
 from flask import Blueprint, request, Response, abort, g, jsonify
-import json
 from .models import signage_db, Person,User, Signage, Enterprise, Store
 import datetime
 from flask_httpauth import HTTPBasicAuth
@@ -17,6 +16,16 @@ signage_v2 = Blueprint('signage2', __name__, url_prefix='/api/v2/signage',
 TIMEOUT=10
 
 
+@signage_v2.route('/enterprise', methods=['GET'])
+@auth.login_required
+def get_all_enterprises():
+    store = Enterprise.query.all()
+    signages_json = [sign.json for sign in store]
+
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
+
+
 ############ Store service #######################################
 
 @signage_v2.route('/store/all/<enterpriseid>', methods=['GET'])
@@ -24,14 +33,17 @@ TIMEOUT=10
 def get_all_stores(enterpriseid):
     store = Store.query.filter(Store.enterprise_id == enterpriseid)
     signages_json = [sign.json for sign in store]
-    return Response(signages_json, mimetype="application/json")
+
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
 
 @signage_v2.route('/store/<storeid>', methods=['GET'])
 @auth.login_required
 def get_stores(storeid):
     store = Store.query.filter(Store.id == storeid)
     signages_json = [sign.json for sign in store]
-    return Response(signages_json, mimetype="application/json")
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
 
 
 ############ Signage Services #####################################
@@ -40,7 +52,16 @@ def get_stores(storeid):
 def get_signages(storeid):
     store = Signage.query.filter(Signage.store_id == storeid)
     signages_json = [sign.json for sign in store]
-    return Response(signages_json, mimetype="application/json")
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
+
+@signage_v2.route('/signage/single/<signageid>', methods=['GET'])
+@auth.login_required
+def get_signage(signageid):
+    store = Signage.query.filter(Signage.id == signageid)
+    signages_json = [sign.json for sign in store]
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
 
 ############ Person Services #####################################
 
@@ -53,9 +74,27 @@ def return_person(signageid):
     return signs_json
 
 
+@signage_v2.route('/person/maxdate/<signageid>', methods =['GET'])
+@auth.login_required
+def get_max_date(signageid):
+    """
+    Return the latest data (maxdate)for a given location
+    """
+    maxdate = Person.query.filter(Person.signage_id == signageid)\
+    .with_entities(func.max(Person.date_created)).first()[0]
 
+    return jsonify(maxdate.isoformat())
 
+@signage_v2.route('/person/mindate/<signageid>', methods =['GET'])
+@auth.login_required
+def get_min_date(signageid):
+    """
+    Return the latest data (maxdate)for a given location
+    """
+    mindate = Person.query.filter(Person.signage_id == signageid)\
+    .with_entities(func.min(Person.date_created)).first()[0]
 
+    return jsonify(mindate.isoformat())
 
 @signage_v2.route('/person/live/<signageid>', methods =['GET'])
 @auth.login_required
@@ -69,12 +108,13 @@ def get_faces_live(signageid):
     maxdate = maxdate.replace(hour=0, minute=0, second=0)
     
     signs = Person.query\
-    .filter(Person.signageid == signageid , Person.date_created >= maxdate)\
+    .filter(Person.signage_id == signageid , Person.date_created >= maxdate)\
     .all()
 
     signs_json = [sign.json for sign in signs]
 
-    return Response(signs_json, mimetype="application/json")
+    #return Response(jsonify(signs_json,), mimetype="application/json")
+    return jsonify(signs_json,)
 
 
 @signage_v2.route('/person/<signageid>', methods =['GET'])
@@ -88,7 +128,8 @@ def get_faces(signageid):
         signs_json = return_person(signageid)
         cache.set('signs-json', signs_json, timeout = TIMEOUT)
     
-    return Response(signs_json, mimetype="application/json")
+    #return Response(jsonify(signs_json,), mimetype="application/json")
+    return jsonify(signs_json,)
 
 
 @signage_v2.route('/person/upload', methods=['POST'])
@@ -113,7 +154,8 @@ def post_faces():
         signage_db.session.add(signage_obj)
     
     signage_db.session.commit()
-    return  Response(response={'status': 'SUCCESS'}, status=200, mimetype="application/json")
+    #return  Response(response={'status': 'SUCCESS'}, status=200, mimetype="application/json")
+    return jsonify({'status':'SUCCESS'})
 
 
 

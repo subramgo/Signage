@@ -6,14 +6,14 @@ from flask import render_template, flash, redirect
 import os
 #import uwsgi
 import psycopg2
-
+from flask_cors import CORS
 
 
 config_name = os.getenv('FLASK_ENV', 'development')
 
 
 app = Flask(__name__, instance_relative_config=True)
-
+CORS(app)
 
 app.config.from_object('config')
 

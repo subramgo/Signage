@@ -52,8 +52,10 @@ def get_random_record():
 
 	engagement_range = np.random.normal(3, 2,1)[0]
 	time_alive = np.random.normal(2.0,1,1)[0]
+	
 	if time_alive < 0:
 		time_alive = 0.5
+	
 	face_id = np.random.randint(1,1000,1)[0]
 
 

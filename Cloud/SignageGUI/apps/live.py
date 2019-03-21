@@ -22,23 +22,8 @@ __author__ = "Gopi Subramanian"
 __maintainer__ = "Gopi Subramanian"
 __status__ = "Proof of concept"
 
-def get_locations():
-    """
-    Returns list of location for drop down box
-    """
-    faces = signage_manager.person()
-    if faces.empty == True:
-        return ({'label': "NA", 'value': "NA"},"N/A")
 
-    locations = faces['location'].unique()
 
-    options_ = []
-
-    for location in locations:
-        option = {'label': location, 'value': location}
-        options_.append(option)
-
-    return (options_, location)
 
 
 #################### First row header ################################
@@ -46,17 +31,17 @@ def get_locations():
 
 @app.callback(
     Output("live_faces_count", "children"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_count_callback(location):
-    return get_live_count(location)
+def live_count_callback(signage_id):
+    return get_live_count(signage_id)
 
-def get_live_count(location):
+def get_live_count(signage_id):
     """
     Total impressions count
     """
 
-    df = signage_manager.live_person(location)
+    df = signage_manager.live_person(signage_id)
     if df.empty == True:
         return "NA"
     
@@ -67,14 +52,14 @@ def get_live_count(location):
 
 @app.callback(
     Output("live_male_count", "children"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_male_count_callback(location):
-    return get_male_count(location)
+def live_male_count_callback(signage_id):
+    return get_male_count(signage_id)
 
-def get_male_count(location):
+def get_male_count(signage_id):
 
-    demographics = signage_manager.live_person(location)
+    demographics = signage_manager.live_person(signage_id)
     demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
 
     if demographics.empty == True:
@@ -92,14 +77,14 @@ def get_male_count(location):
 
 @app.callback(
     Output("live_female_count", "children"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_female_count_callback(location):
-    return get_female_count(location)
+def live_female_count_callback(signage_id):
+    return get_female_count(signage_id)
 
-def get_female_count(location):
+def get_female_count(signage_id):
 
-    demographics = signage_manager.live_person(location)
+    demographics = signage_manager.live_person(signage_id)
     demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
 
     if demographics.empty == True:
@@ -115,13 +100,13 @@ def get_female_count(location):
 
 @app.callback(
     Output("live_activity", "children"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_activity_callback(location):
-    return get_activity(location)
+def live_activity_callback(signage_id):
+    return get_activity(signage_id)
 
-def get_activity(location):
-    df = signage_manager.live_person(location)
+def get_activity(signage_id):
+    df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return "NA"
@@ -131,14 +116,14 @@ def get_activity(location):
 
 @app.callback(
     Output("live_engagement", "children"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_engagement_callback(location):
-    return get_engagement(location)
+def live_engagement_callback(signage_id):
+    return get_engagement(signage_id)
 
-def get_engagement(location):
+def get_engagement(signage_id):
    
-    df = signage_manager.live_person(location)
+    df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return "NA"
@@ -148,14 +133,14 @@ def get_engagement(location):
 
 @app.callback(
     Output("live_age_group", "children"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_agegroup_callback(location):
-    return get_agegroup(location)
+def live_agegroup_callback(signage_id):
+    return get_agegroup(signage_id)
 
-def get_agegroup(location):
+def get_agegroup(signage_id):
    
-    df = signage_manager.live_person(location)
+    df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return "NA"
@@ -170,13 +155,13 @@ def get_agegroup(location):
 
 @app.callback(
     Output("live_dwell_chart", "figure"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_dwell_callback(location):
-    return get_live_dwell_chart(location)
+def live_dwell_callback(signage_id):
+    return get_live_dwell_chart(signage_id)
 
-def get_live_dwell_chart(location):
-    df = signage_manager.live_person(location)
+def get_live_dwell_chart(signage_id):
+    df = signage_manager.live_person(signage_id)
     if df.empty == True:
         return {'data':[],'layout':[]}
 
@@ -193,15 +178,15 @@ def get_live_dwell_chart(location):
 
 @app.callback(
     Output("live_age_chart", "figure"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_age_callback(location):
-    return get_live_age_chart(location)
+def live_age_callback(signage_id):
+    return get_live_age_chart(signage_id)
 
 
-def get_live_age_chart(location):
+def get_live_age_chart(signage_id):
 
-    df = signage_manager.live_person(location)
+    df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return {"data":[],"layout":[]}
@@ -244,15 +229,15 @@ def get_live_age_chart(location):
 
 @app.callback(
     Output("live_agebygender_chart", "figure"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_agebygender_callback(location):
-    return get_live_agebygender_chart(location)
+def live_agebygender_callback(signage_id):
+    return get_live_agebygender_chart(signage_id)
 
 
-def get_live_agebygender_chart(location):
+def get_live_agebygender_chart(signage_id):
 
-    df = signage_manager.live_person(location)
+    df = signage_manager.live_person(signage_id)
 
 
     if df.empty == True:
@@ -302,14 +287,14 @@ def get_live_agebygender_chart(location):
 
 @app.callback(
     Output("live_gender_chart", "figure"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_gender_callback(location):
-    return get_live_gender_chart(location)
+def live_gender_callback(signage_id):
+    return get_live_gender_chart(signage_id)
 
 
-def get_live_gender_chart(location):
-    df = signage_manager.live_person(location)
+def get_live_gender_chart(signage_id):
+    df = signage_manager.live_person(signage_id)
 
 
     if df.empty == True:
@@ -372,14 +357,14 @@ def get_live_gender_chart(location):
 
 @app.callback(
     Output("live_impressions_chart", "figure"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_impressions_callback(location):
-    return get_live_impressions_chart(location)
+def live_impressions_callback(signage_id):
+    return get_live_impressions_chart(signage_id)
 
-def get_live_impressions_chart(location):
+def get_live_impressions_chart(signage_id):
 
-    df = signage_manager.live_person(location)
+    df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return {"data":[],"layout":[]}
@@ -410,16 +395,16 @@ def get_live_impressions_chart(location):
 
 @app.callback(
     Output("live_engagement_chart", "figure"),
-    [Input("location-dropdown", "value")]
+    [Input("signage-dropdown", "value")]
 )
-def live_engagement_callback(location):
-    return get_live_engagement_chart(location)
+def live_engagement_callback(signage_id):
+    return get_live_engagement_chart(signage_id)
 
 
 
-def get_live_engagement_chart(location):
+def get_live_engagement_chart(signage_id):
 
-    df = signage_manager.live_person(location)
+    df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return {'data':[],'layout':[]}
@@ -458,19 +443,19 @@ def get_live_engagement_chart(location):
 
 @app.callback(
     Output('output-container', 'children'),
-    [Input('location-dropdown', 'value')])
+    [Input('signage-dropdown', 'value')])
 def update_output(value):
     return 'Audience Measurement for "{}"'.format(value)
 
 
 @app.callback(
     Output('signage-date-picker-single', 'date'),
-    [Input('location-dropdown', 'value')])
+    [Input('signage-dropdown', 'value')])
 def update_date(value):
     return live_date(value)
 
-def live_date(location):
-    df = signage_manager.live_person(location)
+def live_date(signage_id):
+    df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return dt.now()
@@ -490,80 +475,6 @@ vertical_center = {
 }
 
 layout = [
-
-
-
-
-    # drop down
-
-
-
-    html.Div([
-
-
-        html.Table(
-                [
-
-
-                 html.Tr([
-
-                    html.Td([
-                        
-                        html.P(["Select a signage from drop down"]
-                            , style={"text-align":"center"}),
-                        ], className="three columns",style={"height":"98%"}
-
-                        ),
-
-                    html.Td([
-                                dcc.Dropdown(
-                                id='location-dropdown',
-                                options=get_locations()[0],
-                                value=get_locations()[1],
-
-
-                            ), 
-                            ],
-                            className="three columns",
-                            style={"text-align":"center"},
-
-                        ),
-                    html.Td([
-                            dcc.DatePickerSingle(
-                                id="signage-date-picker-single",
-                                display_format='MMMM Y, DD'
-                            ) ],                       
-                            className="three columns",
-                            style={"text-align":"center","height":"100%"},
-
-                            ),
-                    
-
-                    html.Td([
-
-                    html.H5(
-                    id='output-container'
-                    )], 
-
-                    className="three columns",style={"text-align":"center","height":"90%"},
-                    )  , 
-
-                ],
-
-            ),
-            ] , className="twelve columns"
-
-            ),
-
-
-            ],
-            className="row",
-            style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
-
-
-    ),
-
-
 
     #indicators row
     html.Div(

@@ -21,7 +21,7 @@ def to_json(inst, cls):
             d[c.name] = v.isoformat()
         else:
             d[c.name] = str(v)
-    return json.dumps(d,)
+    return d
 
 
 class Enterprise(signage_db.Model):

@@ -8,7 +8,7 @@ import plotly.plotly as py
 from plotly import graph_objs as go
 import math
 from app import app, server, signage_manager
-from apps import snapshot, live, audience
+from apps import snapshot, live, audience, filter
 import logging
 
 """
@@ -23,7 +23,7 @@ tabs_styles = {
 }
 tab_style = {
     'borderBottom': '1px solid #d6d6d6',
-    'padding': '6px',
+    'padding': '2px',
     'fontWeight': 'bold'
 
 }
@@ -36,28 +36,25 @@ tab_selected_style = {
     'padding': '6px'
 }
 
+enterprise_drops = signage_manager.get_enterprise()
+
 
 app.layout = html.Div(
     [
 
 
-        #html.Link(href="static/all.css",rel="stylesheet"),
         html.Link(href="./static/all.min.css",rel="stylesheet"),
-
-        #html.Link(href="https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css",rel="stylesheet"),
         html.Link(href="./static/stylesheet-oil-and-gas.css",rel="stylesheet"),
-
         html.Link(href="./static/Dosis.css", rel="stylesheet"),
         html.Link(href="./static/OpenSan.css", rel="stylesheet"),
         html.Link(href="./static/Ubuntu.css", rel="stylesheet"),
-        #html.Link(href="https://cdn.rawgit.com/amadoukane96/8a8cfdac5d2cecad866952c52a70a50e/raw/cd5a9bf0b30856f4fc7e3812162c74bfc0ebe011/dash_crm.css", rel="stylesheet"),
         html.Link(href="./static/dash_crm.css", rel="stylesheet"),
-
-
         # header
         html.Div([
 
             html.Span("Smart Signage", className='app-title'),
+
+
             
             html.Div(
                 html.Img(src='./static/logo.png',height="80%")
@@ -66,23 +63,28 @@ app.layout = html.Div(
             className="row header"
             ),
 
+        # Filters
+        html.Div(id='filter_content', className="row",style={"margin": "2% 3%"}),
+
+
         #tabs
         html.Div([
 
-            dcc.Tabs(
-                id="tabs",
-                value="live_tab",
-        #parent_className='custom-tabs',
-        #className='custom-tabs-container',
-                children=[
-                    dcc.Tab(label="Live Signage View", value="live_tab",style=tab_style, selected_style=tab_selected_style),
-                    
-                    dcc.Tab(label="Compare Signages", value="snapshot_tab",style=tab_style, selected_style=tab_selected_style),
-                    dcc.Tab(label="Audience Insights", value="audience_tab",style=tab_style, selected_style=tab_selected_style)
+            html.Div([
+                        dcc.Tabs(
+                            id="tabs",
+                            value="live_tab",
+                            children=[
+                                dcc.Tab(label="Explore", value="live_tab",style=tab_style, selected_style=tab_selected_style),
+                                dcc.Tab(label="Insights", value="audience_tab",style=tab_style, selected_style=tab_selected_style),
+
+                                dcc.Tab(label="Compare Signages", value="snapshot_tab",style=tab_style, selected_style=tab_selected_style),
 
 
-                ]
-            ,style=tabs_styles)
+                            ]
+                        ,style=tabs_styles),
+                ],className="twelve columns",),
+            
 
             ],
             className="row",style={"margin": "2% 3%"}
@@ -97,14 +99,16 @@ app.layout = html.Div(
 
  
 
-
-         html.Div(id="tab_content", className="row", style={"margin": "2% 3%"})
+        html.Div(id="tab_content", className="row", style={"margin": "2% 3%"})
         
     ],
     className="row",
     style={"margin": "0%"},
 )
 
+@app.callback(Output("filter_content", "children"), [Input("snapshot_df", "children")])
+def render_content(df):
+    return filter.layout
 
 
 @app.callback(Output("tab_content", "children"), [Input("tabs", "value")])
