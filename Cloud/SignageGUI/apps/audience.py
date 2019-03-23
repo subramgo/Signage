@@ -49,6 +49,7 @@ layout =[
 
 ]
 
+
 @app.callback(Output("audience_tab_content", "children"), [Input("audience_tabs", "value")])
 def render_content(tab):
     if tab == "audience_effect_tab":
@@ -56,4 +57,7 @@ def render_content(tab):
     elif tab == "audience_demo_effect_tab":
         return demographics.layout
     elif tab == "recommendation_tab":
-    	return recommendations.layout
+        return recommendations.layout
+
+
+

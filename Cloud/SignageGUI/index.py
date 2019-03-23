@@ -8,7 +8,8 @@ import plotly.plotly as py
 from plotly import graph_objs as go
 import math
 from app import app, server, signage_manager
-from apps import snapshot, live, audience, filter
+from apps import snapshot, live, filter
+from apps.insights import overall, recommendations , demographics
 import logging
 
 """
@@ -36,14 +37,13 @@ tab_selected_style = {
     'padding': '6px'
 }
 
-enterprise_drops = signage_manager.get_enterprise()
 
 
 app.layout = html.Div(
     [
 
 
-        html.Link(href="./static/all.min.css",rel="stylesheet"),
+        html.Link(href="./static/css/all.min.css",rel="stylesheet"),
         html.Link(href="./static/stylesheet-oil-and-gas.css",rel="stylesheet"),
         html.Link(href="./static/Dosis.css", rel="stylesheet"),
         html.Link(href="./static/OpenSan.css", rel="stylesheet"),
@@ -64,36 +64,77 @@ app.layout = html.Div(
             ),
 
         # Filters
-        html.Div(id='filter_content', className="row",style={"margin": "2% 3%"}),
+        html.Div(id='filter_content',className="row",style={"margin": "2% 3%"}),
+
+
+        # Data Caches
+        html.Div(
+               id="effectiveness_df",
+               style={"display": "none"},
+        ),
+        html.Div(
+               id="recommendation_df",
+               style={"display": "none"},
+        ),
+         html.Div(
+               id="live_person_df",
+               style={"display": "none"},
+        ),
+        html.Div(
+               id="store_df",
+               style={"display": "none"},
+        ),
+
+
+        html.Div(
+               id="signage_df",
+               style={"display": "none"},
+        ),
+
+        html.Div(
+               id="person_signage_list_df",
+               style={"display": "none"},
+        ),
+        html.Div(
+               id="selected_enterprise_df",
+               style={"display": "none"},
+        ),
+
 
 
         #tabs
         html.Div([
 
-            html.Div([
+        html.Div([
                         dcc.Tabs(
                             id="tabs",
-                            value="live_tab",
+                            value="setup_tab",
                             children=[
+
+                                dcc.Tab(label="Setup", value="setup_tab",style=tab_style, selected_style=tab_selected_style),
                                 dcc.Tab(label="Explore", value="live_tab",style=tab_style, selected_style=tab_selected_style),
                                 dcc.Tab(label="Insights", value="audience_tab",style=tab_style, selected_style=tab_selected_style),
-
+                                dcc.Tab(label="Demographics Effectiveness", value="audience_demo_effect_tab",style=tab_style, selected_style=tab_selected_style),
+                                dcc.Tab(label="Recommendation", value="recommendation_tab",style=tab_style, selected_style=tab_selected_style),
                                 dcc.Tab(label="Compare Signages", value="snapshot_tab",style=tab_style, selected_style=tab_selected_style),
-
 
                             ]
                         ,style=tabs_styles),
                 ],className="twelve columns",),
             
-
             ],
             className="row",style={"margin": "2% 3%"}
         ),
   
+        html.Div(
+                signage_manager.enterprise().to_json(orient='split'),
+                id ="all_enterprise_df",
+                style={"display":"none"},
+            ),
 
         html.Div(
-                signage_manager.get_first_row_header().to_json(orient='split'),
-                id="snapshot_df",
+                signage_manager.get_init_push().to_json(orient='split'),
+               id="snapshot_df",
                 style={"display": "none"},
         ),
 
@@ -106,9 +147,6 @@ app.layout = html.Div(
     style={"margin": "0%"},
 )
 
-@app.callback(Output("filter_content", "children"), [Input("snapshot_df", "children")])
-def render_content(df):
-    return filter.layout
 
 
 @app.callback(Output("tab_content", "children"), [Input("tabs", "value")])
@@ -118,10 +156,19 @@ def render_content(tab):
     elif tab == "live_tab":
         return live.layout
     elif tab == "audience_tab":
-        return audience.layout
+        return overall.layout
+    elif tab == "audience_demo_effect_tab":
+        return demographics.layout
+    elif tab == "recommendation_tab":
+        return recommendations.layout
+    elif tab == "setup_tab":
+        return filter.layout
 
 
-  
+
+
+
+
 if __name__ == '__main__':
     app.run_server(host="0.0.0.0", debug=True)
 

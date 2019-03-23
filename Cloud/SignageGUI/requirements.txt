@@ -9,3 +9,4 @@ pandas==0.24.1
 plotly==3.6.0
 uWSGI==2.0.17.1
 scipy==1.2.1
+dash_table

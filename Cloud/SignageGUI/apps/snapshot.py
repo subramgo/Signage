@@ -20,54 +20,66 @@ import itertools
 
 
 
+
+
+
 ####################### Age Chart ########################
+@app.callback(
+    Output("age_chart", "figure"),
+    [Input("person_signage_list_df", "children")]
+)
+def get_age_bar(person_df):
 
-def get_age_bar():
+    #df = signage_manager.person()
+    
+    df = pd.read_json(person_df, orient='split')
 
-	df = signage_manager.person()
+    if df.empty == True:
+        return {'data':[],'layout':[]}
 
-	if df.empty == True:
-		return {'data':[],'layout':[]}
+    df = df[['location','age']]
 
-	df = df[['location','age']]
+    locations = df['location'].unique()
 
-	locations = df['location'].unique()
+    data = []
+    for location in locations:
+        age_list = df[df['location'] == location]['age'].tolist()
+        counter = collections.Counter(age_list)
 
-	data = []
-	for location in locations:
-		age_list = df[df['location'] == location]['age'].tolist()
-		counter = collections.Counter(age_list)
+        trace = go.Bar(
+            x = list(counter.keys()),
+            y = list(counter.values()),
+            name=location,
 
-		trace = go.Bar(
-			x = list(counter.keys()),
-			y = list(counter.values()),
-			name=location,
-
-			)
-		data.append(trace)
+            )
+        data.append(trace)
 
 
-	layout = go.Layout(
-	    xaxis=dict(showgrid=False),
-	    #margin=dict(l=35, r=25, b=25, t=5, pad=2),
-	    paper_bgcolor="white",
-	    plot_bgcolor="white",
+    layout = go.Layout(
+        xaxis=dict(showgrid=False),
+        #margin=dict(l=35, r=25, b=25, t=5, pad=2),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
         title="Age by Location"
-	)
+    )
 
-	return {"data":data,"layout":layout}
+    return {"data":data,"layout":layout}
 
 
 
 ########################### Demographics chart ############################
+@app.callback(
+    Output("demograpics_chart", "figure"),
+    [Input("person_signage_list_df", "children")]
+)
+def get_demographics_chart(person_df):
 
-def get_demographics_chart():
-
-    df = signage_manager.person()
+    #df = signage_manager.person()
+    df = pd.read_json(person_df, orient='split')
 
 
     if df.empty == True :
-    	return {"data":[],"layout":[]}
+        return {"data":[],"layout":[]}
 
     df = df.groupby(['location','gender']).aggregate({'face_id':'nunique'}).reset_index()
 
@@ -112,93 +124,106 @@ def get_demographics_chart():
 
 
 ######################### Dwell time chart ##############################
+@app.callback(
+    Output("dwelltime_chart", "figure"),
+    [Input("person_signage_list_df", "children")]
+)
+def get_dwelltime_chart(person_df):
 
-def get_dwelltime_chart():
+    #df = signage_manager.person()
+    df = pd.read_json(person_df, orient='split')
 
-	df = signage_manager.person()
+    if df.empty == True :
+        return {"data":[],"layout":[]}
 
-	if df.empty == True :
-		return {"data":[],"layout":[]}
+    df = df[['location','time_alive']]
+    locations = df['location'].unique()
+    bar_data = []
 
-	df = df[['location','time_alive']]
-	locations = df['location'].unique()
-	bar_data = []
-	for location in locations:
-		vals = df[df['location'] == location]['time_alive'].tolist()
-		tot  = sum(vals)
-		count = len(vals)
+    for location in locations:
+        vals = df[df['location'] == location]['time_alive'].tolist()
+        tot  = sum(vals)
+        count = len(vals)
 
-		bar_data.append( (tot / count * 1.0) )
+        bar_data.append( (tot / count * 1.0) )
 
-	data = [go.Bar(
+    data = [go.Bar(
             x=locations,
             y=bar_data,
             text=[ '%.2f' % elem for elem in bar_data ],
                 textposition = 'auto',
-		    marker=dict(
-		        color='#0091D5',
-		        line=dict(
-		            color='rgb(8,48,107)',
-		            width=1.5),
-		        ),
+            marker=dict(
+                color='#0091D5',
+                line=dict(
+                    color='rgb(8,48,107)',
+                    width=1.5),
+                ),
     )]
 
-	layout = go.Layout(
-	    xaxis=dict(showgrid=False),
-	    #margin=dict(l=35, r=25, b=25, t=5, pad=2),
-	    paper_bgcolor="white",
-	    plot_bgcolor="white",
+    layout = go.Layout(
+        xaxis=dict(showgrid=False),
+        #margin=dict(l=35, r=25, b=25, t=5, pad=2),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
         title="Average Dwell Time by Location"
-	)
+    )
 
-	return {"data":data,"layout":layout}
+    return {"data":data,"layout":layout}
 
 ###################### Impressions chart ############################
+@app.callback(
+    Output("impressions_chart", "figure"),
+    [Input("person_signage_list_df", "children")]
+)
+def get_impressions_chart(person_df):
 
-def get_impressions_chart():
 
+    #df = signage_manager.person()
+    df = pd.read_json(person_df, orient='split')
 
-	df = signage_manager.person()
+    if df.empty == True:
+        return {"data":[],"layout":[]}
 
-	if df.empty == True:
-		return {"data":[],"layout":[]}
+    df = df[['location','face_id']]
 
-	df = df[['location','face_id']]
+    locations = df['location'].unique()
+    bar_data = []
+    for location in locations:
+        bar_data.append( df[df['location'] == location]['face_id'].nunique() )
 
-	locations = df['location'].unique()
-	bar_data = []
-	for location in locations:
-		bar_data.append( df[df['location'] == location]['face_id'].nunique() )
-
-	data = [go.Bar(
+    data = [go.Bar(
             x=locations,
             y=bar_data,
             text=bar_data,
             textposition = 'auto',
-		    marker=dict(
-		        color='#1C4E80',
-		        line=dict(
-		            color='rgb(8,48,107)',
-		            width=1.5),
-		        ),
+            marker=dict(
+                color='#1C4E80',
+                line=dict(
+                    color='rgb(8,48,107)',
+                    width=1.5),
+                ),
     )]
 
-	layout = go.Layout(
-	    xaxis=dict(showgrid=False),
-	    #margin=dict(l=35, r=25, b=25, t=5, pad=2),
-	    paper_bgcolor="white",
-	    plot_bgcolor="white",
+    layout = go.Layout(
+        xaxis=dict(showgrid=False),
+        #margin=dict(l=35, r=25, b=25, t=5, pad=2),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
         title="Impressions by Location"
-	)
+    )
 
-	return {"data":data,"layout":layout}
+    return {"data":data,"layout":layout}
 
 
 
 ############################## Engatement Chart #############################
-
-def get_engagement_chart():
-    df = signage_manager.person()
+@app.callback(
+    Output("engagement_chart", "figure"),
+    [Input("person_signage_list_df", "children")]
+)
+def get_engagement_chart(person_df):
+    #df = signage_manager.person()
+    df = pd.read_json(person_df, orient='split')
 
     if df.empty == True:
         return {'data':[],'layout':[]}
@@ -240,9 +265,13 @@ def get_engagement_chart():
 
 
 ############################## Engagement Box Chart #########################
-
-def get_engagement_box_chart():
-    df = signage_manager.person()
+@app.callback(
+    Output("engagement_box_chart", "figure"),
+    [Input("person_signage_list_df", "children")]
+)
+def get_engagement_box_chart(person_df):
+    #df = signage_manager.person()
+    df = pd.read_json(person_df, orient='split')
 
     if df.empty == True :
         return {'data':[],'layout':[]}
@@ -277,51 +306,17 @@ def get_engagement_box_chart():
 
 layout = [
 
+
+
        html.P(
         '',
         className="twelve columns indicator_text"
     ),
 
-    #indicators row
-    html.Div(
-        [
-            indicator(
-                "#00cc96",
-                "Total Impressions",
-                "total_impressions",
-            ),
-            indicator_alt(
-                "#119DFF",
-                "Average Dwell time",
-                "avg_dwell_time",
-            ),
-            indicator(
-                "#EF553B",
-                "Engagement Range",
-                "engagement_range",
-            ),
-            indicator_alt(
-                "#00cc96",
-                "Male Customers",
-                "male_count",
-            ),
-            indicator(
-                "#119DFF",
-                "Female Customers",
-                "female_count",
-            ),
-            indicator_alt(
-                "#119DFF",
-                "Frequent Age Group",
-                "age_group",
-            ),
-        ],
-        className="row",
-        style={"marginTop": "5px", "max height": "200px"},
-	),
+
 
     html.Div([
-	#charts row div 
+    #charts row div 
         html.Div(
             [
                 html.Div(
@@ -330,7 +325,6 @@ layout = [
                             id = "impressions_chart",
                             style={"height": "100%", "width": "98%","margin":5},
                             config=dict(displayModeBar=False),
-                            figure =get_impressions_chart()
                         ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -345,7 +339,6 @@ layout = [
                             id = "dwelltime_chart",
                             style = {"height": "100%", "width": "98%","margin":5},
                             config = dict(displayModeBar=False),
-                            figure = get_dwelltime_chart()
                         ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -355,7 +348,7 @@ layout = [
 
             ],
             className="four columns",
-    	),
+        ),
 
         html.Div(
                 [
@@ -365,7 +358,6 @@ layout = [
                                 id = "demograpics_chart",
                                 style={"height": "100%", "width": "98%","margin":5},
                                 config=dict(displayModeBar=False),
-                                figure =get_demographics_chart(),
                             ),
                         ],
                         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -380,7 +372,6 @@ layout = [
                                 id = "age_chart",
                                 style = {"height": "100%", "width": "98%","margin":5},
                                 config = dict(displayModeBar=False),
-                                figure = get_age_bar(),
                             ),
                         ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -388,7 +379,7 @@ layout = [
                     ),
                 ],
                 className="four columns",
-        	),
+            ),
 
             html.Div(
                 [
@@ -399,7 +390,6 @@ layout = [
                                 id = "engagement_box_chart",
                                 style={"height": "100%", "width": "98%","margin":5},
                                 config=dict(displayModeBar=False),
-                                figure =get_engagement_box_chart()
                             ),
                         ],
                         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -415,7 +405,6 @@ layout = [
                                 id = "engagement_chart",
                                 style={"height": "100%", "width": "98%","margin":5},
                                 config=dict(displayModeBar=False),
-                                figure =get_engagement_chart()
                             ),
                         ],
                         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -434,60 +423,4 @@ layout = [
 ]
 
 
-###################### First row header call backs #######################
-
-@app.callback(
-    Output("avg_dwell_time", "children"),
-    [Input("snapshot_df", "children")]
-)
-def dwell_time_callback(df_json):
-    df = pd.read_json(df_json, orient="split")
-    avg_dwell_time = df['Avg Dwell time']
-    return str(int(avg_dwell_time)) + " seconds"
-
-@app.callback(
-    Output("engagement_range", "children"),
-    [Input("snapshot_df", "children")]
-)
-def engagement_callback(df_json):
-    df = pd.read_json(df_json, orient="split")
-    engagement_range = df['Engagement Range']
-    return str(float(np.round(engagement_range,decimals=1))) + " Feet"
-
-@app.callback(
-    Output("male_count", "children"),
-    [Input("snapshot_df", "children")]
-)
-def male_count_callback(df_json):
-    df = pd.read_json(df_json, orient="split")
-    male_count = df['Male Count']
-    return str(float(np.round(male_count,decimals=1)))
-
-@app.callback(
-    Output("female_count", "children"),
-    [Input("snapshot_df", "children")]
-)
-def female_count_callback(df_json):
-    df = pd.read_json(df_json, orient="split")
-    female_count = df['Female Count']
-    return str(float(np.round(female_count,decimals=1)))
-
-
-@app.callback(
-    Output("age_group", "children"),
-    [Input("snapshot_df", "children")]
-)
-def female_count_callback(df_json):
-    df = pd.read_json(df_json, orient="split")
-    age_group = df['Age Group']
-    return age_group
-
-@app.callback(
-    Output("total_impressions", "children"),
-    [Input("snapshot_df", "children")]
-)
-def total_impressions_callback(df_json):
-    df = pd.read_json(df_json, orient="split")
-    total_impressions = df['Total Impressions']
-    return total_impressions
 

@@ -22,6 +22,10 @@ __author__ = "Gopi Subramanian"
 __maintainer__ = "Gopi Subramanian"
 __status__ = "Proof of concept"
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 
 
@@ -31,17 +35,20 @@ __status__ = "Proof of concept"
 
 @app.callback(
     Output("live_faces_count", "children"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children")]
 )
-def live_count_callback(signage_id):
-    return get_live_count(signage_id)
+def live_count_callback(person_df):
 
-def get_live_count(signage_id):
+    df = pd.read_json(person_df, orient='split')
+
+    return get_live_count(df)
+
+def get_live_count(df):
     """
     Total impressions count
     """
 
-    df = signage_manager.live_person(signage_id)
+    #df = signage_manager.live_person(signage_id)
     if df.empty == True:
         return "NA"
     
@@ -52,15 +59,22 @@ def get_live_count(signage_id):
 
 @app.callback(
     Output("live_male_count", "children"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children")]
 )
-def live_male_count_callback(signage_id):
-    return get_male_count(signage_id)
+def live_male_count_callback(person_df):
 
-def get_male_count(signage_id):
+    df = pd.read_json(person_df, orient='split')
 
-    demographics = signage_manager.live_person(signage_id)
-    demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
+    return get_male_count(df)
+
+def get_male_count(demographics):
+
+    try:
+
+        #demographics = signage_manager.live_person(signage_id)
+        demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
+    except:
+        return "NA"
 
     if demographics.empty == True:
         return "NA"
@@ -77,15 +91,22 @@ def get_male_count(signage_id):
 
 @app.callback(
     Output("live_female_count", "children"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children")]
 )
-def live_female_count_callback(signage_id):
-    return get_female_count(signage_id)
+def live_female_count_callback(person_df):
 
-def get_female_count(signage_id):
+    df = pd.read_json(person_df, orient='split')
 
-    demographics = signage_manager.live_person(signage_id)
-    demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
+    return get_female_count(df)
+
+def get_female_count(demographics):
+
+    try:
+        #demographics = signage_manager.live_person(signage_id)
+
+        demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
+    except:
+        return "NA"
 
     if demographics.empty == True:
         return "NA"
@@ -100,13 +121,15 @@ def get_female_count(signage_id):
 
 @app.callback(
     Output("live_activity", "children"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children")]
 )
-def live_activity_callback(signage_id):
-    return get_activity(signage_id)
+def live_activity_callback(person_df):
+    df = pd.read_json(person_df, orient='split')
 
-def get_activity(signage_id):
-    df = signage_manager.live_person(signage_id)
+    return get_activity(df)
+
+def get_activity(df):
+    #df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return "NA"
@@ -116,14 +139,18 @@ def get_activity(signage_id):
 
 @app.callback(
     Output("live_engagement", "children"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children")]
 )
-def live_engagement_callback(signage_id):
-    return get_engagement(signage_id)
+def live_engagement_callback(person_df):
+    
+    df = pd.read_json(person_df, orient='split')
 
-def get_engagement(signage_id):
+
+    return get_engagement(df)
+
+def get_engagement(df):
    
-    df = signage_manager.live_person(signage_id)
+    #df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return "NA"
@@ -133,14 +160,16 @@ def get_engagement(signage_id):
 
 @app.callback(
     Output("live_age_group", "children"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children")]
 )
-def live_agegroup_callback(signage_id):
-    return get_agegroup(signage_id)
+def live_agegroup_callback(person_df):
+    df = pd.read_json(person_df, orient='split')
 
-def get_agegroup(signage_id):
+    return get_agegroup(df)
+
+def get_agegroup(df):
    
-    df = signage_manager.live_person(signage_id)
+    #df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return "NA"
@@ -155,13 +184,16 @@ def get_agegroup(signage_id):
 
 @app.callback(
     Output("live_dwell_chart", "figure"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children"), Input("live_age_group", "children")]
 )
-def live_dwell_callback(signage_id):
-    return get_live_dwell_chart(signage_id)
+def live_dwell_callback(person_df, _):
+    
+    df = pd.read_json(person_df, orient='split')
 
-def get_live_dwell_chart(signage_id):
-    df = signage_manager.live_person(signage_id)
+    return get_live_dwell_chart(df)
+
+def get_live_dwell_chart(df):
+    #df = signage_manager.live_person(signage_id)
     if df.empty == True:
         return {'data':[],'layout':[]}
 
@@ -178,15 +210,17 @@ def get_live_dwell_chart(signage_id):
 
 @app.callback(
     Output("live_age_chart", "figure"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children"), Input("live_age_group", "children")]
 )
-def live_age_callback(signage_id):
-    return get_live_age_chart(signage_id)
+def live_age_callback(person_df,_):
+    df = pd.read_json(person_df, orient='split')
+
+    return get_live_age_chart(df)
 
 
-def get_live_age_chart(signage_id):
+def get_live_age_chart(df):
 
-    df = signage_manager.live_person(signage_id)
+    #df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return {"data":[],"layout":[]}
@@ -229,15 +263,18 @@ def get_live_age_chart(signage_id):
 
 @app.callback(
     Output("live_agebygender_chart", "figure"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children"), Input("live_age_group", "children")]
 )
-def live_agebygender_callback(signage_id):
-    return get_live_agebygender_chart(signage_id)
+def live_agebygender_callback(person_df,_):
+    
+    df = pd.read_json(person_df, orient='split')
+
+    return get_live_agebygender_chart(df)
 
 
-def get_live_agebygender_chart(signage_id):
+def get_live_agebygender_chart(df):
 
-    df = signage_manager.live_person(signage_id)
+    #df = signage_manager.live_person(signage_id)
 
 
     if df.empty == True:
@@ -287,14 +324,16 @@ def get_live_agebygender_chart(signage_id):
 
 @app.callback(
     Output("live_gender_chart", "figure"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children"), Input("live_age_group", "children")]
 )
-def live_gender_callback(signage_id):
-    return get_live_gender_chart(signage_id)
+def live_gender_callback(person_df,_):
+    df = pd.read_json(person_df, orient='split')
+
+    return get_live_gender_chart(df)
 
 
-def get_live_gender_chart(signage_id):
-    df = signage_manager.live_person(signage_id)
+def get_live_gender_chart(df):
+    #df = signage_manager.live_person(signage_id)
 
 
     if df.empty == True:
@@ -357,30 +396,32 @@ def get_live_gender_chart(signage_id):
 
 @app.callback(
     Output("live_impressions_chart", "figure"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children"), Input("live_age_group", "children")]
 )
-def live_impressions_callback(signage_id):
-    return get_live_impressions_chart(signage_id)
+def live_impressions_callback(person_df,_):
+    df = pd.read_json(person_df, orient='split')
 
-def get_live_impressions_chart(signage_id):
+    return get_live_impressions_chart(df)
 
-    df = signage_manager.live_person(signage_id)
+def get_live_impressions_chart(df):
+
+    #df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return {"data":[],"layout":[]}
 
-    df['date_created'] = pd.to_datetime(df['date_created'],unit='s')
+    df['date_created'] = pd.to_datetime(df['date_created'])
 
     times = pd.DatetimeIndex(df.date_created)
-    df = df.groupby([times.hour]).face_id.nunique()
+    df = df.groupby([times.dayofweek]).face_id.nunique()
 
     df = df.reset_index()
 
     data = [go.Bar( x=df['date_created'], y=df['face_id'], text=df['face_id'], textposition='auto',marker=dict(color='#ff8333') )]
 
     layout = go.Layout(
-        title="Hourly Impressions",
-        xaxis=dict(showgrid=False,title="Hour of the day"),
+        title="Daily Impressions",
+        xaxis=dict(showgrid=False,title="Day of week"),
         yaxis=dict(title="Face Count"),
         barmode='relative',
         #margin=dict(l=35, r=25, b=25, t=5, pad=2),
@@ -395,16 +436,18 @@ def get_live_impressions_chart(signage_id):
 
 @app.callback(
     Output("live_engagement_chart", "figure"),
-    [Input("signage-dropdown", "value")]
+    [Input("live_person_df", "children"), Input("live_age_group", "children")]
 )
-def live_engagement_callback(signage_id):
-    return get_live_engagement_chart(signage_id)
+def live_engagement_callback(person_df,_):
+    df = pd.read_json(person_df, orient='split')
+
+    return get_live_engagement_chart(df)
 
 
 
-def get_live_engagement_chart(signage_id):
+def get_live_engagement_chart(df):
 
-    df = signage_manager.live_person(signage_id)
+    #df = signage_manager.live_person(signage_id)
 
     if df.empty == True:
         return {'data':[],'layout':[]}
@@ -441,27 +484,6 @@ def get_live_engagement_chart(signage_id):
 
 ###############################################################################################
 
-@app.callback(
-    Output('output-container', 'children'),
-    [Input('signage-dropdown', 'value')])
-def update_output(value):
-    return 'Audience Measurement for "{}"'.format(value)
-
-
-@app.callback(
-    Output('signage-date-picker-single', 'date'),
-    [Input('signage-dropdown', 'value')])
-def update_date(value):
-    return live_date(value)
-
-def live_date(signage_id):
-    df = signage_manager.live_person(signage_id)
-
-    if df.empty == True:
-        return dt.now()
-    df['date_created'] = pd.to_datetime(df['date_created'],unit='s')
-
-    return min(df['date_created'])
 
 
 
@@ -476,6 +498,9 @@ vertical_center = {
 
 layout = [
 
+
+
+
     #indicators row
     html.Div(
         [
@@ -483,6 +508,7 @@ layout = [
                 "#00cc96",
                 "Total Faces",
                 "live_faces_count",
+
             ),
             indicator_alt(
                 "#119DFF",

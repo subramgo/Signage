@@ -6,6 +6,10 @@ import itertools
 import collections
 import ast
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 cfg_defaults = { 
       'camera'                : {
           'enabled'           : False
@@ -19,7 +23,7 @@ cfg_defaults = {
     , 'data'                  : {
           'enabled'           : False
         , 'credentials'       : 'united:irkbin'
-       # , 'data_server'       : 'signagedata.azurewebsites.net'
+        #, 'data_server'       : 'signagedata.azurewebsites.net/api/v2/signage'
         , 'data_server'       : '0.0.0.0:5000/api/v2/signage'
 
         #, 'data_protocol'     : 'https://'
@@ -65,7 +69,30 @@ class SignageManager():
 		
 		return  return_df
 
+
+	def person_all_signage(self, store_id):
+		
+		signages = self.signage(store_id)['id'].tolist()
+		return_df = pd.DataFrame()
+
+
+
+		final_df = pd.DataFrame({})
+		for signage_id in signages:
+			return_df = pd.DataFrame.from_dict(self._fetch(self.person_url + signage_id))
+			final_df = pd.concat([final_df,return_df])
+
+
+		final_df.engagement_range = pd.to_numeric(final_df.engagement_range)
+		final_df.time_alive = pd.to_numeric(final_df.time_alive)
+		final_df.date_created = pd.to_datetime(final_df.date_created)
+
+		return final_df
+
+
+
 	def person(self, signage_id=11):
+		
 		return_df = pd.DataFrame()
 		signage_id = str(signage_id)
 
@@ -109,9 +136,12 @@ class SignageManager():
 	def enterprise(self):
 		return_df = pd.DataFrame()
 
+
+
 		try:
-			return_df = pd.DataFrame.from_dict(self._fetch(self.enterprise_url))
+			return_df = pd.DataFrame.from_dict(self._fetch(self.enterprise_url), orient='columns')
 		except Exception as e:
+			logger.error(e)
 			return return_df
 		
 		return  return_df
@@ -139,11 +169,16 @@ class SignageManager():
 		
 		return  return_df
 
+	def get_init_push(self):
+		return_df = pd.DataFrame()
+		return_df['data'] = 'success'
+		return return_df
+
 	################ Header Row Functions #######################
 
-	def get_first_row_header(self):
+	def get_first_row_header(self, signage_id):
 
-		person = self.person()
+		person = self.person(signage_id)
 		total_impressions = person['face_id'].count()
 		avg_dwell_time = person['time_alive'].mean()
 		engagement_range = person['engagement_range'].mean()
@@ -247,7 +282,7 @@ class SignageManager():
 	        option = {'label': ename, 'value': eids[i]}
 	        options_.append(option)
 
-	    return (options_, eids[0])
+	    return (options_, eids[1])
 	
 
 	def _decay_func(self,x):
@@ -280,7 +315,6 @@ class SignageManager():
 	def overall_effectiveness(self, signage_id):
 
 		persons = self.person(signage_id)
-
 		persons.date_created = pd.to_datetime(persons.date_created)
 		persons['hour_of_day'] = persons.date_created.dt.hour
 		persons['dayofweek'] = persons.date_created.dt.dayofweek
@@ -292,36 +326,74 @@ class SignageManager():
 	def get_recommendation(self,signage_id):
 		
 		df = self.overall_effectiveness(int(signage_id))
+		df.fillna(0, inplace=True)
 
 
 		rules = []
 		rules_dict = {}
+		rules_df = pd.DataFrame(columns=["Interaction Effect","Insights","Details"])
+		row_count = 0
 
-		male_rating = df[df.gender == 'male']['normalized_engagement'].mean() * 10
-		female_rating = df[df.gender == 'female']['normalized_engagement'].mean() * 10
+		male_rating = df[df.gender == 'male']['normalized_engagement'].mean()
+		female_rating = df[df.gender == 'female']['normalized_engagement'].mean()
+
+
+		# Gender Effect
+		rules_df.at[str(row_count), 'Interaction Effect'] = "Gender Effect"
+
+		percentage_diff = abs(male_rating - female_rating) * 100
 
 		if male_rating > female_rating:
-			rules_dict['Gender Effect'] = ['Male customers are more engaged with the contents']
+			rules_df.at[str(row_count), 'Insights'] = 'The contents at this signage attracts more male attention.'
+			rules_df.at[str(row_count), "Details"] = 'Males are ' + str(np.round(percentage_diff,1) )+ ' % more engaged'
+
 		else:
-			rules_dict['Gender Effect'] = ['Female customers are more engaged with the contents']
+			rules_df.at[str(row_count), 'Insights'] = 'The contents at this signage attracts more female attention.'
+			rules_df.at[str(row_count), "Details"] = 'Females are ' + str(np.round(percentage_diff,1) )+ ' % more engaged'
 
 
-		teen_rating = df[df.age == 'teen']['normalized_engagement'].mean() * 10
-		adult_rating = df[df.age == 'adult']['normalized_engagement'].mean() * 10
-		senior_rating = df[df.age == 'senior']['normalized_engagement'].mean() * 10
+
+		row_count+=1
+
+		# Age Effect
+		rules_df.at[str(row_count), 'Interaction Effect'] = "Age Effect"
+
+		teen_rating = df[df.age == 'teen']['normalized_engagement'].mean()
+		adult_rating = df[df.age == 'adult']['normalized_engagement'].mean()
+		senior_rating = df[df.age == 'senior']['normalized_engagement'].mean() 
+
+		if np.isnan(teen_rating): teen_rating = 0
+		if np.isnan(adult_rating): adult_rating = 0
+		if np.isnan(senior_rating): senior_rating =0
+
+
+
+
 
 		if teen_rating > adult_rating:
 			if teen_rating > senior_rating:
-				rules_dict['Age Effect'] = ['Teen customers are more engaged with the contents']
-		else:
+				rules_df.at[str(row_count), 'Insights'] = "The content is teen oriented."
+				rules_df.at[str(row_count), "Details"] =  'Teens have ' + str(np.round(teen_rating*100,1) )+ " % effectiveness score"
+
+
+		if teen_rating < adult_rating:
 			if adult_rating > senior_rating:
-				rules_dict['Age Effect'] = ['Adult customers are more engaged with the contents']
-			else:
-				rules_dict['Age Effect'] = ['Senior customers are more engaged with the contents']
+				rules_df.at[str(row_count), 'Insights'] = "Adult customers are more engaged"
+				rules_df.at[str(row_count), "Details"] =  'Adults have ' + str(np.round(adult_rating*100,1) )+ " % effectiveness score"
 
-		rules_df = pd.DataFrame.from_dict(rules_dict)
 
-		return rules_dict
+
+
+		if senior_rating > adult_rating:
+			if senior_rating > teen_rating:
+				rules_df.at[str(row_count), 'Insights'] = "Senior customers are more engaged"
+				rules_df.at[str(row_count), "Details"] =  'Senior have ' + str(np.round(senior_rating*100,1) )+ " % effectiveness score"
+
+
+		rules_df.reset_index(drop=True,inplace = True)
+
+
+		return rules_df
 
 
 def main():
@@ -406,6 +478,8 @@ def gender_count(in_pd):
 	print(res)
 
 if __name__ == '__main__':
-	test()
+	smgr = SignageManager()
+	df = smgr.person_all_signage(202)
+	print(df.signage_id.unique())
 
 

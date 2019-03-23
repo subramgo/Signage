@@ -7,7 +7,10 @@ from dash.dependencies import Input, Output
 import dash_table
 import pandas as pd
 
-
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+enterprise_drops = signage_manager.get_enterprise()
 
 
 
@@ -15,13 +18,17 @@ import pandas as pd
 
 @app.callback(
     Output("demograhics_effectiveness", "figure"),
-    [Input("signage-dropdown", "value")]
+    [Input("effectiveness_df", "children"),Input("demo_trigger_df","children")]
 )
-def demo_effectiveness(signage_id):
-    return get_demo_effect(signage_id)
+def demo_effectiveness(effect_df, _):
+    logger.info("demo effectiveness")
+    df = pd.read_json(effect_df, orient='split')
 
-def get_demo_effect(signage_id):
-	df = signage_manager.overall_effectiveness(signage_id)
+    return get_demo_effect(df)
+
+def get_demo_effect(df):
+	
+	#df = signage_manager.overall_effectiveness(signage_id)
 
 	
 	scales = ['<b>Male</b>', '<b>Female</b>',
@@ -149,6 +156,11 @@ def get_demo_effect(signage_id):
 
 layout = [
 
+                    html.Div(
+               id="demo_trigger_df",
+               style={"display": "none"},
+        ),
+
 html.Div([html.P("")]),
 
 
@@ -156,6 +168,9 @@ html.Div([
 	#charts row div 
         html.Div(
             [
+
+
+
                 html.Div(
                     [
                    dcc.Graph(
@@ -164,16 +179,14 @@ html.Div([
                         config=dict(displayModeBar=False),
                     ),
                     ],
-                    className="six colunms",
 
                     ),
 
                 
             ],
-            className="twelve columns",
     	),
         ],
-        #className="row",
+       # className="row",
         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 
         )
