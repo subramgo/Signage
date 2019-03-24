@@ -4,7 +4,7 @@
 
 """
 import dash_html_components as html
-from app import signage_manager, app
+from app import signage_manager, app, app_state
 from app import indicator,indicator_alt
 from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
@@ -31,25 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 #################### First row header ################################
-
-
-@app.callback(
-    Output("live_faces_count", "children"),
-    [Input("live_person_df", "children")]
-)
-def live_count_callback(person_df):
-
-    df = pd.read_json(person_df, orient='split')
-
-    return get_live_count(df)
-
-def get_live_count(df):
+def get_live_count():
     """
     Total impressions count
     """
 
-    #df = signage_manager.live_person(signage_id)
-    if df.empty == True:
+    df = app_state.live_person_df
+
+    if df is None or df.empty == True:
         return "NA"
     
     count = df['face_id'].nunique()
@@ -57,21 +46,11 @@ def get_live_count(df):
 
 
 
-@app.callback(
-    Output("live_male_count", "children"),
-    [Input("live_person_df", "children")]
-)
-def live_male_count_callback(person_df):
-
-    df = pd.read_json(person_df, orient='split')
-
-    return get_male_count(df)
-
-def get_male_count(demographics):
+def get_male_count():
 
     try:
 
-        #demographics = signage_manager.live_person(signage_id)
+        demographics = app_state.live_person_df
         demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
     except:
         return "NA"
@@ -89,20 +68,12 @@ def get_male_count(demographics):
 
 
 
-@app.callback(
-    Output("live_female_count", "children"),
-    [Input("live_person_df", "children")]
-)
-def live_female_count_callback(person_df):
 
-    df = pd.read_json(person_df, orient='split')
 
-    return get_female_count(df)
-
-def get_female_count(demographics):
+def get_female_count():
 
     try:
-        #demographics = signage_manager.live_person(signage_id)
+        demographics = app_state.live_person_df
 
         demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
     except:
@@ -119,59 +90,34 @@ def get_female_count(demographics):
         return "NA"
 
 
-@app.callback(
-    Output("live_activity", "children"),
-    [Input("live_person_df", "children")]
-)
-def live_activity_callback(person_df):
-    df = pd.read_json(person_df, orient='split')
 
-    return get_activity(df)
+def get_activity():
+    
+    df = app_state.live_person_df
 
-def get_activity(df):
-    #df = signage_manager.live_person(signage_id)
-
-    if df.empty == True:
+    if df is None or df.empty == True:
         return "NA"
     else:
         return str(np.round(df['time_alive'].mean())) + ' seconds'
 
 
-@app.callback(
-    Output("live_engagement", "children"),
-    [Input("live_person_df", "children")]
-)
-def live_engagement_callback(person_df):
-    
-    df = pd.read_json(person_df, orient='split')
-
-
-    return get_engagement(df)
-
-def get_engagement(df):
+def get_engagement():
    
-    #df = signage_manager.live_person(signage_id)
+    df= app_state.live_person_df
 
-    if df.empty == True:
+    if df is None or df.empty == True:
         return "NA"
     else:
         return str(np.round(df['engagement_range'].mean())) + ' Feet'
     
 
-@app.callback(
-    Output("live_age_group", "children"),
-    [Input("live_person_df", "children")]
-)
-def live_agegroup_callback(person_df):
-    df = pd.read_json(person_df, orient='split')
 
-    return get_agegroup(df)
 
-def get_agegroup(df):
+def get_agegroup():
    
-    #df = signage_manager.live_person(signage_id)
+    df = app_state.live_person_df
 
-    if df.empty == True:
+    if df is None or df.empty == True:
         return "NA"
 
     ages_ = df['age'].tolist()
@@ -182,19 +128,13 @@ def get_agegroup(df):
 
 ############################# Dwell Chart ######################
 
-@app.callback(
-    Output("live_dwell_chart", "figure"),
-    [Input("live_person_df", "children"), Input("live_age_group", "children")]
-)
-def live_dwell_callback(person_df, _):
-    
-    df = pd.read_json(person_df, orient='split')
 
-    return get_live_dwell_chart(df)
 
-def get_live_dwell_chart(df):
+def get_live_dwell_chart():
     #df = signage_manager.live_person(signage_id)
-    if df.empty == True:
+
+    df = app_state.live_person_df
+    if df is None or df.empty == True:
         return {'data':[],'layout':[]}
 
     hist_data = df['time_alive'].tolist()
@@ -208,21 +148,14 @@ def get_live_dwell_chart(df):
 
 ############################### Live age chart ###################
 
-@app.callback(
-    Output("live_age_chart", "figure"),
-    [Input("live_person_df", "children"), Input("live_age_group", "children")]
-)
-def live_age_callback(person_df,_):
-    df = pd.read_json(person_df, orient='split')
 
-    return get_live_age_chart(df)
-
-
-def get_live_age_chart(df):
+def get_live_age_chart():
 
     #df = signage_manager.live_person(signage_id)
 
-    if df.empty == True:
+    df = app_state.live_person_df
+
+    if df is None or df.empty == True:
         return {"data":[],"layout":[]}
 
     unique_age_buckets = []
@@ -261,23 +194,17 @@ def get_live_age_chart(df):
 
 ############################# Live age by gender chart #############
 
-@app.callback(
-    Output("live_agebygender_chart", "figure"),
-    [Input("live_person_df", "children"), Input("live_age_group", "children")]
-)
-def live_agebygender_callback(person_df,_):
-    
-    df = pd.read_json(person_df, orient='split')
-
-    return get_live_agebygender_chart(df)
 
 
-def get_live_agebygender_chart(df):
+
+def get_live_agebygender_chart():
 
     #df = signage_manager.live_person(signage_id)
 
+    df = app_state.live_person_df
 
-    if df.empty == True:
+
+    if df is None or df.empty == True:
         return {"data":[],"layout":[]}
 
     ages = df['age'].unique()
@@ -322,21 +249,16 @@ def get_live_agebygender_chart(df):
 
 ############################### Live Gender chart ###################
 
-@app.callback(
-    Output("live_gender_chart", "figure"),
-    [Input("live_person_df", "children"), Input("live_age_group", "children")]
-)
-def live_gender_callback(person_df,_):
-    df = pd.read_json(person_df, orient='split')
-
-    return get_live_gender_chart(df)
 
 
-def get_live_gender_chart(df):
+
+def get_live_gender_chart():
     #df = signage_manager.live_person(signage_id)
 
+    df = app_state.live_person_df
 
-    if df.empty == True:
+
+    if df is None or df.empty == True:
         return {"data":[],"layout":[]}
 
     df = df.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
@@ -394,20 +316,14 @@ def get_live_gender_chart(df):
 
 ############################### Live Hourly Impressions chart ###################
 
-@app.callback(
-    Output("live_impressions_chart", "figure"),
-    [Input("live_person_df", "children"), Input("live_age_group", "children")]
-)
-def live_impressions_callback(person_df,_):
-    df = pd.read_json(person_df, orient='split')
 
-    return get_live_impressions_chart(df)
-
-def get_live_impressions_chart(df):
+def get_live_impressions_chart():
 
     #df = signage_manager.live_person(signage_id)
 
-    if df.empty == True:
+    df = app_state.live_person_df
+
+    if df is None or df.empty == True:
         return {"data":[],"layout":[]}
 
     df['date_created'] = pd.to_datetime(df['date_created'])
@@ -434,22 +350,17 @@ def get_live_impressions_chart(df):
 
 ###################### Live Engagement Chart ########################
 
-@app.callback(
-    Output("live_engagement_chart", "figure"),
-    [Input("live_person_df", "children"), Input("live_age_group", "children")]
-)
-def live_engagement_callback(person_df,_):
-    df = pd.read_json(person_df, orient='split')
-
-    return get_live_engagement_chart(df)
 
 
 
-def get_live_engagement_chart(df):
+
+def get_live_engagement_chart():
 
     #df = signage_manager.live_person(signage_id)
 
-    if df.empty == True:
+    df = app_state.live_person_df
+
+    if df is None or df.empty == True:
         return {'data':[],'layout':[]}
 
     distances = df['engagement_range'].tolist()
@@ -508,32 +419,38 @@ layout = [
                 "#00cc96",
                 "Total Faces",
                 "live_faces_count",
+                get_live_count(),
 
             ),
             indicator_alt(
                 "#119DFF",
                 "Male",
                 "live_male_count",
+                get_male_count()
             ),
             indicator(
                 "#EF553B",
                 "Female",
                 "live_female_count",
+                get_female_count()
             ),
             indicator_alt(
                 "#00cc96",
                 "Dwell time",
                 "live_activity",
+                get_live_count()
             ),
             indicator(
                 "#119DFF",
                 "Engagement Range",
                 "live_engagement",
+                get_engagement()
             ),
             indicator_alt(
                 "#00cc96",
                 "Frequent Age Group",
                 "live_age_group",
+                get_agegroup()
             ),
         ],
         className="row",
@@ -554,6 +471,7 @@ layout = [
                         id = "live_engagement_chart",
                         style = {"height": "100%", "width": "98%","margin":5},
                         config = dict(displayModeBar=False),
+                        figure = get_live_engagement_chart(),
                     ),
                 ],
                 style={'border':'1px solid', 'border-radius': 10,'border-color': '#1C4E80' ,'backgroundColor':'#FFFFFF'},
@@ -569,6 +487,7 @@ layout = [
                         id = "live_age_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_age_chart(),
                     ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -590,6 +509,7 @@ layout = [
                         id = "live_impressions_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_impressions_chart(),
                     ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -605,6 +525,7 @@ layout = [
                         id = "live_gender_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_gender_chart()
                     ),
 
                     ],
@@ -629,6 +550,7 @@ layout = [
                         id = "live_dwell_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_dwell_chart(),
                     ),
                     ],
                                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -643,6 +565,7 @@ layout = [
                         id = "live_agebygender_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_agebygender_chart(),
                     ),
                     ],
                                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},

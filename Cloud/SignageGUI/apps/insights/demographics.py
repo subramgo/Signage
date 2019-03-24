@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from plotly import graph_objs as go
 import numpy as np
-from app import signage_manager, app
+from app import app, app_state
 from dash.dependencies import Input, Output
 import dash_table
 import pandas as pd
@@ -10,25 +10,19 @@ import pandas as pd
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-enterprise_drops = signage_manager.get_enterprise()
 
 
 
 
 
-@app.callback(
-    Output("demograhics_effectiveness", "figure"),
-    [Input("effectiveness_df", "children"),Input("demo_trigger_df","children")]
-)
-def demo_effectiveness(effect_df, _):
-    logger.info("demo effectiveness")
-    df = pd.read_json(effect_df, orient='split')
 
-    return get_demo_effect(df)
 
-def get_demo_effect(df):
+
+def get_demo_effect():
 	
 	#df = signage_manager.overall_effectiveness(signage_id)
+
+	df = app_state.effectiveness_df
 
 	
 	scales = ['<b>Male</b>', '<b>Female</b>',
@@ -156,10 +150,6 @@ def get_demo_effect(df):
 
 layout = [
 
-                    html.Div(
-               id="demo_trigger_df",
-               style={"display": "none"},
-        ),
 
 html.Div([html.P("")]),
 
@@ -174,7 +164,8 @@ html.Div([
                 html.Div(
                     [
                    dcc.Graph(
-                        id = "demograhics_effectiveness",
+                   	    figure=get_demo_effect(),
+                        #id = "demograhics_effectiveness",
                         style={"height": "100%", "width": "50%","margin":5},
                         config=dict(displayModeBar=False),
                     ),
@@ -186,6 +177,7 @@ html.Div([
             ],
     	),
         ],
+        
        # className="row",
         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 

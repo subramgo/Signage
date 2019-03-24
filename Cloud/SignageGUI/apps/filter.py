@@ -3,12 +3,13 @@ from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
-from app import app, server, signage_manager
+from app import app, server, signage_manager, app_state
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 enterprise_drops = signage_manager.get_enterprise()
 
+logging.info(app_state.print())
 
 layout =[
 
@@ -24,7 +25,8 @@ layout =[
         html.Div([
              dcc.Dropdown(
             id='enterprise-dropdown',
-            options=enterprise_drops[0],
+            options=app_state.enterprise_options(),
+            value = app_state.enterprise_id,
             #value=enterprise_drops[1],
             #placeholder="Select Enterprise",
             clearable=False,
@@ -37,57 +39,60 @@ layout =[
       ],className="three columns",
       ),
 
-		             
-		          html.Div([
-			             html.Div([html.P("Store")]),
-		              
-		              html.Div([
+                           
+                        html.Div([
+                                  html.Div([html.P("Store")]),
+                            
+                            html.Div([
 
-			              dcc.Dropdown(
-			                    id='store-dropdown',
-			  		            #placeholder="Select Store",
-    							clearable=True,
-
-
-			                    ), 
-			                ],
-		                ),
+                                   dcc.Dropdown(
+                                         id='store-dropdown',
+                                                     clearable=True,
+                                                     #options = app_state.store_options(app_state.enterprise_id),
+                                                     #value = app_state.store_id,
 
 
-		             ],className="three columns"
+                                         ), 
+                                     ],
+                              ),
 
 
-		             ),
+                           ],className="three columns"
 
-        	      html.Div([
 
-        			 html.Div([html.P("Signage")]),
+                           ),
 
-		              html.Div([
-		                     dcc.Dropdown(
-		                    id='signage-dropdown',
-		                    #placeholder="Select Signage",
-    						clearable=False,
-		           
+                     html.Div([
 
-		                    ), 
-		                ],
+                              html.Div([html.P("Signage")]),
 
-		                ),
-		             ],className="three columns",
+                            html.Div([
+                                   dcc.Dropdown(
+                                  id='signage-dropdown',
+                                  #placeholder="Select Signage",
+                                              clearable=False,
+                                              #options = app_state.signage_options(app_state.store_id),
+                                              
+                                              #value = app_state.signage_id,
+
+                                  ), 
+                              ],
+
+                              ),
+                           ],className="three columns",
 
                     ),
-		             
-		            
-		    html.Div([
+                           
+                          
+                  html.Div([
 
-        			 html.Div([html.P("Address")]),
-						html.H5(id="store-address"),
-		                ],
-		             className="three columns",
+                              html.Div([html.P("Address")]),
+                                          html.H5(id="store-address"),
+                              ],
+                           className="three columns",
 
 
-		           ),
+                         ),
             ],
             ),
 ]
@@ -97,151 +102,119 @@ layout =[
 
 ####################### update data ########################
 
-
 @app.callback(
-    Output("recommendation_df", "children"),
-    [Input("signage_df", "children")]
+    Output("selected_enterprise_df", "children"),
+    [Input("switch-button", "n_clicks")]
 )
-def live_recommendation_df_callback(signage_df):
+def button_callback(nclicks):
+
+    logger.info("Enterprise id " + str(app_state.enterprise_id))
+    logger.info("Store id " + str(app_state.store_id))
+    logger.info("singage id " + str(app_state.signage_id))
+
+    df = signage_manager.live_person(app_state.signage_id)
+    app_state.live_person_df = df
+
+    df = signage_manager.overall_effectiveness(app_state.signage_id)
+    app_state.effectiveness_df = df
+
+    df = signage_manager.get_recommendation(app_state.signage_id)
+    app_state.recommendation_df = df
 
 
-    df = pd.read_json(signage_df, orient='split')
-    signage_id = df['signage_id'].iloc[0]
+    df = signage_manager.person_all_signage(app_state.store_id)
+    app_state.person_all_signage_df = df
 
-    df = signage_manager.get_recommendation(signage_id)
+    logger.info(df['location'].unique())
 
-    
-    if df.empty == True:
-        return pd.DataFrame({})
+    logger.info("Data set created")
 
-    return df.to_json(date_format='iso', orient='split')
-
-@app.callback(
-    Output("effectiveness_df", "children"),
-    [Input("signage_df", "children")]
-)
-def live_effectivness_df_callback(signage_df):
-
-
-    df = pd.read_json(signage_df, orient='split')
-    signage_id = df['signage_id'].values[0]
-    signage_id = str(signage_id)
-
-
-    df = signage_manager.overall_effectiveness(signage_id)
-    
-    if df.empty == True:
-        return pd.DataFrame({})
-
-    return df.to_json(date_format='iso', orient='split')
-
+    return None
 
 @app.callback(
     Output("live_person_df", "children"),
-    [Input("signage_df", "children")]
+    [Input("signage-dropdown", "value")]
 )
-def live_person_df_callback(signage_df):
+def live_person_df_callback(signage_id):
 
+    signage_id = int(signage_id)
 
-    df = pd.read_json(signage_df, orient='split')
-
-    signage_id = df['signage_id'].values[0]
-    signage_id = str(signage_id)
-
-
-    df = signage_manager.live_person(signage_id)
-
-    
-    if df.empty == True:
-        return pd.DataFrame({})
-
-    return df.to_json(date_format='iso', orient='split')
+    app_state.signage_id = signage_id
+    return None
 
 ##################################### Update Signage #########################
 
-@app.callback(
-    Output("person_signage_list_df", "children"),
-    [Input("store-dropdown", "value")]
-)
-def live_person_all_df_callback(store_id):
-
-    df = signage_manager.person_all_signage(store_id)
-    return df.to_json(date_format='iso', orient='split')
-
-
-@app.callback(
-    Output('signage_df', 'children'),
-    [Input('store-dropdown', 'value')])
-def load_signage_df_value(store_id):
-    value = signage_manager.get_signage(store_id)[1]
-    print
-    df = pd.DataFrame({'signage_id': [value]})
-    return df.to_json(date_format='iso', orient='split') 
-
-@app.callback(
-    Output('signage-dropdown', 'options'),
-    [Input('store-dropdown', 'value')])
-def load_signage_option(store_id):
-    options = signage_manager.get_signage(store_id)[0]
-    return options
 
 @app.callback(
     Output('signage-dropdown', 'value'),
     [Input('store-dropdown', 'value')])
 def load_signage_value(store_id):
-    value = signage_manager.get_signage(store_id)[1]
-    return value 
+
+    store_id = int(store_id)
+
+    if app_state.store_id != store_id:
+        app_state.store_id = store_id
+        return app_state.signage_value(store_id)
+    else:
+       return app_state.signage_id
+
+
+
+@app.callback(
+    Output('signage-dropdown', 'options'),
+    [Input('store-dropdown', 'value')])
+def load_signage_option(store_id):
+
+           store_id = int(store_id)
+
+           if app_state.store_id != store_id:
+               app_state.store_id = store_id
+           
+           return app_state.signage_options(store_id)
 
 ############# Update Store #######################
-@app.callback(
-    Output('store_df', 'children'),
-    [Input('store-dropdown', 'value')])
-def load_store_df_value(store_id):
-	df = pd.DataFrame({'store_id': [store_id]})
-	
-	return df.to_json(date_format='iso', orient='split') 
+
 
 @app.callback(
     Output('store-address', 'children'),
     [Input('store-dropdown', 'value')])
 def load_stores_address(store_id):
-    options = signage_manager.store(store_id)
-    if options.empty == True:
-    	return "NA"
-    return options['address'] + ',' + options['city'] + ',' + options['state']
+
+       store_id = int(store_id)
+       app_state.store_id = store_id
+       return app_state.store_address(store_id)
 
 
 @app.callback(
     Output('store-dropdown', 'options'),
-    [Input('selected_enterprise_df', 'children')])
-def load_stores_option(selected_enterprise_df):
-	df = pd.read_json(selected_enterprise_df, orient='split')
-	enterprise_id = df['enterprise_id'].iloc[0]
-	options = signage_manager.get_stores(enterprise_id)[0]
-	return options
+    [Input('enterprise-dropdown', 'value')])
+def load_stores_options(in_enterprise_id):
+
+    in_enterprise_id = int(in_enterprise_id)
+    if app_state.enterprise_id != in_enterprise_id:
+        app_state.enterprise_id = in_enterprise_id
+    
+    return app_state.store_options(in_enterprise_id)
+
+
 
 @app.callback(
     Output('store-dropdown', 'value'),
-    [Input('selected_enterprise_df', 'children')])
-def load_stores_value(selected_enterprise_df):
-	df = pd.read_json(selected_enterprise_df, orient='split')
-	enterprise_id = df['enterprise_id'].iloc[0]
-	value = signage_manager.get_stores(enterprise_id)[1]
-	return value 
-
-
-# Step 1 - Store the selected enterprise id
-@app.callback(
-    Output('selected_enterprise_df', 'children'),
     [Input('enterprise-dropdown', 'value')])
-def load_enterprise_df_value(enterprise_id):
+def load_stores_value(in_enterprise_id):
 
-    
-    df = pd.DataFrame({'enterprise_id': [enterprise_id]})
-    return df.to_json(date_format='iso', orient='split') 
+    in_enterprise_id = int(in_enterprise_id)
 
-"""
+    if app_state.enterprise_id != in_enterprise_id:
+        app_state.enterprise_id = in_enterprise_id
+        return app_state.store_value(in_enterprise_id)
+    else:
+        return app_state.store_id
 
 
 
-"""
+
+
+
+
+

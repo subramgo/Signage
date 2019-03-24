@@ -7,11 +7,15 @@ import pandas as pd
 import plotly.plotly as py
 from plotly import graph_objs as go
 import math
-from app import app, server, signage_manager
+from app import app, server, signage_manager, app_state
 from apps import snapshot, live, filter
 from apps.insights import overall, recommendations , demographics
 import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+enterprise_drops = signage_manager.get_enterprise()
 
+logging.info(app_state.print())
 """
 Color Scheme
 
@@ -158,6 +162,7 @@ def render_content(tab):
     elif tab == "audience_tab":
         return overall.layout
     elif tab == "audience_demo_effect_tab":
+        logger.info(tab)
         return demographics.layout
     elif tab == "recommendation_tab":
         return recommendations.layout

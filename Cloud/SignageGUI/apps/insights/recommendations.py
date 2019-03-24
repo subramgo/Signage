@@ -3,28 +3,21 @@ from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
-from app import app, server, signage_manager
+from app import app, server, app_state
 import dash_table
 
 
-rules_df = pd.DataFrame({})
 
 
-@app.callback(
-    Output("recommendation_table", "data"),
-    [Input("recommendation_df", "children"),Input("demo_trigger_df","children")]
-)
-def get_recommendation_data(recommendation_df,_):
+
+def get_recommendation_data():
     
-    rules_df = pd.read_json(recommendation_df, orient='split')
+    rules_df = app_state.recommendation_df
     return rules_df.to_dict("rows")
 
-@app.callback(
-    Output("recommendation_table", "columns"),
-    [Input("recommendation_df", "children"),Input("demo_trigger_df","children")]
-)
-def get_recommendation_columns(recommendation_df,_):
-    rules_df = pd.read_json(recommendation_df, orient='split')
+
+def get_recommendation_columns():
+    rules_df = app_state.recommendation_df
 	
     return [{"name": i, "id": i} for i in rules_df.columns]
 
@@ -34,6 +27,8 @@ layout =[
 
         	      dash_table.DataTable(
 					    id='recommendation_table',
+					    data = get_recommendation_data(),
+					    columns = get_recommendation_columns(),
     style_cell={'textAlign': 'center'},
     style_cell_conditional=[
         {

@@ -6,7 +6,7 @@
 
 import dash_html_components as html
 import dash_core_components as dcc
-from app import app,signage_manager
+from app import app,app_state
 from app import indicator,indicator_alt
 from dash.dependencies import Input, Output, State
 import pandas as pd 
@@ -24,15 +24,12 @@ import itertools
 
 
 ####################### Age Chart ########################
-@app.callback(
-    Output("age_chart", "figure"),
-    [Input("person_signage_list_df", "children")]
-)
-def get_age_bar(person_df):
+
+def get_age_bar():
 
     #df = signage_manager.person()
     
-    df = pd.read_json(person_df, orient='split')
+    df = app_state.person_all_signage_df
 
     if df.empty == True:
         return {'data':[],'layout':[]}
@@ -68,14 +65,11 @@ def get_age_bar(person_df):
 
 
 ########################### Demographics chart ############################
-@app.callback(
-    Output("demograpics_chart", "figure"),
-    [Input("person_signage_list_df", "children")]
-)
-def get_demographics_chart(person_df):
+
+def get_demographics_chart():
 
     #df = signage_manager.person()
-    df = pd.read_json(person_df, orient='split')
+    df = app_state.person_all_signage_df
 
 
     if df.empty == True :
@@ -124,14 +118,11 @@ def get_demographics_chart(person_df):
 
 
 ######################### Dwell time chart ##############################
-@app.callback(
-    Output("dwelltime_chart", "figure"),
-    [Input("person_signage_list_df", "children")]
-)
-def get_dwelltime_chart(person_df):
+
+def get_dwelltime_chart():
 
     #df = signage_manager.person()
-    df = pd.read_json(person_df, orient='split')
+    df = app_state.person_all_signage_df
 
     if df.empty == True :
         return {"data":[],"layout":[]}
@@ -171,15 +162,12 @@ def get_dwelltime_chart(person_df):
     return {"data":data,"layout":layout}
 
 ###################### Impressions chart ############################
-@app.callback(
-    Output("impressions_chart", "figure"),
-    [Input("person_signage_list_df", "children")]
-)
-def get_impressions_chart(person_df):
+
+def get_impressions_chart():
 
 
     #df = signage_manager.person()
-    df = pd.read_json(person_df, orient='split')
+    df = app_state.person_all_signage_df
 
     if df.empty == True:
         return {"data":[],"layout":[]}
@@ -217,13 +205,10 @@ def get_impressions_chart(person_df):
 
 
 ############################## Engatement Chart #############################
-@app.callback(
-    Output("engagement_chart", "figure"),
-    [Input("person_signage_list_df", "children")]
-)
-def get_engagement_chart(person_df):
+
+def get_engagement_chart():
     #df = signage_manager.person()
-    df = pd.read_json(person_df, orient='split')
+    df = app_state.person_all_signage_df
 
     if df.empty == True:
         return {'data':[],'layout':[]}
@@ -265,13 +250,10 @@ def get_engagement_chart(person_df):
 
 
 ############################## Engagement Box Chart #########################
-@app.callback(
-    Output("engagement_box_chart", "figure"),
-    [Input("person_signage_list_df", "children")]
-)
-def get_engagement_box_chart(person_df):
+
+def get_engagement_box_chart():
     #df = signage_manager.person()
-    df = pd.read_json(person_df, orient='split')
+    df = app_state.person_all_signage_df
 
     if df.empty == True :
         return {'data':[],'layout':[]}
@@ -325,6 +307,7 @@ layout = [
                             id = "impressions_chart",
                             style={"height": "100%", "width": "98%","margin":5},
                             config=dict(displayModeBar=False),
+                            figure = get_impressions_chart(),
                         ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -339,6 +322,7 @@ layout = [
                             id = "dwelltime_chart",
                             style = {"height": "100%", "width": "98%","margin":5},
                             config = dict(displayModeBar=False),
+                            figure = get_dwelltime_chart(),
                         ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -358,6 +342,7 @@ layout = [
                                 id = "demograpics_chart",
                                 style={"height": "100%", "width": "98%","margin":5},
                                 config=dict(displayModeBar=False),
+                                figure = get_demographics_chart(),
                             ),
                         ],
                         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -372,6 +357,7 @@ layout = [
                                 id = "age_chart",
                                 style = {"height": "100%", "width": "98%","margin":5},
                                 config = dict(displayModeBar=False),
+                                figure = get_age_bar(),
                             ),
                         ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -390,6 +376,7 @@ layout = [
                                 id = "engagement_box_chart",
                                 style={"height": "100%", "width": "98%","margin":5},
                                 config=dict(displayModeBar=False),
+                                figure = get_engagement_chart(),
                             ),
                         ],
                         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -405,6 +392,7 @@ layout = [
                                 id = "engagement_chart",
                                 style={"height": "100%", "width": "98%","margin":5},
                                 config=dict(displayModeBar=False),
+                                figure = get_engagement_box_chart()
                             ),
                         ],
                         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},

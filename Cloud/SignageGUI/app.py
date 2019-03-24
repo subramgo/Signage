@@ -6,7 +6,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dateutil.parser
-from SignageManager import SignageManager
+from SignageManager import SignageManager, AppState
 from dash.dependencies import Input, Output
 import plotly.plotly as py
 from plotly import graph_objs as go
@@ -21,6 +21,7 @@ app.scripts.config.serve_locally = True
 
 
 signage_manager = SignageManager()
+app_state = AppState()
 
 
 @server.route('/favicon.ico')
@@ -30,7 +31,7 @@ def favicon():
 
 
 #returns top indicator div
-def indicator(color, text, id_value):
+def indicator(color, text, id_value,id_children):
     return html.Div(
         [
             
@@ -39,8 +40,10 @@ def indicator(color, text, id_value):
                 className="twelve columns indicator_text"
             ),
             html.P(
+                                id_children,
+
                 id = id_value,
-                className="indicator_value"
+                className="indicator_value",
             ),
         ],
         className="two columns indicator",
@@ -49,7 +52,7 @@ def indicator(color, text, id_value):
         
 )
 
-def indicator_alt(color, text, id_value):
+def indicator_alt(color, text, id_value,id_children):
     return html.Div(
         [
             
@@ -58,6 +61,7 @@ def indicator_alt(color, text, id_value):
                 className="twelve columns indicator_text"
             ),
             html.P(
+                id_children,
                 id = id_value,
                 className="indicator_value"
             ),

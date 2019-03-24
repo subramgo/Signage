@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from plotly import graph_objs as go
 import numpy as np
-from app import signage_manager, app
+from app import app, app_state
 from dash.dependencies import Input, Output
 import pandas as pd
 
@@ -10,22 +10,15 @@ import pandas as pd
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-enterprise_drops = signage_manager.get_enterprise()
 
 
 
-@app.callback(
-    Output("total_score", "children"),
-    [Input("effectiveness_df", "children")]
-)
-def get_total_score(effect_df):
 
-	df = pd.read_json(effect_df, orient='split')
+def get_total_score():
 
-	#sign_details = signage_manager.signage_details(signage_id)
-	#store_details = signage_manager.store(int(sign_details['store_id']))
+	df = app_state.effectiveness_df
 
-	if df.empty == True :
+	if df is None or df.empty == True :
 	    return {'data':[],'layout':[]}
 
 
@@ -34,43 +27,15 @@ def get_total_score(effect_df):
 	return "Selected signage has an overall effectiveness score of {}".format(x1)
 
 
-@app.callback(
-    Output("trigger_df", "children"),
-    [Input("effectiveness_df", "children")]
-)
-def set_trigger_score(effect_df):
-
-	logger.info("writing trigger.df")
-
-	df = pd.DataFrame({"Trigger":["yes"]})
-
-	return df.to_json(date_format='iso', orient='split')
-
-@app.callback(
-    Output("demo_trigger_df", "children"),
-    [Input("trigger_df", "children")]
-)
-def set_demo_trigger_score(effect_df):
-
-	df = pd.DataFrame({"DemoTrigger":["yes"]})
-
-	return df.to_json(date_format='iso', orient='split')
 
 
-@app.callback(
-    Output("overall_time_alive", "figure"),
-    [Input("effectiveness_df", "children"), Input("trigger_df","children")]
-)
-def effect_timealive(effect_df, total_score):
 
 
-	logger.info(total_score)
-	df = pd.read_json(effect_df, orient='split')
-	return get_overall_time_alive(df)
-
-def get_overall_time_alive(df):
+def get_overall_time_alive():
 
 	#df = signage_manager.overall_effectiveness(signage_id)
+
+	df = app_state.effectiveness_df
 
 	x1 = df['time_alive']
 	y1 = df['engagement_timealive']
@@ -93,18 +58,13 @@ def get_overall_time_alive(df):
 	return {"data":data, "layout":layout}
 
 
-@app.callback(
-    Output("overall_engagement", "figure"),
-    [Input("effectiveness_df", "children"),Input("trigger_df","children")]
-)
-def effect_engagement(effect_df, total_score):
-	df = pd.read_json(effect_df, orient='split')
 
-	return get_overall_engagement(df)
 
-def get_overall_engagement(df):
+def get_overall_engagement():
 
 	#df = signage_manager.overall_effectiveness(signage_id)
+
+	df = app_state.effectiveness_df
 
 	x1 = df['engagement_range']
 	y1 = df['engagement_distance']
@@ -128,19 +88,11 @@ def get_overall_engagement(df):
 	return {"data":data, "layout":layout}
 
 
-@app.callback(
-    Output("engagement_score", "figure"),
-    [Input("effectiveness_df", "children"),Input("trigger_df","children")]
-)
-def engagement_score_box(effect_df, total_score):
 
-	logger.info(total_score)
-	df = pd.read_json(effect_df, orient='split')
 
-	return get_engagement_score_box_chart(df)
-
-def get_engagement_score_box_chart(df):
+def get_engagement_score_box_chart():
 	#df = signage_manager.overall_effectiveness(signage_id)
+	df = app_state.effectiveness_df
 
 	if df.empty == True :
 	    return {'data':[],'layout':[]}
@@ -189,7 +141,7 @@ layout = [
         
  
 	     
-			html.H4(id="total_score", style={"text-align":"center"}),
+			html.H4(get_total_score(),id="total_score", style={"text-align":"center"}),
 
 
 		],
@@ -212,6 +164,7 @@ layout = [
                         id = "overall_time_alive",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_overall_time_alive(),
                     ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -233,6 +186,8 @@ layout = [
                         id = "overall_engagement",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_overall_engagement(),
+
                     ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -251,6 +206,7 @@ layout = [
                         id = "engagement_score",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_engagement_score_box_chart()
                     ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},

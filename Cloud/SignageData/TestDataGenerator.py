@@ -10,16 +10,21 @@ cfg_defaults = {
           'enabled'           : False
         , 'stream_address'    : '192.168.1.168/usecondstream'
         , 'protocol'          : 'rtsp://'
-        , 'location_name'     : 'boca-mac-1'
-        , 'name'              : 'boca-mac-1'
+        , 'location_name'     : 'Lobby'
+        , 'name'              : 'Lobby'
         , 'credentials'       : '*user*:*pass*'
     }
     
     , 'data'                  : {
           'enabled'           : False
         , 'credentials'       : 'united:irkbin'
-        , 'data_server'       : 'signagedata.azurewebsites.net'
-        , 'data_protocol'     : 'https://'
+        #, 'data_server'       : 'signagedata.azurewebsites.net'
+        #, 'data_protocol'     : 'https://'
+
+
+       , 'data_server'       : '0.0.0.0:5000'
+       , 'data_protocol'     : 'http://'
+
     }
 
 
@@ -71,6 +76,7 @@ def get_random_record():
            ,'engagement_range' : str(engagement_range)
 	       ,'location'  : location
 	       ,'face_id' : str(face_id)
+	       ,'signage_id': 10
 	        }
 
 	return data
@@ -105,8 +111,31 @@ def test_update_data():
 
 
 
-def main():
-	for i in range(17):
+def get_url(get_path):
+	r = _requests.get(protocol+cred+"@"+uri+get_path)
+	print(get_path)
+	if r.status_code == 200:
+		print("\tsuccess !")
+	else:
+		print("\tFail")
+
+
+def test_web_services():
+	prefix = '/api/v2/signage/'
+	get_url(prefix + 'enterprise')
+	get_url(prefix + 'store/all/100')
+	get_url(prefix + 'store/200')
+	get_url(prefix + 'signage/200')
+	get_url(prefix + 'signage/single/11')
+	get_url(prefix + 'person/maxdate/11')
+	get_url(prefix + 'person/mindate/11')
+
+	get_url(prefix + 'person/live/11')
+	get_url(prefix + 'person/11')
+
+
+def main(n):
+	for i in range(n):
 		r = push_test_data()
 		if r == -1:
 			break
@@ -114,6 +143,8 @@ def main():
 
 
 if __name__ == '__main__':
-	main()
-	#test_update_data()
+	test_web_services()
+	for i in range(50):
+		push_test_data()
+	test_update_data()
 

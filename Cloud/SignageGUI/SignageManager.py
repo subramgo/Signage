@@ -40,6 +40,52 @@ cred=cfg_defaults['data']['credentials']
 headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
 
+class AppState():
+	def __init__(self):
+		
+		self.signage_id = 11
+		self.enterprise_id = 101
+		self.store_id = 202
+		
+		self.smgr = SignageManager()
+
+		self.person_all_signage_df = self.smgr.person_all_signage(self.store_id) 
+		self.live_person_df = self.smgr.live_person(self.signage_id) 
+		self.recommendation_df = self.smgr.get_recommendation(self.signage_id)
+		self.effectiveness_df = self.smgr.overall_effectiveness(self.signage_id)
+	
+	def print(self):
+		print(self.enterprise_id, self.store_id, self.signage_id)
+
+	def enterprise_options(self):
+		options ,_= self.smgr.get_enterprise() 
+		return options
+
+	def store_options(self, enterprise_id):
+		options,_ = self.smgr.get_stores(enterprise_id)
+		return options 
+
+	def store_value(self, enterprise_id):
+		options,_ = self.smgr.get_stores(enterprise_id)
+		return _ 
+
+
+	def signage_options(self, store_id):
+		options, _ = self.smgr.get_signage(store_id)
+		return options
+
+	def signage_value(self, store_id):
+		options, _ = self.smgr.get_signage(store_id)
+		return _
+
+	def store_address(self, store_id):
+		store_add = self.smgr.store(store_id)
+		return store_add['address']
+
+
+
+
+
 class SignageManager():
 	
 	def __init__(self):
@@ -78,9 +124,12 @@ class SignageManager():
 
 
 		final_df = pd.DataFrame({})
+		df_list = []
 		for signage_id in signages:
 			return_df = pd.DataFrame.from_dict(self._fetch(self.person_url + signage_id))
-			final_df = pd.concat([final_df,return_df])
+			df_list.append(return_df)
+
+		final_df = pd.concat(df_list)
 
 
 		final_df.engagement_range = pd.to_numeric(final_df.engagement_range)
@@ -480,6 +529,6 @@ def gender_count(in_pd):
 if __name__ == '__main__':
 	smgr = SignageManager()
 	df = smgr.person_all_signage(202)
-	print(df.signage_id.unique())
+	print(df['location'].unique())
 
 
