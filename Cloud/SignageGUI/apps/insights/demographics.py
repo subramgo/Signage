@@ -125,15 +125,23 @@ def get_demo_effect():
 	adult_rating = 0
 	senior_rating = 0
 
-	male_rating = df[df.gender == 'male']['normalized_engagement'].mean() * 10
-	female_rating = df[df.gender == 'female']['normalized_engagement'].mean() * 10
-
-	teen_rating = df[df.age == 'teen']['normalized_engagement'].mean() * 10
-	adult_rating = df[df.age == 'adult']['normalized_engagement'].mean() * 10
-	senior_rating = df[df.age == 'senior']['normalized_engagement'].mean() * 10
 
 
-	ratings = [male_rating, female_rating, teen_rating, adult_rating, senior_rating]
+
+	male_rating = df[df.gender == 'male']['normalized_engagement'].mean() * 6
+	female_rating = df[df.gender == 'female']['normalized_engagement'].mean() * 6
+
+	teen_rating = df[df.age == 'teen']['normalized_engagement'].mean() * 6
+	adult_rating = df[df.age == 'adult']['normalized_engagement'].mean() * 6
+	senior_rating = df[df.age == 'senior']['normalized_engagement'].mean() * 6
+
+	if np.isnan(teen_rating): teen_rating = 0
+	if np.isnan(adult_rating): adult_rating = 0
+	if np.isnan(senior_rating): senior_rating =0
+	
+	ratings = [male_rating, female_rating, adult_rating, teen_rating ,senior_rating]
+
+	logger.info(ratings)
 
 	for i in range(len(ratings)):
 	    traces.append(go.Scatter(
@@ -177,7 +185,7 @@ html.Div([
             ],
     	),
         ],
-        
+
        # className="row",
         style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
 

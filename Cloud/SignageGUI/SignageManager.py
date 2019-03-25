@@ -418,6 +418,11 @@ class SignageManager():
 
 
 
+		logger.info("ratings")
+		logger.info("Teen " + str(teen_rating))
+
+		logger.info("Adult " + str(adult_rating))
+		logger.info("Senior " + str(senior_rating))
 
 		if teen_rating > adult_rating:
 			if teen_rating > senior_rating:

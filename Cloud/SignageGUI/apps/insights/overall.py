@@ -24,7 +24,7 @@ def get_total_score():
 
 	x1 = np.round(df['normalized_engagement'].mean() * 100,2)
 
-	return "Selected signage has an overall effectiveness score of {}".format(x1)
+	return "Selected signage has an overall effectiveness score of {} %".format(x1)
 
 
 
