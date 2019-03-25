@@ -23,11 +23,11 @@ cfg_defaults = {
     , 'data'                  : {
           'enabled'           : False
         , 'credentials'       : 'united:irkbin'
-        #, 'data_server'       : 'signagedata.azurewebsites.net/api/v2/signage'
-        , 'data_server'       : '0.0.0.0:5000/api/v2/signage'
+        , 'data_server'       : 'signagedata.azurewebsites.net/api/v2/signage'
+        #, 'data_server'       : '0.0.0.0:5000/api/v2/signage'
 
-        #, 'data_protocol'     : 'https://'
-        , 'data_protocol'     : 'http://'
+        , 'data_protocol'     : 'https://'
+        #, 'data_protocol'     : 'http://'
 
     }
 
@@ -45,7 +45,7 @@ class AppState():
 		
 		self.signage_id = 11
 		self.enterprise_id = 101
-		self.store_id = 202
+		self.store_id = 201
 		
 		self.smgr = SignageManager()
 
