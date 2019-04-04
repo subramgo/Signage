@@ -230,13 +230,8 @@ class SignageManager():
 
 	def get_first_row_header(self, signage_id):
 
-<<<<<<< HEAD
-		person = self.person()
-		total_impressions = person['face_id'].nunique()
-=======
 		person = self.person(signage_id)
 		total_impressions = person['face_id'].count()
->>>>>>> actionsgui
 		avg_dwell_time = person['time_alive'].mean()
 		engagement_range = person['engagement_range'].mean()
 		male_count = person[person['gender'] == 'male']['face_id'].nunique()
@@ -474,12 +469,6 @@ def main():
 
 def enterprise():
 	smgr = SignageManager()
-<<<<<<< HEAD
-	#print(smgr.get_first_row_header())
-	#print(smgr.person())
-	#gender_count(smgr.person())
-	print(smgr.person().head())
-=======
 	signages = smgr.enterprise()
 	print(signages.head())
 
@@ -538,8 +527,6 @@ def gender_Test():
 		print(df[ (df['location'] == location) & (df['gender'] == 'male')]['face_id'].values)
 		print(df[ (df['location'] == location) & (df['gender'] == 'female')]['face_id'].values)
 
-
->>>>>>> actionsgui
 
 
 def gender_count(in_pd):

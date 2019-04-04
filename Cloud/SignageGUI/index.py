@@ -141,10 +141,10 @@ app.layout = html.Div(
                id="snapshot_df",
                 style={"display": "none"},
         ),
-        html.Span("Copyright 2019 JCI All rights reserved", className='footer-title'),
-        html.Div(id="tab_content", className="row", style={"margin": "2% 3%"})
+        html.Div(id="tab_content", className="row", style={"margin": "2% 3%"}),
 
-        
+        html.Span("Copyright 2019 JCI All rights reserved", className='footer-title')
+
     ],
     className="row",
     style={"margin": "0%"},

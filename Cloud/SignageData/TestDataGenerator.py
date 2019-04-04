@@ -76,7 +76,7 @@ def get_random_record():
            ,'engagement_range' : str(engagement_range)
 	       ,'location'  : location
 	       ,'face_id' : str(face_id)
-	       ,'signage_id': 10
+	       ,'signage_id': 11
 	        }
 
 	return data
@@ -144,7 +144,7 @@ def main(n):
 
 if __name__ == '__main__':
 	test_web_services()
-	for i in range(50):
-		push_test_data()
-	test_update_data()
+	#for i in range(50):
+	#	push_test_data()
+	#test_update_data()
 
