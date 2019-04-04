@@ -41,6 +41,7 @@ class DataClient:
                     , 'engagement_range' : str(person.engagement_range)
                     , 'location'  : location
                     , 'face_id'   : str(person.iduid)
+                    , 'signage_id': self.camfig['signage_id']
                     }
             headers  = {'Content-type': 'application/json', 'Accept': 'text/plain'}
             r = _requests.post(protocol+cred+"@"+uri+path,json=data,headers=headers)

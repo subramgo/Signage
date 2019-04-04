@@ -19,6 +19,7 @@ cfg_defaults = {
         , 'protocol'          : 'rtsp://'
         , 'location_name'     : 'signage-analysis-demo'
         , 'name'              : 'signage-camera-1'
+        , 'signage_id'        : 0
         , 'credentials'       : '*user*:*pass*'
         , 'rotation'          : 0
         , 'p_fov'             : 78.0
