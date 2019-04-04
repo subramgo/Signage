@@ -1,0 +1,26 @@
+version: '3'  # version of compose format 
+
+services:
+  
+  data-service:
+    image: data-service
+    build:
+        context: ./SignageData  # path is relative to docker-compose.yml localtion
+        dockerfile: Dockerfile
+    volumes:
+      - "./SignageData:/SignageData" # mount point
+    ports:
+      - 5000:5000  # host:container
+
+  gui-service:
+    image: gui-service
+    build:
+        context: ./SignageGUI  # path is relative to docker-compose.yml localtion
+        dockerfile: Dockerfile
+    volumes:
+      - "./SignageGUI:/SignageGUI"
+    ports:
+      - 8080:8080  # host:container
+
+    depends_on:
+      - data-service

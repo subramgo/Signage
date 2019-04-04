@@ -1,6 +1,5 @@
 from flask import Blueprint, request, Response, abort, g, jsonify
-import json
-from .models import signage_db, Person,User
+from .models import signage_db, Person,User, Signage, Enterprise, Store
 import datetime
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.contrib.cache import SimpleCache
@@ -17,48 +16,120 @@ signage_v2 = Blueprint('signage2', __name__, url_prefix='/api/v2/signage',
 TIMEOUT=10
 
 
+@signage_v2.route('/enterprise', methods=['GET'])
+@auth.login_required
+def get_all_enterprises():
+    store = Enterprise.query.all()
+    signages_json = [sign.json for sign in store]
+
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
+
+
+############ Store service #######################################
+
+@signage_v2.route('/store/all/<enterpriseid>', methods=['GET'])
+@auth.login_required
+def get_all_stores(enterpriseid):
+    store = Store.query.filter(Store.enterprise_id == enterpriseid)
+    signages_json = [sign.json for sign in store]
+
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
+
+@signage_v2.route('/store/<storeid>', methods=['GET'])
+@auth.login_required
+def get_stores(storeid):
+    store = Store.query.filter(Store.id == storeid)
+    signages_json = [sign.json for sign in store]
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
+
+
+############ Signage Services #####################################
+@signage_v2.route('/signage/<storeid>', methods=['GET'])
+@auth.login_required
+def get_signages(storeid):
+    store = Signage.query.filter(Signage.store_id == storeid)
+    signages_json = [sign.json for sign in store]
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
+
+@signage_v2.route('/signage/single/<signageid>', methods=['GET'])
+@auth.login_required
+def get_signage(signageid):
+    store = Signage.query.filter(Signage.id == signageid)
+    signages_json = [sign.json for sign in store]
+    #return Response(jsonify(signages_json,), mimetype="application/json")
+    return jsonify(signages_json,)
 
 ############ Person Services #####################################
 
 
-def return_person():
-    signs = Person.query.all()
-    signs_json = [sign.get_json() for sign in signs]
+def return_person(signageid):
+    signs = Person.query.filter(Person.signage_id == signageid)
+    #signs_json = [sign.get_json() for sign in signs]
+    signs_json = [sign.json for sign in signs]
 
     return signs_json
 
-@signage_v2.route('/person/live/<location>', methods =['GET'])
+
+@signage_v2.route('/person/maxdate/<signageid>', methods =['GET'])
 @auth.login_required
-def get_faces_live(location):
+def get_max_date(signageid):
     """
     Return the latest data (maxdate)for a given location
     """
-    maxdate = Person.query.filter(Person.location == location)\
+    maxdate = Person.query.filter(Person.signage_id == signageid)\
+    .with_entities(func.max(Person.date_created)).first()[0]
+
+    return jsonify(maxdate.isoformat())
+
+@signage_v2.route('/person/mindate/<signageid>', methods =['GET'])
+@auth.login_required
+def get_min_date(signageid):
+    """
+    Return the latest data (maxdate)for a given location
+    """
+    mindate = Person.query.filter(Person.signage_id == signageid)\
+    .with_entities(func.min(Person.date_created)).first()[0]
+
+    return jsonify(mindate.isoformat())
+
+@signage_v2.route('/person/live/<signageid>', methods =['GET'])
+@auth.login_required
+def get_faces_live(signageid):
+    """
+    Return the latest data (maxdate)for a given location
+    """
+    maxdate = Person.query.filter(Person.signage_id == signageid)\
     .with_entities(func.max(Person.date_created)).first()[0]
     
     maxdate = maxdate.replace(hour=0, minute=0, second=0)
     
     signs = Person.query\
-    .filter(Person.location == location , Person.date_created >= maxdate)\
+    .filter(Person.signage_id == signageid , Person.date_created >= maxdate)\
     .all()
 
-    signs_json = [sign.get_json() for sign in signs]
+    signs_json = [sign.json for sign in signs]
 
-    return Response(json.dumps(signs_json), mimetype="application/json")
+    #return Response(jsonify(signs_json,), mimetype="application/json")
+    return jsonify(signs_json,)
 
 
-@signage_v2.route('/person', methods =['GET'])
+@signage_v2.route('/person/<signageid>', methods =['GET'])
 @auth.login_required
-def get_faces():
+def get_faces(signageid):
     """
     Return all the faces data. If available in cache return from cache else fetch.
     """
     signs_json = cache.get('signs-json')
     if signs_json is None:
-        signs_json = return_person()
+        signs_json = return_person(signageid)
         cache.set('signs-json', signs_json, timeout = TIMEOUT)
     
-    return Response(json.dumps(signs_json), mimetype="application/json")
+    #return Response(jsonify(signs_json,), mimetype="application/json")
+    return jsonify(signs_json,)
 
 
 @signage_v2.route('/person/upload', methods=['POST'])
@@ -78,12 +149,13 @@ def post_faces():
         signage_obj = Person( age = payload['age'], 
             camera_id = payload['camera_id'], location=payload['location'],
             time_alive = payload['time_alive'], gender=payload['gender'], 
-            engagement_range=payload['engagement_range'],face_id=payload['face_id'])
+            engagement_range=payload['engagement_range'],face_id=payload['face_id'],signage_id=payload['signage_id'])
         
         signage_db.session.add(signage_obj)
     
     signage_db.session.commit()
-    return  Response(response={'status': 'SUCCESS'}, status=200, mimetype="application/json")
+    #return  Response(response={'status': 'SUCCESS'}, status=200, mimetype="application/json")
+    return jsonify({'status':'SUCCESS'})
 
 
 

@@ -4,8 +4,10 @@
 
 """
 import dash_html_components as html
-from app import signage_manager, app,indicator,indicator_alt
+from app import signage_manager, app, app_state
+from app import indicator,indicator_alt
 from dash.dependencies import Input, Output, State
+from datetime import datetime as dt
 
 import numpy as np
 import dash_core_components as dcc
@@ -20,42 +22,23 @@ __author__ = "Gopi Subramanian"
 __maintainer__ = "Gopi Subramanian"
 __status__ = "Proof of concept"
 
-def get_locations():
-    """
-    Returns list of location for drop down box
-    """
-    faces = signage_manager.person()
-    if faces.empty == True:
-        return ({'label': "NA", 'value': "NA"},"N/A")
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-    locations = faces['location'].unique()
 
-    options_ = []
 
-    for location in locations:
-        option = {'label': location, 'value': location}
-        options_.append(option)
-
-    return (options_, location)
 
 
 #################### First row header ################################
-
-
-@app.callback(
-    Output("live_faces_count", "children"),
-    [Input("location-dropdown", "value")]
-)
-def live_count_callback(location):
-    return get_live_count(location)
-
-def get_live_count(location):
+def get_live_count():
     """
     Total impressions count
     """
 
-    df = signage_manager.live_person(location)
-    if df.empty == True:
+    df = app_state.live_person_df
+
+    if df is None or df.empty == True:
         return "NA"
     
     count = df['face_id'].nunique()
@@ -63,96 +46,73 @@ def get_live_count(location):
 
 
 
-@app.callback(
-    Output("live_male_count", "children"),
-    [Input("location-dropdown", "value")]
-)
-def live_male_count_callback(location):
-    return get_male_count(location)
+def get_male_count():
 
-def get_male_count(location):
+    try:
 
-    demographics = signage_manager.live_person(location)
-    demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
+        demographics = app_state.live_person_df
+        demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
+    except:
+        return "NA"
 
     if demographics.empty == True:
         return "NA"
 
+    count = demographics[demographics['gender'] == 'male']['face_id'].values
+    if len(count) == 1:
+        return str(count[0])
+    else:
+        return "NA"
+
+
+
+def get_female_count():
+
     try:
-        count = demographics[demographics['gender'] == 'male']['face_id'].values[0]
+        demographics = app_state.live_person_df
+
+        demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
     except:
-        count = 0
-    return count
-
-
-@app.callback(
-    Output("live_female_count", "children"),
-    [Input("location-dropdown", "value")]
-)
-def live_female_count_callback(location):
-    return get_female_count(location)
-
-def get_female_count(location):
-
-    demographics = signage_manager.live_person(location)
-    demographics = demographics.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
+        return "NA"
 
     if demographics.empty == True:
         return "NA"
 
-    try:
-        count = demographics[demographics['gender'] == 'female']['face_id'].values[0]
-    except:
-        count = 0
+    count = demographics[demographics['gender'] == 'female']['face_id'].values
+    if len(count) == 1:
+        return str(count[0])
+    else:
+        return "NA"
+
+
+
+def get_activity():
     
-    return count
+    df = app_state.live_person_df
 
-
-@app.callback(
-    Output("live_activity", "children"),
-    [Input("location-dropdown", "value")]
-)
-def live_activity_callback(location):
-    return get_activity(location)
-
-def get_activity(location):
-    df = signage_manager.live_person(location)
-
-    if df.empty == True:
+    if df is None or df.empty == True:
         return "NA"
     else:
         return str(np.round(df['time_alive'].mean())) + ' seconds'
 
 
-@app.callback(
-    Output("live_engagement", "children"),
-    [Input("location-dropdown", "value")]
-)
-def live_engagement_callback(location):
-    return get_engagement(location)
-
-def get_engagement(location):
+def get_engagement():
    
-    df = signage_manager.live_person(location)
+    df= app_state.live_person_df
 
-    if df.empty == True:
+    if df is None or df.empty == True:
         return "NA"
     else:
         return str(np.round(df['engagement_range'].mean())) + ' Feet'
     
 
-@app.callback(
-    Output("live_age_group", "children"),
-    [Input("location-dropdown", "value")]
-)
-def live_agegroup_callback(location):
-    return get_agegroup(location)
 
-def get_agegroup(location):
+
+def get_agegroup():
    
-    df = signage_manager.live_person(location)
+    df = app_state.live_person_df
 
-    if df.empty == True:
+    if df is None or df.empty == True:
         return "NA"
 
     ages_ = df['age'].tolist()
@@ -161,16 +121,13 @@ def get_agegroup(location):
 
 ############################# Dwell Chart ######################
 
-@app.callback(
-    Output("live_dwell_chart", "figure"),
-    [Input("location-dropdown", "value")]
-)
-def live_dwell_callback(location):
-    return get_live_dwell_chart(location)
 
-def get_live_dwell_chart(location):
-    df = signage_manager.live_person(location)
-    if df.empty == True:
+
+def get_live_dwell_chart():
+    #df = signage_manager.live_person(signage_id)
+
+    df = app_state.live_person_df
+    if df is None or df.empty == True:
         return {'data':[],'layout':[]}
 
     hist_data = df['time_alive'].tolist()
@@ -184,19 +141,14 @@ def get_live_dwell_chart(location):
 
 ############################### Live age chart ###################
 
-@app.callback(
-    Output("live_age_chart", "figure"),
-    [Input("location-dropdown", "value")]
-)
-def live_age_callback(location):
-    return get_live_age_chart(location)
 
+def get_live_age_chart():
 
-def get_live_age_chart(location):
+    #df = signage_manager.live_person(signage_id)
 
-    df = signage_manager.live_person(location)
+    df = app_state.live_person_df
 
-    if df.empty == True:
+    if df is None or df.empty == True:
         return {"data":[],"layout":[]}
 
     unique_age_buckets = []
@@ -235,20 +187,17 @@ def get_live_age_chart(location):
 
 ############################# Live age by gender chart #############
 
-@app.callback(
-    Output("live_agebygender_chart", "figure"),
-    [Input("location-dropdown", "value")]
-)
-def live_agebygender_callback(location):
-    return get_live_agebygender_chart(location)
 
 
-def get_live_agebygender_chart(location):
 
-    df = signage_manager.live_person(location)
+def get_live_agebygender_chart():
+
+    #df = signage_manager.live_person(signage_id)
+
+    df = app_state.live_person_df
 
 
-    if df.empty == True:
+    if df is None or df.empty == True:
         return {"data":[],"layout":[]}
 
     ages = df['age'].unique()
@@ -293,24 +242,28 @@ def get_live_agebygender_chart(location):
 
 ############################### Live Gender chart ###################
 
-@app.callback(
-    Output("live_gender_chart", "figure"),
-    [Input("location-dropdown", "value")]
-)
-def live_gender_callback(location):
-    return get_live_gender_chart(location)
+def get_live_gender_chart():
+    #df = signage_manager.live_person(signage_id)
+
+    df = app_state.live_person_df
 
 
-def get_live_gender_chart(location):
-    df = signage_manager.live_person(location)
-
-    if df.empty == True:
+    if df is None or df.empty == True:
         return {"data":[],"layout":[]}
 
     df = df.groupby(['gender']).aggregate({'face_id':'nunique'}).reset_index()
 
-    male_count = get_male_count(location)
-    female_count = get_female_count(location)
+    male_count_ =   df[df['gender'] == 'male']['face_id'].values
+    female_count_ = df[df['gender'] == 'female']['face_id'].values
+
+    male_count = 0
+    female_count = 0
+
+    if len(male_count_) == 1:
+        male_count = male_count_[0]
+
+    if len(female_count_) == 1:
+        female_count = female_count_[0]
 
     labels = ["Male","Female"]
     colors = {'Male': 'blue','Female':'orange'}
@@ -348,32 +301,28 @@ def get_live_gender_chart(location):
 
 ############################### Live Hourly Impressions chart ###################
 
-@app.callback(
-    Output("live_impressions_chart", "figure"),
-    [Input("location-dropdown", "value")]
-)
-def live_impressions_callback(location):
-    return get_live_impressions_chart(location)
 
-def get_live_impressions_chart(location):
+def get_live_impressions_chart():
 
-    df = signage_manager.live_person(location)
+    #df = signage_manager.live_person(signage_id)
 
-    if df.empty == True:
+    df = app_state.live_person_df
+
+    if df is None or df.empty == True:
         return {"data":[],"layout":[]}
 
-    df['date_created'] = pd.to_datetime(df['date_created'],unit='s')
+    df['date_created'] = pd.to_datetime(df['date_created'])
 
     times = pd.DatetimeIndex(df.date_created)
-    df = df.groupby([times.hour]).face_id.nunique()
+    df = df.groupby([times.dayofweek]).face_id.nunique()
 
     df = df.reset_index()
 
     data = [go.Bar( x=df['date_created'], y=df['face_id'], text=df['face_id'], textposition='auto',marker=dict(color='#ff8333') )]
 
     layout = go.Layout(
-        title="Hourly Impressions",
-        xaxis=dict(showgrid=False,title="Hour of the day"),
+        title="Daily Impressions",
+        xaxis=dict(showgrid=False,title="Day of week"),
         yaxis=dict(title="Face Count"),
         barmode='relative',
         #margin=dict(l=35, r=25, b=25, t=5, pad=2),
@@ -386,20 +335,17 @@ def get_live_impressions_chart(location):
 
 ###################### Live Engagement Chart ########################
 
-@app.callback(
-    Output("live_engagement_chart", "figure"),
-    [Input("location-dropdown", "value")]
-)
-def live_engagement_callback(location):
-    return get_live_engagement_chart(location)
 
 
 
-def get_live_engagement_chart(location):
 
-    df = signage_manager.live_person(location)
+def get_live_engagement_chart():
 
-    if df.empty == True:
+    #df = signage_manager.live_person(signage_id)
+
+    df = app_state.live_person_df
+
+    if df is None or df.empty == True:
         return {'data':[],'layout':[]}
 
     distances = df['engagement_range'].tolist()
@@ -434,11 +380,7 @@ def get_live_engagement_chart(location):
 
 ###############################################################################################
 
-@app.callback(
-    Output('output-container', 'children'),
-    [Input('location-dropdown', 'value')])
-def update_output(value):
-    return 'Audience Measurement for "{}"'.format(value)
+
 
 
 
@@ -455,52 +397,6 @@ layout = [
 
 
 
-    # drop down
-
-
-
-    html.Div([
-
-                html.Div([
-                        
-                        html.P("Select a signage from drop down")
-
-                    ],
-                    className='three columns',
-                                            style={'padding-top':'15px','padding-left':'20px'}
-
-                    ),
-
-                html.Div([
-                        dcc.Dropdown(
-                                id='location-dropdown',
-                                options=get_locations()[0],
-                                value=get_locations()[1],
-
-                            ),
-                        ],
-                        className='three columns',
-                        style={'padding-top':'12px','padding-left':'20px'}
-
-                        ),
-
-
-                html.Div([
-                    html.H4(
-                    id='output-container'
-                    )]
-                    , className="six columns",style={"text-align":"right"})
-
-
-            ],
-            className="row",
-            style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
-
-
-    ),
-
-
-
     #indicators row
     html.Div(
         [
@@ -508,31 +404,38 @@ layout = [
                 "#00cc96",
                 "Total Faces",
                 "live_faces_count",
+                get_live_count(),
+
             ),
             indicator_alt(
                 "#119DFF",
                 "Male",
                 "live_male_count",
+                get_male_count()
             ),
             indicator(
                 "#EF553B",
                 "Female",
                 "live_female_count",
+                get_female_count()
             ),
             indicator_alt(
                 "#00cc96",
                 "Dwell time",
                 "live_activity",
+                get_live_count()
             ),
             indicator(
                 "#119DFF",
                 "Engagement Range",
                 "live_engagement",
+                get_engagement()
             ),
             indicator_alt(
                 "#00cc96",
                 "Frequent Age Group",
                 "live_age_group",
+                get_agegroup()
             ),
         ],
         className="row",
@@ -553,6 +456,7 @@ layout = [
                         id = "live_engagement_chart",
                         style = {"height": "100%", "width": "98%","margin":5},
                         config = dict(displayModeBar=False),
+                        figure = get_live_engagement_chart(),
                     ),
                 ],
                 style={'border':'1px solid', 'border-radius': 10,'border-color': '#1C4E80' ,'backgroundColor':'#FFFFFF'},
@@ -568,6 +472,7 @@ layout = [
                         id = "live_age_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_age_chart(),
                     ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -589,6 +494,7 @@ layout = [
                         id = "live_impressions_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_impressions_chart(),
                     ),
                     ],
                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -604,6 +510,7 @@ layout = [
                         id = "live_gender_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_gender_chart()
                     ),
 
                     ],
@@ -628,6 +535,7 @@ layout = [
                         id = "live_dwell_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_dwell_chart(),
                     ),
                     ],
                                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},
@@ -642,6 +550,7 @@ layout = [
                         id = "live_agebygender_chart",
                         style={"height": "100%", "width": "98%","margin":5},
                         config=dict(displayModeBar=False),
+                        figure = get_live_agebygender_chart(),
                     ),
                     ],
                                     style={'border':'1px solid', 'border-radius': 10, 'border-color': '#1C4E80','backgroundColor':'#FFFFFF'},

@@ -32,10 +32,7 @@ gender_path = '/api/v2/signage/demographics'
 
 
 
-test_windows = []
-test_windows.append([291,192,513,415])
-test_windows.append([381,206,417,242])
-test_windows.append([269,206,305,242])
+
 
 genders = ['male','female']
 ages    =['(25,32)','(35,45)','(5,15)']
@@ -46,7 +43,13 @@ def get_random_face():
 	no_faces = np.random.randint(low = 1, high = 3)
 	windows  = []
 	for i in range(no_faces):
-		windows.append(test_windows[i])
+
+		x1 = np.random.randint(low=290, high=385)
+		y1 = np.random.randint(low=192, high=207)
+		x2 = np.random.randint(low=303, high=517)
+		y2 = np.random.randint(low=240, high=420)
+
+		windows.append([x1, y1, x2, y2])
 
 	camera_id=cfg_defaults['camera']['name']
 	location=cfg_defaults['camera']['location_name']
@@ -97,7 +100,7 @@ def push_test_data():
 
 	data_face, no_faces = get_random_face()
 	data_gender = get_random_gender(no_faces)
-	print(data_gender)
+	
 
 	r = _requests.post(protocol+cred+"@"+uri+face_path,json=data_face,headers=headers)
 	
