@@ -6,13 +6,13 @@ import config
 #####        Used by signage and ad services          #####
 ###########################################################
 
-cfg_defaults = { 
+cfg_defaults = {
       'logging'               : {
           'logfile_path'      : None
         , 'logfile_maxbytes'  : 3750000
         , 'log_level'         : 'info'
     }
- 
+
     , 'camera'                : {
           'enabled'           : False
         , 'stream_address'    : '192.168.1.168/usecondstream'
@@ -32,7 +32,7 @@ cfg_defaults = {
 
     , 'tracking'              : {
           'iou_threshold'     : 0.8
-        , 'min_secs_live'     : 2 
+        , 'min_secs_live'     : 2
     }
 
     , 'data'                  : {
@@ -41,7 +41,7 @@ cfg_defaults = {
         , 'data_server'       : '127.0.0.1:5000'
         , 'data_protocol'     : 'http://'
     }
-    
+
     , 'ads'                   : {
           'enabled'           : False
         , 'server'            : ['localhost',18861]
@@ -67,3 +67,6 @@ cfg = config.Config(
 
 cfg.mask('data.credentials'   ,'*user*:*pass*')
 cfg.mask('camera.credentials' ,'*user*:*pass*')
+
+if __name__ == '__main__':
+    cfg.dump()
