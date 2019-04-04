@@ -60,7 +60,7 @@ cfg_defaults = {
     }
 
 cfg = config.Config(
-      filepath = "/boot/signage/config.yml"
+      filepath = "/opt/signage/config.yml"
     , description = "Orchestration and Image Feed"
     , defaults_dict = cfg_defaults
     , maskedpath = "/opt/signage/credentials.yml")
