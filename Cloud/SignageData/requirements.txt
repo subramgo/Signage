@@ -2,7 +2,7 @@ numpy==1.14.6
 requests==2.19.1
 passlib==1.7.1
 pandas==0.22.0
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 Flask_SQLAlchemy==2.3.2
 psycopg2==2.7.7
 Flask_Migrate==2.3.1
